@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:ma="http://www.ganimed.icmvc.emau.org/matching/config/model" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.ganimed.icmvc.emau.org/matching/config/model" elementFormDefault="unqualified" version="1.0">
+	<xs:element name="MatchingConfiguration" type="ma:MatchingConfiguration"/>
+	
+	<xs:complexType name="SimpleType">
+		<xs:sequence>
+			<xs:element name="property-type" type="xs:string"/>
+			<xs:element name="regex-pattern" type="xs:string" minOccurs="0"/>
+			<xs:element name="description" type="xs:string" minOccurs="0"/>
+			<xs:element name="threshold-config" type="ma:ThresholdConfiguration"/>
+			<xs:element name="algorithm" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="ObjectField">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string"/>
+			<xs:choice>
+				<xs:element name="simple-type" type="ma:SimpleType"/>
+				<xs:element name="complex-type" type="ma:ObjectType"/>
+				<xs:element name="list-type" type="ma:ObjectType"/>
+			</xs:choice>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="ObjectType">
+		<xs:sequence maxOccurs="unbounded">
+			<xs:element name="object-field" type="ma:ObjectField" minOccurs="1"/>
+		</xs:sequence>
+		<xs:attribute name="qualified-class-name" type="xs:string"/>
+	</xs:complexType>
+	
+	<xs:complexType name="ObjectOfSingleTruth">
+		<xs:sequence>
+			<xs:element name="global-threshold" type="ma:ThresholdConfiguration"/>
+			<xs:element name="object-type" type="ma:ObjectType" minOccurs="1" maxOccurs="1"/>			
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="MatchingConfiguration">
+		<xs:sequence>
+			<xs:element name="version" type="xs:string"/>
+			<xs:element name="pageSize" type="xs:int"/>
+			<xs:element name="report-file" type="xs:string"/>			
+			<xs:element name="deduplication-algorithm" type="xs:string"/>
+			<xs:element name="preprocessing-config" type="ma:PreprocessingConfig" minOccurs="0"/>
+			<xs:element name="object-of-single-truth" type="ma:ObjectOfSingleTruth"/>
+			<xs:element name="blocking" type="ma:Blocking"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="ThresholdConfiguration">
+		<xs:sequence>
+			<xs:element name="threshold" type="xs:double"/>
+			<xs:element name="reject-threshold" type="xs:double" minOccurs="0"/>
+			<xs:element name="weight" type="xs:double" default="1.0" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="PreprocessingConfig">	
+		<xs:sequence>
+			<xs:element name="preprocessing-type" type="ma:PreprocessingType" maxOccurs="unbounded"/>									
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="PreprocessingType">
+		<xs:sequence>			
+			<xs:element name="qualified-class-name" type="xs:string"/>
+			<xs:element name="preprocessing-field" type="ma:PreprocessingField" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>	
+			
+	<xs:complexType name="PreprocessingField">
+		<xs:sequence>
+			<xs:element name="field-name" type="xs:string"/>				
+			<xs:element name="transformation" type="ma:Transformation" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+			
+	<xs:complexType name="Transformation">
+		<xs:sequence>					
+			<xs:element name="input-pattern" type="xs:string" default=""/>				
+			<xs:choice>
+				<xs:element name="output-pattern" type="xs:string" default=""/>
+				<xs:element name="complex-transformation" type="ma:ComplexTransformation"/>
+			</xs:choice>
+		</xs:sequence>			
+	</xs:complexType>
+		
+	<xs:complexType name="ComplexTransformation">
+		<xs:sequence>
+			<xs:element name="qualified-class-name" type="xs:string"/>
+			<xs:element name="transformation-method" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="Blocking">
+		<xs:sequence>
+			<xs:element name="blocking-threshold" type="ma:ThresholdConfiguration"/>
+			<xs:element name="blocking-type" type="ma:ObjectType"/>			
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

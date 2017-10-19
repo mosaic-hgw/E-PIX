@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>epix-project</artifactId>
+		<groupId>org.emau.icmvc.ganimed.epix</groupId>
+		<version>2.4.1</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<groupId>org.emau.icmvc.ganimed.epix.service</groupId>
+	<artifactId>epix-ear</artifactId>
+	<packaging>ear</packaging>
+	<name>epix-ear</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.emau.icmvc.ganimed.epix.service</groupId>
+			<artifactId>epix-service</artifactId>
+			<type>ejb</type>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jboss-maven-plugin</artifactId>
+				<version>1.5.0</version>
+				<configuration>
+					<jbossHome></jbossHome>
+					<hostName>localhost</hostName>
+					<port>8080</port>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

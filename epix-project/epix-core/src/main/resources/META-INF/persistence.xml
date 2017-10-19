@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2017 The MOSAIC Project - Institut fuer Community Medicine der
+  							Universitaetsmedizin Greifswald - mosaic-projekt@uni-greifswald.de
+  							concept and implementation
+  							c. schack, d.langner, l. geidel
+  							web client
+  							a. blumentritt
+  							g. weiher
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+	<persistence-unit name="epix" transaction-type="JTA">
+<!-- jboss 6 -->
+<!--
+		<jta-data-source>java:/epix-ds</jta-data-source>
+-->
+<!-- jboss 7 -->
+		<jta-data-source>java:jboss/datasources/EPIXDS</jta-data-source>	
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.Person</class>		
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.PersonPreprocessed</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.PatientPreprocessed</class>	
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.HealthcareProviderPreprocessed</class>		
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.PersonLink</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.Patient</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.HealthcareProvider</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.Contact</class>		
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.Identifier</class>		
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.IdentifierDomain</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.Project</class>
+  		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.IDType</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.Account</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.Role</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.PersonHistory</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.PatientHistory</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.HealthcareProviderHistory</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.ContactHistory</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.PersonLinkHistory</class>
+		<class>org.emau.icmvc.ganimed.epix.core.persistence.model.Source</class>
+		
+		<class>org.emau.icmvc.ganimed.ttp.gstats.ejb.Statistic</class>
+		
+		<properties>
+        	<property name="hibernate.hbm2ddl.auto" value="validate"/>
+        	<property name="hibernate.dialect" value="org.emau.icmvc.ganimed.epix.core.persistence.UTF8Mysql5InnoDBDialect"/>
+        	<property name="hibernate.id.new_generator_mappings" value="false"/> <!-- see https://hibernate.atlassian.net/browse/HHH-6881 -->
+        	<property name="hibernate.implicit_naming_strategy" value="legacy-jpa"/> <!-- for Hibernate 5 in wildfly 10 -->
+      </properties>
+	</persistence-unit>
+</persistence>

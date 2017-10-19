@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:com="http://www.ganimed.icmvc.emau.org/epix/common/model"
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+                   xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+				   xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+				   jaxb:extensionBindingPrefixes="xjc"
+                   jaxb:version="2.0"
+                   targetNamespace="http://www.ganimed.icmvc.emau.org/epix/common/model" elementFormDefault="unqualified" version="1.0">
+
+	<xs:annotation>
+   		<xs:appinfo>
+	      		<jaxb:globalBindings generateIsSetMethod="true">
+	      		<xjc:superClass name="org.emau.icmvc.ganimed.common.model.ResponseEntry"/>
+			  	<xjc:serializable />
+		      	</jaxb:globalBindings>
+   		</xs:appinfo>
+	</xs:annotation>
+	
+	<xs:import namespace="http://www.ganimed.icmvc.emau.org/common/model"/>
+	
+	<xs:element name="epix-search" type="com:QueryResponseEntry"/>
+	<xs:complexType name="QueryResponseEntry">
+		<xs:sequence>
+			<xs:element name="person-identities" type="xs:string" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>
