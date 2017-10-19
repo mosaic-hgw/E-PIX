@@ -2,8 +2,16 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2015 MOSAIC - Institut fuer Community Medicine der
-  							Universitaetsmedizin Greifswald - mosaic@uni-greifswald.de
+  Copyright (C) 2009 - 2017 The MOSAIC Project - Institut fuer Community Medicine der
+  							Universitaetsmedizin Greifswald - mosaic-projekt@uni-greifswald.de
+  							concept and implementation
+  							c. schack, d.langner, l. geidel
+  							web client
+  							a. blumentritt
+  							g. weiher
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
   __
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
