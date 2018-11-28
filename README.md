@@ -1,4 +1,4 @@
-![context](https://user-images.githubusercontent.com/22166209/47564583-c19b5500-d925-11e8-9eab-74ce040085d4.png)
+![context](https://user-images.githubusercontent.com/12081369/49164561-a4481500-f32f-11e8-9f0d-fa7a730f4b9d.png)
 
 Current Version: 2.4.1
 
