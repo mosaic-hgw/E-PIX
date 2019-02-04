@@ -14,4 +14,4 @@ To build gICS with maven use the goals "clean install".
 Use the Docker-Image to easily try out E-PIX visit https://hub.docker.com/r/tmfev/epix/
 
 # More Information
-Visit https://mosaic-greifswald.de/werkzeuge-und-vorlagen/id-management-e-pix.html
+Visit https://www.ths-greifswald.de/forscher/e-pix/
