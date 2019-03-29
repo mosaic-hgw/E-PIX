@@ -8,7 +8,7 @@ The ID Management solution E-PIX (Enterprise Identifier Cross Referencing) appli
 This Software was developed by the Institute for Community Medicine of the University Medicine Greifswald. It it licensed under AGPLv3 and provided by the DFG-funded MOSAIC-Project (grant number HO 1937/2-1).
 
 # Build
-To build gICS with maven use the goals "clean install".
+To build E-PIX with maven use the goals "clean install".
 
 # Docker
 Use the Docker-Image to easily try out E-PIX visit https://hub.docker.com/r/tmfev/epix/
