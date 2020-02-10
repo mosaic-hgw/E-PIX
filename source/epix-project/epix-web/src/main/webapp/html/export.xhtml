@@ -1,0 +1,320 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2017 The MOSAIC Project - Institut fuer Community Medicine der
+  							Universitaetsmedizin Greifswald - mosaic-projekt@uni-greifswald.de
+  							concept and implementation
+  							c. schack, d.langner, l. geidel
+  							web client
+  							a. blumentritt
+  							g. weiher
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core" xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:customs="http://java.sun.com/jsf/composite/customs">
+<!-- author: blumentritta -->
+
+<h:body>
+	<ui:composition template="/template/ths_templ.xhtml">
+
+		<ui:define name="meta_tags">
+			<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+			<meta http-equiv="Pragma" content="no-cache" />
+			<meta http-equiv="Expires" content="0" />
+			<style media="screen" type="text/css">
+.combine {
+	overflow: auto;
+}
+
+.combine>div>div {
+	overflow: visible;
+}
+
+.combine th {
+	height: 25px;
+}
+
+.combine td, th {
+	width: 110px !important;
+}
+
+.combine .table-content {
+	white-space: normal;
+	overflow: visible;
+}
+
+.combine .ui-button-icon-only {
+	width: 16px;
+	height: 16px;
+	border: none !important;
+	position: absolute;
+	right: -10px;
+	top: -8px;
+	background: none !important;
+}
+
+.combine .ui-column-title {
+	display: block;
+	position: relative;
+}
+
+.combine th .grey {
+	color: #999;
+}
+
+.combine td .grey {
+	color: lightgrey;
+}
+
+.headline {
+	margin-top: 15px;
+}
+
+table.ui-selectoneradio {
+	width: auto !important;
+}
+</style>
+		</ui:define>
+
+		<ui:define name="customLogo">
+			<a href="index.xhtml"><img src="#{request.contextPath}/img/epix_logo.png" /></a>
+		</ui:define>
+
+		<ui:define name="header_title">
+			<h:outputFormat value="#{msg['general.headertitle']}" />
+		</ui:define>
+
+		<ui:define name="title">
+			<h:outputFormat value="#{msg['general.title']}" />
+		</ui:define>
+
+		<ui:define name="info">
+			<customs:headerMenu activeIndex="2" />
+		</ui:define>
+
+		<ui:define name="content">
+			<p:dialog modal="true" widgetVar="statusDialog" header="Status" draggable="false"
+				closable="false" resizable="false">
+				<p:graphicImage value="/img/ajax-loader_pf.gif" />
+			</p:dialog>
+			<script type="text/javascript">
+				function start() {
+					PF('statusDialog').show();
+				}
+
+				function stop() {
+					PF('statusDialog').hide();
+				}
+			</script>
+			<p:messages autoUpdate="true" showDetail="true"></p:messages>
+
+			<h:form id="main" enctype="multipart/form-data">
+
+				<!-- Chooser -->
+				<!-- ======= -->
+				<ui:fragment rendered="#{exportBean.type == 'start'}">
+					<p:commandButton update=":main" value="#{msg['export.label.exportAll']}"
+						actionListener="#{exportBean.chooseExportAll}">
+					</p:commandButton>
+					<h:outputText value=" #{msg['export.label.exportAll.desc']}" />
+					<br />
+					<br />
+					<p:commandButton update=":main" value="#{msg['export.label.exportDomain']}"
+						actionListener="#{exportBean.chooseExportDomain}">
+					</p:commandButton>
+					<h:outputText value=" #{msg['export.label.exportDomain.desc']}" />
+					<br />
+					<br />
+					<p:commandButton update=":main" value="#{msg['export.label.exportIds']}"
+						actionListener="#{exportBean.chooseExportIds}">
+					</p:commandButton>
+					<h:outputText value=" #{msg['export.label.exportIds.desc']}" />
+				</ui:fragment>
+
+				<!-- Export all -->
+				<!-- ========== -->
+				<ui:fragment rendered="#{exportBean.type == 'exportAll'}">
+					<h:outputText value="#{msg['export.label.findPersons']}" styleClass="headline" />
+					<p:commandButton id="exportAll" update=":main" value="#{msg['export.label.findPersons']}"
+						actionListener="#{exportBean.exportAll}">
+					</p:commandButton>
+					<p:blockUI block="main" widgetVar="blockui" trigger="main:exportAll">  
+     					LOADING<br />
+     					This may take up to 30 minutes.<br />
+						<p:graphicImage value="/img/ajax-loader_pf.gif" />
+					</p:blockUI>
+					<br />
+				</ui:fragment>
+
+				<!-- Export by domain -->
+				<!-- ================ -->
+				<ui:fragment rendered="#{exportBean.type == 'exportDomain'}">
+					<h:outputText value="#{msg['export.label.options']}" styleClass="headline" />
+					Persons to export:
+					<p:selectOneRadio value="#{exportBean.personToExport}" layout="grid" columns="1">
+						<f:selectItem itemLabel="Reference Persons" itemValue="reference" />
+						<f:selectItem itemLabel="Original Persons" itemValue="original" />
+					</p:selectOneRadio>
+					<div style="padding-bottom: 7px;"></div>
+					Domain:
+					<p:selectOneMenu label="#{msg.localDomain}" required="true"
+						value="#{exportBean.selectedIndentifierDomain}">
+						<f:selectItem noSelectionOption="true" itemLabel="#{msg['export.label.pleaseSelectDomain']}"
+							itemValue="null" />
+						<f:selectItems value="#{exportBean.identifierDomains}" var="identifierDomain"
+							itemLabel="#{identifierDomain.name}" itemValue="#{identifierDomain.name}" />
+						<p:ajax update="start_panel" process="@this"></p:ajax>
+					</p:selectOneMenu>
+					<h:outputText value="#{msg['export.label.findPersons']}" styleClass="headline" />
+					<p:commandButton id="exportDomain" update=":main" value="#{msg['export.label.findPersons']}"
+						actionListener="#{exportBean.exportDomain}">
+					</p:commandButton>
+					<p:blockUI block="main" widgetVar="blockui" trigger="main:exportDomain">  
+     					LOADING<br />
+     					This may take up to 30 minutes.<br />
+						<p:graphicImage value="/img/ajax-loader_pf.gif" />
+					</p:blockUI>
+					<br />
+				</ui:fragment>
+
+				<!-- Export by id -->
+				<!-- ============ -->
+				<ui:fragment rendered="#{exportBean.type == 'exportIds'}">
+					<!-- Step 1 -->
+					<!-- ====== -->
+					<h:outputText value="#{msg['export.label.uploadIdentifiers']}" styleClass="headline" />
+					<p:panel>
+						<h:outputText value=" - #{msg['export.label.firstColumn']}" />
+						<br />
+						<h:outputText value=" - #{msg['export.label.firstRow']} " />
+						<p:selectBooleanCheckbox id="ignoreHeader" value="#{exportBean.ignoreHeader}">
+							<p:ajax process="@this" ignoreAutoUpdate="true" />
+						</p:selectBooleanCheckbox>
+						<h:outputText value="#{msg['yes']} " />
+						<br />
+						<br />
+						<p:fileUpload id="file_upload" label="Browse" uploadLabel="Upload" mode="advanced"
+							allowTypes="/(\.|\/)(csv|txt)$/" auto="false" multiple="false" fileLimit="1"
+							fileUploadListener="#{exportBean.handleUpload}" update=":main,:progress">
+						</p:fileUpload>
+						<h:outputText
+							value="#{msg['export.label.uploaded']} #{exportBean.sum} #{msg['export.label.ids']}"
+							rendered="#{exportBean.sum != 0}" />
+					</p:panel>
+
+
+
+					<!-- Step 2 -->
+					<!-- ====== -->
+					<ui:fragment rendered="#{!empty exportBean.data}">
+						<h:outputText value="#{msg['export.label.options']}" styleClass="headline" />
+						Persons to export:
+						<p:selectOneRadio value="#{exportBean.personToExport}" layout="grid" columns="1">
+							<f:selectItem itemLabel="Reference Persons" itemValue="reference" />
+							<f:selectItem itemLabel="Original Persons" itemValue="original" />
+						</p:selectOneRadio>
+						<div style="padding-bottom: 7px;"></div>
+						Domain for local ID:
+						<p:selectOneMenu label="#{msg.localDomain}" required="true"
+							value="#{exportBean.selectedIndentifierDomain}">
+							<f:selectItem noSelectionOption="true" itemLabel="#{msg['export.label.pleaseSelectDomain']}"
+								itemValue="null" />
+							<f:selectItems value="#{exportBean.identifierDomains}" var="identifierDomain"
+								itemLabel="#{identifierDomain.name}" itemValue="#{identifierDomain.name}" />
+							<p:ajax update="start_panel" process="@this"></p:ajax>
+						</p:selectOneMenu>
+						<h:outputText value="#{msg['export.label.findPersons']}" styleClass="headline" />
+						<p:commandButton id="exportIds" update=":main" value="#{msg['export.label.findPersons']}"
+							actionListener="#{exportBean.exportIds}" />
+						<p:blockUI block="main" widgetVar="blockui" trigger="main:exportIds">  
+     						LOADING<br />
+     						This may take up to 30 minutes.<br />
+							<p:graphicImage value="/img/ajax-loader_pf.gif" />
+						</p:blockUI>
+					</ui:fragment>
+				</ui:fragment>
+
+				<ui:fragment rendered="#{exportBean.type != 'start'}">
+					<!-- Step 3 -->
+					<!-- ====== -->
+					<h:outputText value="#{msg['export.label.arrangeColumns']}" styleClass="headline" />
+					<ui:fragment rendered="#{!empty exportBean.exportData}">
+						<h:outputText
+							value="#{msg['export.label.found']} #{exportBean.exportData.size()} #{msg['export.label.persons']}" />
+						<div class="combine">
+							<p:dataTable id="persons_table" value="#{exportBean.exportData}" var="_person"
+								resizableColumns="true" liveResize="true" draggableColumns="true" paginator="true"
+								paginatorAlwaysVisible="false" rows="10" paginatorPosition="bottom"
+								style="white-space:normal;" styleClass="table-content">
+								<p:columns value="#{exportBean.columns}" var="_column" columnIndexVar="i">
+									<f:facet name="header">
+										<h:outputText value="#{_column.name}" styleClass="#{!_column.active ? 'grey' : ''}" />
+										<p:commandButton update="main:persons_table" process="main:persons_table"
+											icon="ui-icon-close" actionListener="#{exportBean.toggle(_column)}" immediate="true"
+											rendered="#{_column.active}" />
+										<p:commandButton update="main:persons_table" process="main:persons_table"
+											icon="ui-icon-plus" actionListener="#{exportBean.toggle(_column)}" immediate="true"
+											rendered="#{!_column.active}" />
+									</f:facet>
+									<h:outputText value="#{_person[i]}" styleClass="#{!_column.active ? 'grey' : ''}" />
+								</p:columns>
+							</p:dataTable>
+						</div>
+					</ui:fragment>
+
+					<!-- Step 4 -->
+					<!-- ====== -->
+					<h:outputText value="#{msg['export.label.downloadPersons']}" styleClass="headline" />
+					<ui:fragment rendered="#{!empty exportBean.exportData}">
+						<p:outputPanel id="start_panel">
+							<p:commandButton id="downloadLink" value="#{msg['export.label.downloadCSV']}" ajax="false"
+								actionListener="#{exportBean.handleDownloadResult}"
+								onclick="PrimeFaces.monitorDownload(start, stop)">
+								<p:fileDownload value="#{exportBean.downloadFile}" />
+							</p:commandButton>
+						</p:outputPanel>
+					</ui:fragment>
+				</ui:fragment>
+
+			</h:form>
+			<p:dialog widgetVar="progressDialog" id="progress" modal="true" closable="false"
+				resizable="false" width="400px">
+				<h:outputFormat value="#{msg['batch.label.processingEntries']}">
+					<f:param value="#{exportBean.sum}"></f:param>
+				</h:outputFormat>
+				<h:form>
+					<p:progressBar widgetVar="progressBar" interval="3000" ajax="true" labelTemplate="{value}%"
+						value="#{exportBean.progress}">
+						<p:ajax event="complete" oncomplete="PF('progressDialog').hide();" />
+					</p:progressBar>
+				</h:form>
+			</p:dialog>
+
+		</ui:define>
+
+		<ui:define name="version">
+			<h:outputText value="${display_version}" />
+		</ui:define>
+
+	</ui:composition>
+</h:body>
+</html>

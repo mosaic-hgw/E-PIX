@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:pdq="http://www.ganimed.icmvc.emau.org/epix/pdqQuery/model" 
+                   xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+                   xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+				   xmlns:xjc="http://java.sun.com/xml/ns/jaxb/xjc"
+				   jaxb:extensionBindingPrefixes="xjc"
+                   jaxb:version="2.0"
+                   targetNamespace="http://www.ganimed.icmvc.emau.org/epix/pdqQuery/model" elementFormDefault="unqualified" version="1.0">
+
+	<xs:annotation>
+   		<xs:appinfo>
+	      		<jaxb:globalBindings generateIsSetMethod="true">
+			  	<xjc:serializable />
+		      	</jaxb:globalBindings>
+   		</xs:appinfo>
+	</xs:annotation>
+
+	<xs:element name="epix-search" type="pdq:SearchMask"/>
+	<xs:complexType name="SearchMask">
+		<xs:sequence>
+			<xs:element name="first-name" type="xs:string" minOccurs="0"/>
+			<xs:element name="last-name" type="xs:string" minOccurs="0"/>
+			<xs:element name="birth-day" type="xs:string" minOccurs="0"/>
+			<xs:element name="birth-month" type="xs:string" minOccurs="0"/>
+			<xs:element name="birth-year" type="xs:string" minOccurs="0"/>
+			<xs:element name="mpiid" type="xs:string" minOccurs="0"/>
+			<xs:element name="identifier" type="xs:string" minOccurs="0"/>
+			<xs:element name="identifier-domain" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

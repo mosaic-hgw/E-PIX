@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- edited with XMLSpy v2011 sp1 (http://www.altova.com) by Christian Schack (Universitätsklinikum Greifswald) -->
+<xs:schema xmlns:com="http://www.ganimed.icmvc.emau.org/common/model" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.ganimed.icmvc.emau.org/common/model" elementFormDefault="unqualified" version="1.0">
+	<xs:complexType name="MPIID">
+		<xs:sequence>
+			<xs:element name="value" type="xs:string"/>
+			<xs:element name="idType" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Identifier">
+		<xs:sequence>
+			<xs:element name="value" type="xs:string"/>
+			<xs:element name="description" type="xs:string" minOccurs="0"/>
+			<xs:element name="sending-application" type="xs:string" minOccurs="0"/>
+			<xs:element name="sending-facility" type="xs:string" minOccurs="0"/>
+			<xs:element name="identifier-domain" type="com:IdentifierDomain"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="IdentifierDomain">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string"/>
+			<xs:element name="oid" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Person">
+		<xs:sequence>
+			<xs:element name="first-name" type="xs:string"/>
+			<xs:element name="middle-name" type="xs:string" minOccurs="0"/>
+			<xs:element name="last-name" type="xs:string"/>
+			<xs:element name="prefix" type="xs:string" minOccurs="0"/>
+			<xs:element name="suffix" type="xs:string" minOccurs="0"/>
+			<xs:element name="gender" type="com:Gender" minOccurs="0"/>
+			<xs:element name="contact" type="com:Contact" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="birth-date" type="xs:date" minOccurs="0"/>
+			<xs:element name="mpiid" type="com:MPIID" minOccurs="0"/>
+			<xs:element name="identifiers" type="com:Identifier" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Patient" mixed="false">
+		<xs:complexContent mixed="false">
+			<xs:extension base="com:Person">
+				<xs:sequence>
+					<xs:element name="birth-place" type="xs:string" minOccurs="0"/>
+					<xs:element name="race" type="xs:string" minOccurs="0"/>
+					<xs:element name="religion" type="xs:string" minOccurs="0"/>
+					<xs:element name="mothers-maiden-name" type="xs:string" minOccurs="0"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="HealthcareProvider" mixed="false">
+		<xs:complexContent mixed="false">
+			<xs:extension base="com:Person">
+				<xs:sequence>
+					<xs:element name="department" type="xs:string" minOccurs="0"/>
+					<xs:element name="institute"  type="xs:string" minOccurs="0"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<xs:complexType name="Contact">
+		<xs:sequence>
+			<xs:element name="street" type="xs:string" minOccurs="0"/>
+			<xs:element name="zipCode" type="xs:string" minOccurs="0"/>
+			<xs:element name="city" type="xs:string" minOccurs="0"/>
+			<xs:element name="state" type="xs:string" minOccurs="0"/>
+			<xs:element name="country" type="xs:string" minOccurs="0"/>
+			<xs:element name="email" type="xs:string" minOccurs="0"/>
+			<xs:element name="phone" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="Gender">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="m">
+				<xs:annotation>
+					<xs:documentation>male</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="f">
+				<xs:annotation>
+					<xs:documentation>female</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="o">
+				<xs:annotation>
+					<xs:documentation>other</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="u">
+				<xs:annotation>
+					<xs:documentation>unknown</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:element name="patient" type="com:Patient"/>
+	<xs:element name="healthcare-provider" type="com:HealthcareProvider"/>
+	<xs:element name="person" type="com:Person"/>
+	<xs:complexType name="PersonRole">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string"/>
+			<xs:element name="description" type="xs:string" minOccurs="0"/>
+			<xs:element name="is-healthcare-provider" type="xs:boolean"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+</xs:schema>

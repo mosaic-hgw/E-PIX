@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- edited with XMLSpy v2011 sp1 (http://www.altova.com) by Christian Schack (Universitätsklinikum Greifswald) -->
+<!--Created with Liquid XML Studio Developer Edition (Trial) 8.1.6.2625 (http://www.liquid-technologies.com)-->
+<xs:schema xmlns:epix="http://www.ganimed.icmvc.emau.org/epix/common/model" xmlns:com="http://www.ganimed.icmvc.emau.org/common/model" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.ganimed.icmvc.emau.org/epix/common/model" elementFormDefault="unqualified">
+	<xs:import namespace="http://www.ganimed.icmvc.emau.org/common/model" schemaLocation="gm-common-1.3.0.xsd"/>
+	<xs:element name="MPIRequest" type="epix:MPIRequest"/>
+	<xs:element name="MPIResponse" type="epix:MPIResponse"/>
+	<xs:complexType name="MPIResponse">
+		<xs:sequence minOccurs="1" maxOccurs="unbounded">
+			<xs:element name="response-entries" type="epix:ResponseEntry"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="MPIRequest">
+		<xs:sequence minOccurs="1" maxOccurs="1">
+			<xs:element name="request-entries" type="epix:RequestEntry" maxOccurs="unbounded"/>
+			<xs:element name="identifier-domain" type="com:IdentifierDomain"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ErrorCode">
+		<xs:sequence>
+			<xs:element name="code" type="xs:int"/>
+			<xs:element name="message" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RequestEntry">
+		<xs:sequence>
+			<xs:element name="person" type="com:Person"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ResponseEntry">
+		<xs:sequence minOccurs="1" maxOccurs="1">
+			<xs:element name="error-code" type="epix:ErrorCode"/>
+			<xs:element name="person" type="com:Person"/>
+			<xs:sequence minOccurs="0" maxOccurs="unbounded">
+				<xs:element name="linked-persons" type="epix:LinkedPerson"/>
+			</xs:sequence>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="LinkedPerson">
+		<xs:sequence>
+			<xs:element name="person" type="com:Person"/>
+			<xs:element name="probability" type="xs:double"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

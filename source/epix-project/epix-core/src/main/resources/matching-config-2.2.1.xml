@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2017 The MOSAIC Project - Institut fuer Community Medicine der
+  							Universitaetsmedizin Greifswald - mosaic-projekt@uni-greifswald.de
+  							concept and implementation
+  							c. schack, d.langner, l. geidel
+  							web client
+  							a. blumentritt
+  							g. weiher
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+<!-- edited with XMLSpy v2011 sp1 (http://www.altova.com) by Christian Schack 
+	(UniversitÃ¤tsklinikum Greifswald) -->
+<ma:MatchingConfiguration
+	xmlns:ma="http://www.ganimed.icmvc.emau.org/deduplication/config/model"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"	
+	xsi:schemaLocation="http://www.ganimed.icmvc.emau.org/deduplication/config/model matching-config-2.1.0.xsd ">
+	<version>1.0.0</version>
+	<safe-system-oid>1.2.276.0.76.3.1.132.100.1.1.1.3.0.1.1</safe-system-oid>
+	<pageSize>10000</pageSize>
+	<report-file></report-file>
+	<deduplication-algorithm>org.emau.icmvc.ganimed.deduplication.impl.FellegiSunterAlgorithm</deduplication-algorithm>
+
+	<required-config>
+		<required-type>
+			<qualified-class-name>org.emau.icmvc.ganimed.epix.core.persistence.model.PatientPreprocessed</qualified-class-name>
+			<required-field>
+				<field-name>firstName</field-name>
+			</required-field>
+			<required-field>
+				<field-name>lastName</field-name>
+			</required-field>
+			<required-field>
+				<field-name>birthDate</field-name>
+			</required-field>
+			<required-field>
+				<field-name>gender</field-name>
+			</required-field>
+		</required-type>
+		<required-type>
+			<qualified-class-name>org.emau.icmvc.ganimed.epix.core.persistence.model.HealthcareProviderPreprocessed</qualified-class-name>
+			<required-field>
+				<field-name>firstName</field-name>
+			</required-field>
+			<required-field>
+				<field-name>lastName</field-name>
+			</required-field>
+			<required-field>
+				<field-name>birthDate</field-name>
+			</required-field>
+			<required-field>
+				<field-name>gender</field-name>
+			</required-field>
+		</required-type>
+	</required-config>
+	<preprocessing-config>
+		<preprocessing-type qualified-class-name="org.emau.icmvc.ganimed.epix.core.persistence.model.PersonPreprocessed">
+			<preprocessing-field required="true">
+				<field-name>firstName</field-name>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Â?</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>?</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>Ã©</input-pattern>
+						<output-pattern>e</output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>Dr.</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>Prof.</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern> med.</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>rer.</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>nat.</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>Ing.</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>Dipl.</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>,</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern> </input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:SimpleTransformation">
+						<input-pattern>-</input-pattern>
+						<output-pattern></output-pattern>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:ComplexTransformation">
+						<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name>
+						<transformation-method>transform</transformation-method>
+					</simple-transformation-type>
+					<simple-transformation-type xsi:type="ma:ComplexTransformation">
+						<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name>
+						<transformation-method>transform</transformation-method>
+					</simple-transformation-type>
+			</preprocessing-field>
+			<preprocessing-field>
+				<field-name>middleName</field-name>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern> </input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>-</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+			</preprocessing-field>
+			<preprocessing-field>
+				<field-name>lastName</field-name>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Â?</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>?</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Ã©</input-pattern>
+					<output-pattern>e</output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Dr.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Prof.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>med.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>rer.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>nat.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Ing.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Dipl.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>,</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern> </input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>-</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+			</preprocessing-field>
+<!-- 			<preprocessing-field> -->
+<!-- 				<field-name>contactPreprocessed</field-name> -->
+<!-- 				<list-transformation-type -->
+<!-- 					qualified-class-name="org.emau.icmvc.ganimed.epix.core.persistence.model.ContactPreprocessed"> -->
+<!-- 					<preprocessing-field> -->
+<!-- 						<field-name>city</field-name> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>-</input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern> </input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:ComplexTransformation"> -->
+<!-- 							<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name> -->
+<!-- 							<transformation-method>transform</transformation-method> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:ComplexTransformation"> -->
+<!-- 							<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name> -->
+<!-- 							<transformation-method>transform</transformation-method> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 					</preprocessing-field> -->
+<!-- 					<preprocessing-field> -->
+<!-- 						<field-name>zipCode</field-name> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>-</input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern> </input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 					</preprocessing-field> -->
+<!-- 					<preprocessing-field> -->
+<!-- 						<field-name>street</field-name> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern> </input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>-</input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:ComplexTransformation"> -->
+<!-- 							<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name> -->
+<!-- 							<transformation-method>transform</transformation-method> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:ComplexTransformation"> -->
+<!-- 							<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name> -->
+<!-- 							<transformation-method>transform</transformation-method> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>STRASSE</input-pattern> -->
+<!-- 							<output-pattern>STR</output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>STRASE</input-pattern> -->
+<!-- 							<output-pattern>STR</output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>STR </input-pattern> -->
+<!-- 							<output-pattern>STR</output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>STR.</input-pattern> -->
+<!-- 							<output-pattern>STR</output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 					</preprocessing-field> -->
+<!-- 				</list-transformation-type> -->
+<!-- 			</preprocessing-field> -->
+		</preprocessing-type>
+		<preprocessing-type qualified-class-name="org.emau.icmvc.ganimed.epix.core.persistence.model.HealthcareProviderPreprocessed">
+			<preprocessing-field required="true">
+				<field-name>firstName</field-name>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Â?</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>?</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Dr.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Prof.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern> med.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>rer.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>nat.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Ing.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Dipl.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>,</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern> </input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>-</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+			</preprocessing-field>
+			<preprocessing-field>
+				<field-name>middleName</field-name>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern> </input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>-</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+			</preprocessing-field>
+			<preprocessing-field>
+				<field-name>lastName</field-name>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Â?</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>?</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Dr.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Prof.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>med.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>rer.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>nat.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Ing.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>Dipl.</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>,</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern> </input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:SimpleTransformation">
+					<input-pattern>-</input-pattern>
+					<output-pattern></output-pattern>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+				<simple-transformation-type xsi:type="ma:ComplexTransformation">
+					<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name>
+					<transformation-method>transform</transformation-method>
+				</simple-transformation-type>
+			</preprocessing-field>
+<!-- 			<preprocessing-field> -->
+<!-- 				<field-name>contactPreprocessed</field-name> -->
+<!-- 				<list-transformation-type -->
+<!-- 					qualified-class-name="org.emau.icmvc.ganimed.epix.core.persistence.model.ContactPreprocessed"> -->
+<!-- 					<preprocessing-field> -->
+<!-- 						<field-name>city</field-name> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>-</input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern> </input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:ComplexTransformation"> -->
+<!-- 							<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name> -->
+<!-- 							<transformation-method>transform</transformation-method> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:ComplexTransformation"> -->
+<!-- 							<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name> -->
+<!-- 							<transformation-method>transform</transformation-method> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 					</preprocessing-field> -->
+<!-- 					<preprocessing-field> -->
+<!-- 						<field-name>zipCode</field-name> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>-</input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern> </input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 					</preprocessing-field> -->
+<!-- 					<preprocessing-field> -->
+<!-- 						<field-name>street</field-name> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern> </input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>-</input-pattern> -->
+<!-- 							<output-pattern></output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:ComplexTransformation"> -->
+<!-- 							<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name> -->
+<!-- 							<transformation-method>transform</transformation-method> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:ComplexTransformation"> -->
+<!-- 							<qualified-class-name>org.emau.icmvc.ganimed.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name> -->
+<!-- 							<transformation-method>transform</transformation-method> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>STRASSE</input-pattern> -->
+<!-- 							<output-pattern>STR</output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>STRASE</input-pattern> -->
+<!-- 							<output-pattern>STR</output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>STR </input-pattern> -->
+<!-- 							<output-pattern>STR</output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 						<simple-transformation-type xsi:type="ma:SimpleTransformation"> -->
+<!-- 							<input-pattern>STR.</input-pattern> -->
+<!-- 							<output-pattern>STR</output-pattern> -->
+<!-- 						</simple-transformation-type> -->
+<!-- 					</preprocessing-field> -->
+<!-- 				</list-transformation-type> -->
+<!-- 			</preprocessing-field> -->
+		</preprocessing-type>
+	</preprocessing-config>
+	<object-of-single-truth>
+		<global-threshold>
+			<threshold>2.99</threshold>
+			<reject-threshold>14.5</reject-threshold>
+		</global-threshold>
+		<object-type
+			qualified-class-name="org.emau.icmvc.ganimed.epix.core.persistence.model.PersonPreprocessed">
+			<object-field>
+				<name>firstName</name>
+				<simple-type>
+					<property-type>java.lang.String</property-type>
+					<description>description</description>
+					<threshold-config>
+						<threshold>0.8</threshold>
+						<weight>8</weight>
+					</threshold-config>
+					<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenstheinMatchingAlgorithm</algorithm>
+				</simple-type>
+			</object-field>
+			<object-field>
+				<name>lastName</name>
+				<simple-type>
+					<property-type>java.lang.String</property-type>
+					<description>description</description>
+					<threshold-config>
+						<threshold>0.8</threshold>
+						<weight>6</weight>
+					</threshold-config>
+					<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenstheinMatchingAlgorithm</algorithm>
+				</simple-type>
+			</object-field>
+			<object-field>
+				<name>gender</name>
+				<simple-type>
+					<property-type>java.lang.String</property-type>
+					<description>description</description>
+					<threshold-config>
+						<threshold>0.75</threshold>
+						<weight>3</weight>
+					</threshold-config>
+					<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenstheinMatchingAlgorithm</algorithm>
+				</simple-type>
+			</object-field>
+			<object-field>
+				<name>birthDate</name>
+				<simple-type>
+					<property-type>java.sql.Date</property-type>
+					<regex-pattern>yyyyMMdd</regex-pattern>
+					<description>description</description>
+					<threshold-config>
+						<threshold>1</threshold>
+						<weight>9</weight>
+					</threshold-config>
+					<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenstheinMatchingAlgorithm</algorithm>
+				</simple-type>
+			</object-field>
+<!-- Test with value1 (new)) -->
+<!-- 			<object-field> -->
+<!-- 				<name>value1</name> -->
+<!-- 				<simple-type> -->
+<!-- 					<property-type>java.lang.String</property-type> -->
+<!-- 					<description>description</description> -->
+<!-- 					<threshold-config> -->
+<!-- 						<threshold>0.8</threshold> -->
+<!-- 						<weight>0</weight> -->
+<!-- 					</threshold-config> -->
+<!-- 					<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenstheinMatchingAlgorithm</algorithm> -->
+<!-- 				</simple-type> -->
+<!-- 			</object-field> -->
+			
+		
+<!-- Test with Contact (old) -->
+<!-- 			<object-field> -->
+<!-- 				<name>contactPreprocessed</name> -->
+<!-- 				<list-type -->
+<!-- 					qualified-class-name="org.emau.icmvc.ganimed.epix.core.persistence.model.ContactPreprocessed"> -->
+<!-- 					<object-field> -->
+<!-- 						<name>city</name> -->
+<!-- 						<simple-type> -->
+<!-- 							<property-type>java.lang.String</property-type> -->
+<!-- 							<description>description</description> -->
+<!-- 							<threshold-config> -->
+<!-- 								<threshold>0.9</threshold> -->
+<!-- 								<weight>3</weight> -->
+<!-- 							</threshold-config> -->
+<!-- 							<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenstheinMatchingAlgorithm</algorithm> -->
+<!-- 						</simple-type> -->
+<!-- 					</object-field> -->
+<!-- 					<object-field> -->
+<!-- 						<name>street</name> -->
+<!-- 						<simple-type> -->
+<!-- 							<property-type>java.lang.String</property-type> -->
+<!-- 							<description>description</description> -->
+<!-- 							<threshold-config> -->
+<!-- 								<threshold>0.9</threshold> -->
+<!-- 								<weight>3</weight> -->
+<!-- 							</threshold-config> -->
+<!-- 							<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenstheinMatchingAlgorithm</algorithm> -->
+<!-- 						</simple-type> -->
+<!-- 					</object-field> -->
+<!-- 				</list-type> -->
+<!-- 			</object-field> -->
+<!-- Test with Contact -->	
+		</object-type>	
+		
+	</object-of-single-truth>
+	<blocking>
+		<blocking-threshold>
+			<threshold>1.0</threshold>
+		</blocking-threshold>
+		<blocking-type
+			qualified-class-name="org.emau.icmvc.ganimed.epix.core.persistence.model.PersonPreprocessed">
+			<object-field>
+				<name>birthDate</name>
+				<simple-type>
+					<property-type>java.sql.Date</property-type>
+					<description>description</description>
+					<threshold-config>
+						<reject-threshold>0.6</reject-threshold>
+					</threshold-config>
+					<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenshteinBlockingAlgorithm</algorithm>
+				</simple-type>
+			</object-field>
+			<object-field>
+				<name>firstName</name>
+				<simple-type>
+					<property-type>java.lang.String</property-type>
+					<description>description</description>
+					<threshold-config>
+						<reject-threshold>0.4</reject-threshold>
+					</threshold-config>
+					<algorithm>org.emau.icmvc.ganimed.deduplication.impl.LevenshteinBlockingAlgorithm</algorithm>
+				</simple-type>
+			</object-field>
+		</blocking-type>
+	</blocking>
+</ma:MatchingConfiguration>

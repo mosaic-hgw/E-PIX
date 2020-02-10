@@ -1,0 +1,108 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2017 The MOSAIC Project - Institut fuer Community Medicine der
+  							Universitaetsmedizin Greifswald - mosaic-projekt@uni-greifswald.de
+  							concept and implementation
+  							c. schack, d.langner, l. geidel
+  							web client
+  							a. blumentritt
+  							g. weiher
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:customs = "http://java.sun.com/jsf/composite/customs">
+<!-- author: mathiasd -->
+<h:body>
+
+	<ui:composition template="/template/ths_templ.xhtml">
+	
+		<!--  method is called when page is loaded / without output  -->
+		<ui:define name="start">
+			<h:outputText value="#{updateBean.response()}" />
+		</ui:define>
+		
+		<ui:define name="customLogo">
+			<a href="index.xhtml"><img src="#{request.contextPath}/img/epix_logo.png" /></a>
+		</ui:define>
+		
+		<ui:define name="header_title">
+			<h:outputFormat value="#{msg['general.headertitle']}"/>
+		</ui:define>
+		
+		<ui:define name="title">
+				<h:outputFormat value="#{msg['general.title']}"/>
+		</ui:define>
+				
+		<ui:define name="info">
+				<customs:headerMenu activeIndex="-1" />
+		</ui:define>
+		
+		<ui:define name="content">
+			<h:form id="empty" rendered="#{updateBean.formModel.showEmptyView}">
+				<br style="margin-top: 0.3em;" />
+				<p:panelGrid columns="1" columnClasses="emptyColumn">
+					<p:column>
+						<h:outputText value="Unable to get response."
+							style="font-weight:bold;" />
+						<br />
+						<h:outputText value="#{msg['update.not_successful']}"
+							style="font-size: 1.2em; font-weight: bold" />
+						<br />
+					</p:column>
+				</p:panelGrid>
+					<br />
+				<h:outputText value="Do you want to search for another person?" />
+					<br style="margin-top: 0.3em;" />
+				<p:commandButton value="Search Person"
+					action="search.xhtml?faces-redirect=true" />
+				<br style="margin-top: 2em;" />
+			</h:form>
+			<h:form id="main" rendered="#{updateBean.formModel.showMainView}">
+				<p:panelGrid columns="1" columnClasses="emptyColumn">
+					<p:column>
+						<h:outputText value="#{updateBean.formModel.responseEntry}"
+							style="font-size: 1.2em; font-weight: bold" />
+						<br />
+						<h:outputText value="#{msg['update.successful']}"
+							style="font-size: 1.2em; font-weight: bold" />
+						<br />
+					</p:column>
+				</p:panelGrid>
+					<br />
+				
+				<h:outputText value="#{msg['update.searchAnotherPerson']}" />
+					<br style="margin-top: 0.3em;" />
+				<p:commandButton value="Search Person"
+					action="search.xhtml?faces-redirect=true" />
+			</h:form>
+		</ui:define>
+		
+		<ui:define name="version">	
+			<h:outputText value="${display_version}"/>
+		</ui:define>
+		
+	</ui:composition>
+</h:body>
+</html>

@@ -1,0 +1,69 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2017 The MOSAIC Project - Institut fuer Community Medicine der
+  							Universitaetsmedizin Greifswald - mosaic-projekt@uni-greifswald.de
+  							concept and implementation
+  							c. schack, d.langner, l. geidel
+  							web client
+  							a. blumentritt
+  							g. weiher
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+<beans xmlns='http://www.springframework.org/schema/beans' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:beans='http://www.springframework.org/schema/beans'
+	xmlns:jaxws='http://cxf.apache.org/jaxws'
+	xsi:schemaLocation='http://cxf.apache.org/core
+    http://cxf.apache.org/schemas/core.xsd
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://cxf.apache.org/jaxws
+    http://cxf.apache.org/schemas/jaxws.xsd'>
+
+	<bean id="securityContextIn" class="org.jboss.wsf.stack.cxf.security.authentication.SubjectCreatingInterceptor">
+		<constructor-arg>
+			<map>
+				<entry key="action" value="UsernameToken" />
+			</map>
+		</constructor-arg>
+		<!-- <property name="nonceStore" ref="nonceStore"/> <property name="supportDigestPasswords" value="true"/> <property name="timestampThreshold" value="3600"/> -->
+		<property name="propagateContext" value="true" />
+	</bean>
+
+	<!-- Logging InInterceptor -->
+	<bean id="logIn" class="org.apache.cxf.interceptor.LoggingInInterceptor" />
+	<bean id="logOut" class="org.apache.cxf.interceptor.LoggingOutInterceptor" />
+
+	<jaxws:endpoint id='EPIXService' address='http://@jboss.bind.address@:8080/epix' implementor='org.emau.icmvc.ganimed.epix.service.impl.EPIXServiceBean'>
+<!-- Comment in if using JBoss 6 -->
+		<!-- <jaxws:invoker> -->
+<!-- <bean class='org.jboss.wsf.stack.cxf.InvokerEJB3'/> -->
+		<!-- </jaxws:invoker> -->
+		<jaxws:outInterceptors>
+			<bean class="org.apache.cxf.binding.soap.saaj.SAAJOutInterceptor" />
+			<!-- <ref bean="logOut"/> -->
+		</jaxws:outInterceptors>
+		<jaxws:inInterceptors>
+			<ref bean="securityContextIn" />
+			<bean class="org.apache.cxf.binding.soap.saaj.SAAJInInterceptor" />
+			<!-- <ref bean="logIn"/> -->
+		</jaxws:inInterceptors>
+	</jaxws:endpoint>
+
+</beans>

@@ -1,0 +1,413 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2017 The MOSAIC Project - Institut fuer Community Medicine der
+  							Universitaetsmedizin Greifswald - mosaic-projekt@uni-greifswald.de
+  							concept and implementation
+  							c. schack, d.langner, l. geidel
+  							web client
+  							a. blumentritt
+  							g. weiher
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:customs = "http://java.sun.com/jsf/composite/customs">
+
+<!-- author: mathiasd -->
+<!-- edited by: bialkem -->
+
+<h:body>
+
+	<ui:composition template="/template/ths_templ.xhtml">
+	
+		<ui:define name="meta_tags">
+			<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+			<meta http-equiv="Pragma" content="no-cache" />
+			<meta http-equiv="Expires" content="0" />
+		</ui:define>
+		
+		<!--  method is called when page is loaded / without output  -->
+		<ui:define name="start">
+			<h:outputText value="#{updateBean.onStart()}" />
+		</ui:define>
+	
+		<ui:define name="customLogo">
+			<a href="index.xhtml"><img src="#{request.contextPath}/img/epix_logo.png" /></a>
+		</ui:define>
+		
+		<ui:define name="header_title">
+			<h:outputFormat value="#{msg['general.headertitle']}"/>
+		</ui:define>
+		
+		<ui:define name="title">
+			<h:outputFormat value="#{msg['general.title']}" />
+		</ui:define>
+				
+		<ui:define name="info">
+			<customs:headerMenu activeIndex="-1" />
+		</ui:define>
+
+		<ui:define name="content">
+			<h:form id="empty" rendered="#{updateBean.formModel.showEmptyView}">
+				<p:panel>
+					<h:panelGrid columns="1">
+						<h:outputText value="#{msg['update.label.nothing_selected_info']}"
+							style="font-weight:bold;" />
+						<p:commandButton value="Search Person"
+							action="search.xhtml?faces-redirect=true" />
+					</h:panelGrid>
+
+
+				</p:panel>
+				<br style="margin-top: 2em;" />
+			</h:form>
+
+			<h:form id="main" rendered="#{updateBean.formModel.showMainView}">
+				<br style="margin-top: 0.3em;" />
+				<h:outputText value="#{msg['update.label.usage_info']}" />
+				<br />
+				<br style="margin-top: 2em;" />
+				<h:outputText value="#{msg.identifier}" styleClass="headline" />
+				<p:panel>
+					<h:panelGrid columns="2" columnClasses="label,input">
+						<h:outputText value="*#{msg.persontype}:" />
+						<p:selectOneMenu id="personentyp" disabled="true"
+							value="#{updateBean.patientModel.personType}"
+							style="width: 100% !important">
+							<f:selectItem itemLabel="" itemValue="" />
+							<f:selectItem itemLabel="Patient" itemValue="Patient" />
+							<f:selectItem itemLabel="HealthcareProvider"
+								itemValue="HealthcareProvider" />
+						</p:selectOneMenu>
+						<!--********************************************************-->
+						<h:outputText value="*#{msg.mpi}:" />
+						<p:inputText id="mpi" readonly="true" disabled="true"
+							value="#{updateBean.patientModel.mpiid.value}" />
+						<!--********************************************************-->
+						<h:outputText value="*#{msg.localDomain}:" />
+						<p:selectOneMenu disabled="true" id="localDomain"
+							value="#{updateBean.patientModel.identifierDomain}"
+							style="width: 100% !important">
+							<f:selectItem itemLabel="#{msg['label.pleaseSelectLocalDomain']}"
+								itemValue="" />
+							<f:selectItems value="#{updateBean.formModel.localDomains}"
+								var="domain" itemLabel="#{domain.name}"
+								itemValue="#{domain.name}" />
+						</p:selectOneMenu>
+						<!--********************************************************-->
+						<h:outputText value="*#{msg.localIdentifier}:" />
+						<p:inputText id="localId" readonly="true" disabled="true"
+							value="#{updateBean.patientModel.localIdentifier}" />
+					</h:panelGrid>
+				</p:panel>
+				<h:outputText value="#{msg.person}" styleClass="headline" />
+				<p:panel>
+					<h:panelGrid columns="2" columnClasses="label,input">
+						<p:outputLabel id="degreeLabel" for="degree"
+							value="#{msg.degree}:" />
+						<h:panelGroup>
+							<p:inputText id="degree"
+								value="#{updateBean.patientModel.degree}"
+								requiredMessage="The degree is required"
+								required="#{updateBean.formModel.returnValidation('degree')}" />
+							<p:message id="degreeMessage" for="degree" />
+						</h:panelGroup>
+						<!--********************************************************-->
+						<p:outputLabel id="lastNameLabel" for="lastName"
+							value="#{msg.lastName}:" />
+						<h:panelGroup>
+							<p:inputText id="lastName"
+								required="#{updateBean.formModel.returnValidation('lastName')}"
+								requiredMessage="The last name is required"
+								value="#{updateBean.patientModel.lastName}" />
+							<p:message id="lastNameMessage" for="lastName" />
+						</h:panelGroup>
+						<!--********************************************************-->
+						<p:outputLabel id="maidennameLabel" for="maidenname"
+							value="#{msg.maidenname}:" />
+						<h:panelGroup>
+							<p:inputText id="maidenname"
+								value="#{updateBean.patientModel.mothersmaidenname}"
+								requiredMessage="The mothers maiden name is required"
+								required="#{updateBean.formModel.returnValidation('maidenname')}" />
+							<p:message id="maidennameMessage" for="maidenname" />
+						</h:panelGroup>
+						<!--********************************************************-->
+						<p:outputLabel id="firstNameLabel" for="firstName"
+							value="#{msg.firstName}:" />
+						<h:panelGroup>
+							<p:inputText id="firstName"
+								required="#{updateBean.formModel.returnValidation('firstName')}"
+								requiredMessage="The first name is required"
+								value="#{updateBean.patientModel.firstName}" />
+							<p:message id="firstNameMessage" for="firstName" />
+						</h:panelGroup>
+						<!--********************************************************-->
+						<p:outputLabel id="secondNameLabel" for="secondName"
+							value="#{msg.secondName}:" />
+						<h:panelGroup>
+							<p:inputText id="secondName"
+								required="#{updateBean.formModel.returnValidation('secondName')}"
+								requiredMessage="The second name is required"
+								value="#{updateBean.patientModel.secondName}" />
+							<p:message id="secondNameMessage" for="secondName" />
+						</h:panelGroup>
+						<!--********************************************************-->
+						<p:outputLabel id="birthdateLabel" for="birthDate"
+							value="#{msg.birthDate}#{msg.ddmmyyyy}:" />
+						<h:panelGroup>
+							<p:inputMask id="birthDate"
+								value="#{updateBean.patientModel.birthDate}" mask="99.99.9999"
+								validatorMessage="the birthdate is not valid"
+								requiredMessage="The birth date is required"
+								required="#{updateBean.formModel.returnValidation('birthDate')}">
+								<f:converter converterId="org.icmvc.jsf.BirthdateConverter" />
+								<f:attribute name="pattern" value="dd.MM.yyyy" />
+							</p:inputMask>
+							<p:message id="birthDateMessage" for="birthDate" />
+						</h:panelGroup>
+						<!--********************************************************-->
+						<p:outputLabel id="birthplaceLabel" for="birthplace"
+							value="#{msg.birthplace}:" />
+						<h:panelGroup>
+							<p:inputText id="birthplace"
+								value="#{updateBean.patientModel.birthplace}"
+								requiredMessage="The birth place is required"
+								required="#{updateBean.formModel.returnValidation('birthplace')}" />
+							<p:message id="birthplaceMessage" for="birthplace" />
+						</h:panelGroup>
+						<!--********************************************************-->
+						<p:outputLabel id="sexLabel" for="sex" value="#{msg.gender}:" />
+						<h:panelGroup>
+							<p:selectOneMenu id="sex" style="width:100%"
+								required="#{updateBean.formModel.returnValidation('gender')}"
+								requiredMessage="Selecting the gender is required"
+								value="#{updateBean.patientModel.sex}">
+								<f:selectItems value="#{generateBean.genders}" var="gender"
+									itemLabel="#{generateBean.getGenderLabel(gender)}"
+									itemValue="#{gender}" />
+							</p:selectOneMenu>
+							<p:message id="sexMessage" for="sex" />
+						</h:panelGroup>
+						<!--********************************************************-->
+						<p:outputLabel id="nationalityLabel" for="nationality"
+							value="#{msg.nationality}:" />
+						<h:panelGroup>
+							<p:inputText id="nationality"
+								value="#{updateBean.patientModel.nationality}"
+								requiredMessage="The nationality is required"
+								required="#{updateBean.formModel.returnValidation('nationality')}" />
+							<p:message id="nationalityMessage" for="nationality" />
+						</h:panelGroup>
+					</h:panelGrid>
+				</p:panel>
+
+				<h:outputText value="Values" styleClass="headline" />
+				<p:panel>
+					<h:dataTable id="valueTable" columnClasses="label,input"
+						value="#{updateBean.patientModel.values}" var="value"
+						binding="#{valueTable}">
+						<h:column>
+							<ui:param name="valueKey" value="value#{valueTable.rowIndex+1}" />
+							<ui:param name="valueMapping" value="#{updateBean.formModel.valueMapping.get(valueKey)}" />
+							<h:outputText
+								value="#{empty valueMapping? valueKey:valueMapping}" />
+						</h:column>
+						<h:column>
+							<p:inputText
+								value="#{updateBean.patientModel.values[valueTable.rowIndex]}" />
+						</h:column>
+					</h:dataTable>
+				</p:panel>
+
+				<h:outputText value="#{msg.contact}" styleClass="headline" />
+				<p:panel id="contact_input_panel">
+					<h:panelGrid columns="2" columnClasses="label,input">
+						<p:outputLabel for="street" id="streetLabel"
+							value="#{msg.street}:"></p:outputLabel>
+						<h:panelGroup>
+							<p:inputText id="street"
+								required="#{updateBean.formModel.returnValidation('street')}"
+								requiredMessage="The street is required"
+								value="#{updateBean.selectedContact.contact.street}" />
+							<p:message id="streetMessage" for="street" />
+						</h:panelGroup>
+
+						<!-- ************************************************** -->
+						<p:outputLabel for="zip" id="zipLabel" value="#{msg.zip}:"></p:outputLabel>
+						<h:panelGroup>
+							<p:inputText id="zip"
+								required="#{updateBean.formModel.returnValidation('zip')}"
+								requiredMessage="The postcode is required"
+								value="#{updateBean.selectedContact.contact.zipCode}" />
+							<p:message id="zipMessage" for="zip" />
+						</h:panelGroup>
+						<!-- ************************************************** -->
+						<p:outputLabel for="city" id="cityLabel" value="#{msg.city}:"></p:outputLabel>
+						<h:panelGroup>
+							<p:inputText id="city"
+								required="#{updateBean.formModel.returnValidation('city')}"
+								requiredMessage="The city is required"
+								value="#{updateBean.selectedContact.contact.city}" />
+							<p:message id="cityMessage" for="city" />
+						</h:panelGroup>
+						<!-- ************************************************** -->
+						<p:outputLabel for="district" id="districtLabel" value="#{msg.district}:"></p:outputLabel>
+						<h:panelGroup>
+							<p:inputText id="district"
+								required="#{updateBean.formModel.returnValidation('district')}"
+								requiredMessage="The district is required"
+								value="#{updateBean.selectedContact.contact.district}" />
+							<p:message id="districtMessage" for="district" />
+						</h:panelGroup>
+						<!-- ************************************************** -->
+						<p:outputLabel for="state" id="stateLabel" value="#{msg.state}:"></p:outputLabel>
+						<h:panelGroup>
+							<p:inputText id="state"
+								required="#{updateBean.formModel.returnValidation('state')}"
+								requiredMessage="The state is required"
+								value="#{updateBean.selectedContact.contact.state}" />
+							<p:message id="stateMessage" for="state" />
+						</h:panelGroup>
+						<!-- ************************************************** -->
+						<p:outputLabel for="country" id="countryLabel"
+							value="#{msg.country}:"></p:outputLabel>
+						<h:panelGroup>
+							<p:inputText id="country"
+								required="#{updateBean.formModel.returnValidation('country')}"
+								requiredMessage="The country is required"
+								value="#{updateBean.selectedContact.contact.country}" />
+							<p:message id="countryMessage" for="country" />
+						</h:panelGroup>
+						<!-- ************************************************** -->
+						<p:outputLabel for="phone" id="phoneLabel" value="#{msg.phone}:"></p:outputLabel>
+						<h:panelGroup>
+							<p:inputText id="phone"
+								required="#{updateBean.formModel.returnValidation('phone')}"
+								requiredMessage="The phone number is required"
+								value="#{updateBean.selectedContact.contact.phone}" />
+							<p:message id="phoneMessage" for="phone" />
+						</h:panelGroup>
+						<!-- ************************************************** -->
+						<p:outputLabel for="mail" id="emailLabel" value="#{msg.email}:"></p:outputLabel>
+						<h:panelGroup>
+							<p:inputText id="mail"
+								required="#{updateBean.formModel.returnValidation('email')}"
+								requiredMessage="The E-Mail address is required"
+								value="#{updateBean.selectedContact.contact.email}" />
+							<p:message id="mailMessage" for="mail" />
+						</h:panelGroup>
+						<!-- ************************************************** -->
+						<h:outputText id="addContactButtonLabel_epmty" value="" />
+						<h:panelGroup>
+							<div align="right">
+								<p:commandButton id="addContactButton"
+									value="#{updateBean.selectedContact.id==0? msg.addContact :msg.saveContact}"
+									actionListener="#{updateBean.addContactButtonListener}"
+									update="@form:contacts,@form:contact_input_panel" />
+								<p:commandButton rendered="#{updateBean.selectedContact.id!=0}"
+									immediate="true" update="@form:contact_input_panel"
+									id="editContactCancel" value="#{msg.cancel}"
+									actionListener="#{updateBean.cancelButtonListener()}">
+									<p:resetInput target="@form:contact_input_panel"></p:resetInput>
+								</p:commandButton>
+								<p:messages id="addContactInfo" for="info" showDetail="true"
+									autoUpdate="true" severity="info" />
+							</div>
+						</h:panelGroup>
+					</h:panelGrid>
+					<h:outputText id="contactListLabel" value="#{msg.contactList}:" />
+					<p:dataTable id="contacts" var="contactEntry"
+						value="#{updateBean.patientModel.tableContacts}"
+						scrollable="false" liveScroll="false" rowKey="#{contactEntry.id}"
+						resizableColumns="true" scrollRows="5" lazy="true"
+						emptyMessage="No contacts found."
+						style="background-color: white !important">
+
+						<p:column headerText="Street">
+							#{contactEntry.contact.street}
+							</p:column>
+						<p:column headerText="Postcode">
+							#{contactEntry.contact.zipCode}
+							</p:column>
+						<p:column headerText="City">
+							#{contactEntry.contact.city}
+							</p:column>
+						<p:column headerText="District">
+							#{contactEntry.contact.district}
+							</p:column>
+						<p:column headerText="State">
+							#{contactEntry.contact.state}
+							</p:column>
+						<p:column headerText="Country">
+							#{contactEntry.contact.country}
+							</p:column>
+						<p:column headerText="Phone">
+							#{contactEntry.contact.phone}
+							</p:column>
+						<p:column headerText="Email">
+							#{contactEntry.contact.email }
+							</p:column>
+						<p:column headerText="#{msg.edit}/#{msg.remove}"
+							style="text-align:center">
+							<p:commandButton id="rowEditButton" icon="ui-icon-pencil"
+								process="@form:contacts"
+								actionListener="#{updateBean.editButtonListener(contactEntry)}"
+								update="@form:contact_input_panel" />
+							<p:commandButton id="rowDeleteButton" icon="ui-icon-closethick"
+								process="@form:contacts"
+								actionListener="#{updateBean.deleteButtonListener(contactEntry)}"
+								update="@form:contacts" >
+								<p:confirm message="#{msg.contactDeleteConfirm}" header="Delete Contact" icon="ui-icon-alert"></p:confirm>
+							</p:commandButton>
+
+						</p:column>
+					</p:dataTable>
+					<p:messages id="feedbackMessage" for="feedback" showDetail="true"
+						autoUpdate="true" severity="info" />
+
+					<div class="spacerH20"></div>
+					<div class="alignRight">
+						<p:commandButton value="#{msg.updatePerson}" id="updateButton"
+							update="
+						:main:lastNameMessage :main:firstNameMessage :main:secondNameMessage :main:birthDateMessage :main:sexMessage
+						:main:streetMessage :main:zipMessage :main:cityMessage :main:stateMessage :main:countryMessage 
+						:main:phoneMessage :main:mailMessage :main:birthplaceMessage :main:maidennameMessage 
+					    :main:nationalityMessage :main:degreeMessage"
+							action="#{updateBean.updateButtonListener}"
+							style="font-weight: bold;" />
+					</div>
+					<div class="clear"></div>
+				</p:panel>
+			</h:form>
+			<br />
+		</ui:define>
+
+		<ui:define name="version">	
+			<h:outputText value="${display_version}"/>
+		</ui:define>
+		
+	</ui:composition>
+</h:body>
+</html>
