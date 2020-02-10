@@ -60,12 +60,12 @@ https://dx.doi.org/10.1186/s12967-015-0545-6
 
 Record Linkage
 
-![context](https://raw.githubusercontent.com/mosaic-hgw/Dockerbank/master/E-PIX/screenshots/E-PIX-Screenshot-Dublettenaufl%C3%B6sung.png)
+![context](https://raw.githubusercontent.com/mosaic-hgw/Dockerbank/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Dublettenaufl%C3%B6sung.png)
 
 Processing of Lists
 
-![context](https://raw.githubusercontent.com/mosaic-hgw/Dockerbank/master/E-PIX/screenshots/E-PIX-Screenshot-Listenverarbeitung.png)
+![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Listenverarbeitung.png)
 
 Adding Patients
 
-![context](https://raw.githubusercontent.com/mosaic-hgw/Dockerbank/master/E-PIX/screenshots/E-PIX-Screenshot-Personen-erfassen.png)
+![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Personen-erfassen.png)
