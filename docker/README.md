@@ -2,13 +2,13 @@
 
 Current Version: 2.9.2 (September 2019)
 
-# Docker versions and documentation #
+# E-PIX 2.9.2 Docker (Sep 2019)
 
-[Standard-Version](https://github.com/mosaic-hgw/E-PIX/docker/standard "")
+### [Standard-Version](https://github.com/mosaic-hgw/E-PIX/tree/master/docker/standard)
 
-[Web-Auth-Version](https://github.com/mosaic-hgw/E-PIX/docker/web-auth "") <strong>(Announced for Feb. 2020)</strong> 
+### [Web-Auth-Version](https://github.com/mosaic-hgw/E-PIX/tree/master/docker/web-auth) <strong>(Announced for Feb. 2020)</strong> 
 
-# Additional Information #
+## Additional Information #
 
 The E-PIX was developed by the University Medicine Greifswald  and published in 2014 as part of the [MOSAIC-Project](https://ths-greifswald.de/mosaic "")  (funded by the DFG HO 1937/2-1).
 
