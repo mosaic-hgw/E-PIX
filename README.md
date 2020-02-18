@@ -52,6 +52,9 @@ Copyright: 2014 - 2020 University Medicine Greifswald
 Contact: https://www.ths-greifswald.de/kontakt/
 
 ## Publications ##
+
+Hampf et al. 2020 "Assessment of scalability and performance of the record linkage tool E‑PIX® in managing multi‑million patients in research projects at a large university hospital in Germany", https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+
 https://dx.doi.org/10.3414/ME14-01-0133
 
 https://dx.doi.org/10.1186/s12967-015-0545-6
