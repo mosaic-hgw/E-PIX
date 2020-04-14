@@ -12,11 +12,11 @@ or visit https://ths-greifswald.de/epix for more information.
 
 # Versions and documentation #
 
-[Source-Code](https://github.com/mosaic-hgw/E-PIX/source "")
+[Source-Code](https://github.com/mosaic-hgw/E-PIX/tree/master/source "")
 
-[Docker-compose version of E-PIX (Standard)](https://github.com/mosaic-hgw/E-PIX/docker/standard "")
+[Docker-compose version of E-PIX (Standard)](https://github.com/mosaic-hgw/E-PIX/tree/master/docker/standard "")
 
-[Docker-compose version of E-PIX (Web-Auth)](https://github.com/mosaic-hgw/E-PIX/docker/web-auth "") <strong>(Announced for Feb. 2020)</strong> 
+[Docker-compose version of E-PIX (Web-Auth)](https://github.com/mosaic-hgw/E-PIX/tree/master/docker/docker/web-auth "") <strong>(Announced for Feb. 2020)</strong> 
 
 # Web-based interfaces
 All functionalities of the E-PIX are provided for external use via SOAP-interfaces. 
