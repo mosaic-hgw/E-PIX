@@ -1,8 +1,18 @@
 
 ![context](https://user-images.githubusercontent.com/12081369/49164561-a4481500-f32f-11e8-9f0d-fa7a730f4b9d.png)
 
+[Current Docker-Compose Version: 2.12.0 (July 2021)](https://www.ths-greifswald.de/e-pix/#_download "")
+
 # About #
 The Record Linkage and ID Management solution E-PIX (Enterprise Identifier Cross Referencing) applies the propabilistic Fellegi-Sunter-algorithm and the Levenshtein distance to avoid duplicate participant entries. The independent software module facilitates participant management and multisite-aggregation of medical research data. Additionally, the correction of potential synonym errors is supported (i.e. false-negative record linkage).
+
+# Download #
+
+[Latest Docker-compose version of E-PIX](https://www.ths-greifswald.de/e-pix/#_download "")
+
+# Source #
+
+https://github.com/mosaic-hgw/E-PIX/tree/master/source
 
 ## Live-Demo and more information ##
 
@@ -10,15 +20,9 @@ Try out E-PIX from https://demo.ths-greifswald.de
 
 or visit https://ths-greifswald.de/epix for more information.
 
-# Versions and documentation #
+# API
 
-[Source-Code](https://github.com/mosaic-hgw/E-PIX/tree/master/source "")
-
-[Docker-compose version of E-PIX (Standard)](https://github.com/mosaic-hgw/E-PIX/tree/master/docker/standard "")
-
-[Docker-compose version of E-PIX (Web-Auth)](https://github.com/mosaic-hgw/E-PIX/tree/master/docker/web-auth "") <strong>(Announced for Feb. 2020)</strong> 
-
-# Web-based interfaces
+## SOAP
 All functionalities of the E-PIX are provided for external use via SOAP-interfaces. 
 
 Record Linkage and ID administration: ``http://<YOUR IPADDRESS>:8080/epix/epixService?wsdl``
@@ -30,10 +34,12 @@ Configuration and domain management: ``http://<YOUR IPADDRESS>:8080/epix/epixMan
 Use SOAP-UI to create sample requests.
 
 # IT-Security Recommendations #
+
 For the operation of E-PIX at least following IT-security measures are recommended:
+* use **integrated authentication and authorization mechanism (gRAS)** or **keycloak-support** to secure access and grant privileges to epix-web (see [supplementary documentation](https://www.ths-greifswald.de/ttp-tools/keycloak) for details)
 * operation in a separate network-zone
 * use of firewalls and IP-filters
-* access restriction to the E-PIX-Servers with basic authentication (e.g. with nginx or apache)
+* access restriction to the gPAS-Servers with basic authentication (e.g. with nginx or apache)
 
 # Additional Information #
 
@@ -44,10 +50,14 @@ Concept and implementation: L. Geidel
 
 Web-Client: A. Blumentritt
 
+Docker: R. Schuldt
+
+Bloom-Filter: C. Hampf
+
 ## License ##
 License: AGPLv3, https://www.gnu.org/licenses/agpl-3.0.en.html
 
-Copyright: 2014 - 2020 University Medicine Greifswald
+Copyright: 2014 - 2021 University Medicine Greifswald
 
 Contact: https://www.ths-greifswald.de/kontakt/
 
