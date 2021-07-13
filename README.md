@@ -69,16 +69,19 @@ https://dx.doi.org/10.3414/ME14-01-0133
 
 https://dx.doi.org/10.1186/s12967-015-0545-6
 
+# Supported languages #
+German, English
+
 # Screenshots #
 
 Record Linkage
 
-![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Dublettenaufl%C3%B6sung.png)
+![context](https://www.ths-greifswald.de/wp-content/uploads/2019/07/E-PIX-Screenshot-Dublettenaufl%C3%B6sung-600x298.png)
 
 Processing of Lists
 
-![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Listenverarbeitung.png)
+![context](https://www.ths-greifswald.de/wp-content/uploads/2019/01/E-PIX-Screenshot-Listenverarbeitung.png)
 
 Adding Patients
 
-![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Personen-erfassen.png)
+![context](https://www.ths-greifswald.de/wp-content/uploads/2019/01/E-PIX-Screenshot-Personen-erfassen.png)
