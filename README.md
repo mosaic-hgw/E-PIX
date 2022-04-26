@@ -1,7 +1,7 @@
 
 ![context](https://user-images.githubusercontent.com/12081369/49164561-a4481500-f32f-11e8-9f0d-fa7a730f4b9d.png)
 
-[Current Docker-Compose Version: 2.12.0 (July 2021)](https://www.ths-greifswald.de/e-pix/#_download "")
+[Latest Docker-Compose Version](https://www.ths-greifswald.de/e-pix/#_download "")
 
 # About #
 The Record Linkage and ID Management solution E-PIX (Enterprise Identifier Cross Referencing) applies the propabilistic Fellegi-Sunter-algorithm and the Levenshtein distance to avoid duplicate participant entries. The independent software module facilitates participant management and multisite-aggregation of medical research data. Additionally, the correction of potential synonym errors is supported (i.e. false-negative record linkage).
