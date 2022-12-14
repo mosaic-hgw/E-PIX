@@ -1,0 +1,343 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:p="http://primefaces.org/ui" xmlns:ui="http://java.sun.com/jsf/facelets">
+
+<!-- author: Arne Blumentritt -->
+
+<h:body>
+	<ui:composition template="/resources/templates/epix.xhtml">
+
+		<ui:define name="header_title">
+			<h:outputText value="#{msg['reports.titleHeader']}" />
+		</ui:define>
+
+		<ui:define name="title">
+			<h:outputText value="#{msg['reports.title']}" />
+		</ui:define>
+
+		<ui:define name="help">
+			<h:outputFormat value="#{msg['reports.help']}" escape="false">
+				<f:param value="#{domainSelector.selectedDomainConfiguration.matchingConfig.thresholdPossibleMatch}"></f:param>
+				<f:param value="#{domainSelector.selectedDomainConfiguration.matchingConfig.thresholdAutomaticMatch}"></f:param>
+			</h:outputFormat>
+		</ui:define>
+
+		<ui:define name="js">
+			<script type="text/javascript">
+				var label_old = "#{msg['reports.label.old']}";
+				var label_new = "#{msg['reports.label.new']}";
+				jQuery("span:contains(" + label_old + ")").html(
+					function (_, html)
+					{
+						return html.split(label_old).join(
+							'<span class="rowDetail">' + label_old
+							+ '</span>');
+					});
+				jQuery("span:contains(" + label_new + ")").html(
+					function (_, html)
+					{
+						return html.split(label_new).join(
+							'<span class="rowDetail">' + label_new
+							+ '</span>');
+					});
+			</script>
+		</ui:define>
+
+		<ui:define name="content">
+
+			<h:form id="main" onkeypress="if (event.keyCode == 13) {return false;}">
+
+				<p:panel>
+					<h4>
+						<h:outputText value="#{msg['reports.label.identityHistory']}" />
+					</h4>
+					<p:dataTable id="identity_history" widgetVar="identity_history" var="_pair"
+								 lazy="true" paginator="true"
+								 value="#{reportsController.identityHistoryPairsLazyModel}"
+								 paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+								 currentPageReportTemplate="{startRecord}-{endRecord} #{cmsg['ui.table.of']} {totalRecords}" rows="10" pageLinks="3">
+
+						<f:facet name="header" style="text-align:left; padding: 0;">
+							<p:inputText id="globalFilter" onkeyup="PF('identity_history').filter()" placeholder="#{cmsg['ui.table.search']}" />
+						</f:facet>
+
+						<p:column headerText="#{msg['common.timestamp']}" width="90"
+								  filterBy="#{reportsController.dateToString(_pair.newIdentity.historyTimestamp, 'datetime')}" filterable="false"
+								  sortBy="#{_pair.newIdentity.historyId}" sortOrder="desc">
+							<h:outputText value="#{_pair.newIdentity.historyTimestamp}" converter="date"/>
+							<h:outputText value=" " />
+							<h:outputText value="#{_pair.newIdentity.historyTimestamp}" converter="time" styleClass="rowDetail"/>
+						</p:column>
+						<!--************************************************************** -->
+
+						<p:column headerText="#{msg['common.person.MPI']}" width="120">
+							<h:outputText value="#{_pair.newMpi}" />
+						</p:column>
+						<!--************************************************************** -->
+						<p:column filterBy="event" filterMatchMode="in">
+							<f:facet name="filter">
+								<p:selectCheckboxMenu onchange="PF('identity_history').filter()" label="#{msg['common.event']}" showHeader="false">
+									<f:selectItem itemLabel="NEW" itemValue="NEW" />
+									<f:selectItem itemLabel="UPDATE" itemValue="UPDATE" />
+									<f:selectItem itemLabel="FORCED UPDATE" itemValue="FORCED_UPDATE" />
+									<f:selectItem itemLabel="MATCH" itemValue="MATCH" />
+									<f:selectItem itemLabel="FORCED MATCH" itemValue="FORCED_MATCH" />
+									<f:selectItem itemLabel="PERFECT MATCH" itemValue="PERFECT_MATCH" />
+									<f:selectItem itemLabel="MERGE" itemValue="MERGE" />
+									<f:selectItem itemLabel="MOVE" itemValue="MOVE" />
+									<f:selectItem itemLabel="SET REFERENCE" itemValue="SET_REFERENCE" />
+								</p:selectCheckboxMenu>
+
+								<!--p:selectManyButton onchange="PF('identity_history').filter()" style="width:281px;">
+									<f:selectItem itemLabel="NEW" itemValue="NEW" />
+									<f:selectItem itemLabel="UPDATE" itemValue="UPDATE" />
+									<f:selectItem itemLabel="FORCED UPDATE" itemValue="FORCED_UPDATE" />
+									<f:selectItem itemLabel="MATCH" itemValue="MATCH" />
+									<f:selectItem itemLabel="FORCED MATCH" itemValue="FORCED_MATCH" />
+									<f:selectItem itemLabel="PERFECT MATCH" itemValue="PERFECT_MATCH" />
+									<f:selectItem itemLabel="MERGE" itemValue="MERGE" />
+									<f:selectItem itemLabel="MOVE" itemValue="MOVE" />
+									<f:selectItem itemLabel="SET REFERENCE" itemValue="SET_REFERENCE" />
+								</p:selectManyButton-->
+							</f:facet>
+							<h:outputText value="#{_pair.newIdentity.event.name()}" />
+							<h:outputText value=" (P=" rendered="#{not empty _pair.treshold}" />
+							<h:outputText value="#{_pair.treshold}">
+								<f:convertNumber type="number" pattern="#0.00" />
+							</h:outputText>
+							<h:outputText value=") " rendered="#{not empty _pair.treshold}" />
+							<h:outputText value="#{_pair.explanation}" rendered="#{not empty _pair.treshold}" styleClass="rowDetail" />
+						</p:column>
+						<p:column styleClass="spacer" exportable="false">
+							<h:outputText value="=" />
+						</p:column>
+						<!--************************************************************** -->
+						<p:column rendered="#{reportsController.required('degree')}" headerText="#{msg['common.person.degree']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.degree}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('firstName')}" headerText="#{msg['common.person.firstName']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.firstName}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('lastName')}" headerText="#{msg['common.person.lastName']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.lastName}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('middleName')}" headerText="#{msg['common.person.middleName']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.middleName}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('mothersMaidenName')}" headerText="#{msg['common.person.mothersMaidenName']} #{msg['reports.label.new']}" >
+							<h:outputText value="#{_pair.newIdentity.mothersMaidenName}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('birthDate')}" headerText="#{msg['common.person.birthDate']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.birthDate}" converter="date"/>
+						</p:column>
+						<p:column rendered="#{reportsController.required('birthPlace')}" headerText="#{msg['common.person.birthPlace']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.birthPlace}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('gender')}" headerText="#{msg['common.person.gender']} #{msg['reports.label.new']}">
+							<h:outputText value="#{msg['common.person.gender.'.concat(_pair.newIdentity.gender.name())]}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('prefix')}" headerText="#{msg['common.person.prefix']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.prefix}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('suffix')}" headerText="#{msg['common.person.suffix']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.suffix}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('race')}" headerText="#{msg['common.person.race']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.race}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('religion')}" headerText="#{msg['common.person.religion']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.religion}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('motherTongue')}" headerText="#{msg['common.person.motherTongue']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.motherTongue}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('nationality')}" headerText="#{msg['common.person.nationality']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.nationality}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('civilStatus')}" headerText="#{msg['common.person.civilStatus']} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.civilStatus}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value1')}"
+								  headerText="#{reportsController.getValueFieldLabel('value1')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value1}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value2')}"
+								  headerText="#{reportsController.getValueFieldLabel('value2')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value2}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value3')}"
+								  headerText="#{reportsController.getValueFieldLabel('value3')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value3}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value4')}"
+								  headerText="#{reportsController.getValueFieldLabel('value4')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value4}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value5')}"
+								  headerText="#{reportsController.getValueFieldLabel('value5')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value5}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value6')}"
+								  headerText="#{reportsController.getValueFieldLabel('value6')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value6}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value7')}"
+								  headerText="#{reportsController.getValueFieldLabel('value7')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value7}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value8')}"
+								  headerText="#{reportsController.getValueFieldLabel('value8')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value8}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value9')}"
+								  headerText="#{reportsController.getValueFieldLabel('value9')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value9}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value10')}"
+								  headerText="#{reportsController.getValueFieldLabel('value10')} #{msg['reports.label.new']}">
+							<h:outputText value="#{_pair.newIdentity.value10}" />
+						</p:column>
+						<p:column styleClass="spacer" exportable="false">
+							<h:outputText value="+" rendered="#{not empty _pair.oldIdentity.firstName}" />
+						</p:column>
+						<!--************************************************************** -->
+						<p:column rendered="#{reportsController.required('degree')}" headerText="#{msg['common.person.degree']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.degree}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('firstName')}" headerText="#{msg['common.person.firstName']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.firstName}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('lastName')}" headerText="#{msg['common.person.lastName']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.lastName}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('middleName')}" headerText="#{msg['common.person.middleName']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.middleName}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('mothersMaidenName')}" headerText="#{msg['common.person.mothersMaidenName']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.mothersMaidenName}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('birthDate')}" headerText="#{msg['common.person.birthDate']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.birthDate}" converter="date"/>
+						</p:column>
+						<p:column rendered="#{reportsController.required('birthPlace')}" headerText="#{msg['common.person.birthPlace']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.birthPlace}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('gender')}" headerText="#{msg['common.person.gender']} #{msg['reports.label.old']}">
+							<h:outputText value="#{msg['common.person.gender.'.concat(_pair.oldIdentity.gender.name())]}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('prefix')}" headerText="#{msg['common.person.prefix']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.prefix}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('suffix')}" headerText="#{msg['common.person.suffix']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.suffix}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('race')}" headerText="#{msg['common.person.race']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.race}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('religion')}" headerText="#{msg['common.person.religion']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.religion}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('motherTongue')}" headerText="#{msg['common.person.motherTongue']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.motherTongue}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('nationality')}" headerText="#{msg['common.person.nationality']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.nationality}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('civilStatus')}" headerText="#{msg['common.person.civilStatus']} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.civilStatus}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value1')}"
+								  headerText="#{reportsController.getValueFieldLabel('value1')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value1}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value2')}"
+								  headerText="#{reportsController.getValueFieldLabel('value2')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value2}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value3')}"
+								  headerText="#{reportsController.getValueFieldLabel('value3')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value3}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value4')}"
+								  headerText="#{reportsController.getValueFieldLabel('value4')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value4}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value5')}"
+								  headerText="#{reportsController.getValueFieldLabel('value5')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value5}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value6')}"
+								  headerText="#{reportsController.getValueFieldLabel('value6')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value6}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value7')}"
+								  headerText="#{reportsController.getValueFieldLabel('value7')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value7}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value8')}"
+								  headerText="#{reportsController.getValueFieldLabel('value8')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value8}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value9')}"
+								  headerText="#{reportsController.getValueFieldLabel('value9')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value9}" />
+						</p:column>
+						<p:column rendered="#{reportsController.required('value10')}"
+								  headerText="#{reportsController.getValueFieldLabel('value10')} #{msg['reports.label.old']}">
+							<h:outputText value="#{_pair.oldIdentity.value10}" />
+						</p:column>
+					</p:dataTable>
+				</p:panel>
+
+				<p:panel style="margin-top: 15px;">
+					<h4>
+						<h:outputText value="#{msg['common.download']}" />
+					</h4>
+					<p:commandButton value="#{cmsg['ui.button.download.csv']}" ajax="false" icon="mdi mdi-file-excel">
+						<p:dataExporter type="csv" target="main:identity_history" fileName="#{reportsController.identityReportFilename}" />
+					</p:commandButton>
+				</p:panel>
+			</h:form>
+		</ui:define>
+
+	</ui:composition>
+</h:body>
+</html>

@@ -1,0 +1,157 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+<!-- author: mathiasd -->
+<!-- edited by: bialkem -->
+<!-- edited by: Arne Blumentritt -->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:components="http://java.sun.com/jsf/composite/components" xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui"
+	  xmlns:ui="http://java.sun.com/jsf/facelets">
+<h:body>
+
+	<ui:composition template="/resources/templates/epix.xhtml">
+
+		<ui:define name="header_title">
+			<h:outputText value="#{msg['search.titleHeader']}" />
+		</ui:define>
+
+		<ui:define name="title">
+			<h:outputText value="#{msg['search.title']}" />
+		</ui:define>
+
+		<ui:define name="help">
+			<h:outputText escape="false" value="#{msg['search.help']}" />
+		</ui:define>
+
+		<ui:define name="content">
+
+			<div class="ui-g">
+				<div class="ui-g-12 ui-md-6 ui-lg-6">
+					<h:form id="idatForm">
+						<p:focus context="@form" />
+						<f:event listener="#{searchController.checkUpdate()}" type="preRenderView" />
+
+						<p:panel>
+							<h4>
+								<h:outputText value="#{msg['search.label.parameterSearch']}" />
+							</h4>
+							<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+								<p:outputLabel for="firstName" value="#{msg['common.person.firstName']}" />
+								<p:inputText id="firstName" value="#{searchController.identity.firstName}" />
+								<!--************************************************************** -->
+								<p:outputLabel for="lastName" value="#{msg['common.person.lastName']}" />
+								<p:inputText id="lastName" value="#{searchController.identity.lastName}" />
+								<!--************************************************************** -->
+								<p:outputLabel for="birthDate"
+											   value="#{msg['common.person.birthDate']} (#{cmsg['ui.date.pattern.date']})" />
+								<p:inputMask id="birthDate" converter="date"
+											 value="#{searchController.identity.birthDate}"  mask='#{searchController.getDateTimeMask("date")}'/>
+								<!--************************************************************** -->
+								<p:outputLabel for="gender" value="#{msg['common.person.gender']}" />
+								<p:selectOneMenu id="gender" value="#{searchController.identity.gender}">
+									<f:selectItem itemLabel="#{msg['common.noSelect']}" />
+									<f:selectItems itemLabel="#{msg['common.person.gender.'.concat(_gender.name())]}" itemValue="#{_gender}"
+												   value="#{searchController.genders}"
+												   var="_gender" />
+								</p:selectOneMenu>
+								<!--************************************************************** -->
+								<p:outputLabel for="identifierDomain" value="#{msg['common.identifier.localIdentifierDomain']}" />
+								<p:selectOneMenu id="identifierDomain" converter="#{identifierDomainDTOConverter}"
+												 label="#{msg['import.label.source']}"
+												 value="#{searchController.identifier.identifierDomain}">
+									<f:selectItem itemLabel="#{msg['common.identifier.noDomain']}" />
+									<f:selectItems itemLabel="#{_domain.label}" itemValue="#{_domain}"
+												   value="#{searchController.identifierDomainsFiltered}" var="_domain" />
+								</p:selectOneMenu>
+								<!--************************************************************** -->
+								<p:outputLabel for="identifierValue" value="#{msg['common.identifier.localIdentifier']}" />
+								<p:inputText id="identifierValue" value="#{searchController.identifier.value}" />
+								<!--************************************************************** -->
+								<h:outputText style="font-weight:bold;" value="#{msg['search.label.searchMode']}" />
+								<p:inputSwitch offLabel="#{msg['search.label.searchMode.or']}" onLabel="#{msg['search.label.searchMode.and']}"
+											   value="#{searchController.andMode}" />
+							</p:panelGrid>
+							<p:commandButton actionListener="#{searchController.onSearchPersonByIDAT}" icon="mdi mdi-magnify"
+											 onclick="PF('loading').show();" oncomplete="PF('loading').hide();"
+											 update="@form, mpiForm, result" value="#{msg['common.button.search']}" />
+							<br />
+							<p:commandButton actionListener="#{searchController.onSearchAllPersonByIDAT}" icon="mdi mdi-magnify"
+											 onclick="PF('loading').show();" oncomplete="PF('loading').hide();"
+											 rendered="#{searchController.persons.size() ge 100}" update="@form, mpiForm, result"
+											 value="#{msg['common.button.searchAll']}" />
+						</p:panel>
+					</h:form>
+
+				</div>
+
+				<div class="ui-g-12 ui-md-6 ui-lg-6">
+
+					<h:form id="mpiForm">
+						<p:panel>
+							<h4>
+								<h:outputText value="#{msg['search.label.mpiSearch']}" />
+							</h4>
+							<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+								<p:outputLabel for="mpi" value="#{msg['common.person.MPI']}" />
+								<p:inputText id="mpi" value="#{searchController.mpi}" />
+							</p:panelGrid>
+							<p:commandButton actionListener="#{searchController.onSearchPersonByMPI}" icon="mdi mdi-magnify"
+											 onclick="PF('loading').show();"
+											 oncomplete="PF('loading').hide();" update="@form, idatForm, result"
+											 value="#{msg['common.button.search']}" />
+						</p:panel>
+					</h:form>
+				</div>
+			</div>
+
+			<h:form id="result" onkeypress="if (event.keyCode === 13) { return false; }">
+				<p:panel rendered="#{not empty searchController.persons}" style="margin-top: 15px;">
+					<h4>
+						<h:outputText
+								value="#{searchController.persons.size()} #{searchController.persons.size() eq 1 ? msg['search.label.result'] : msg['search.label.results']}" />
+					</h4>
+					<components:persons_table controller="#{searchController}" edit="true" webPersonList="#{searchController.persons}" />
+				</p:panel>
+			</h:form>
+		</ui:define>
+
+	</ui:composition>
+</h:body>
+</html>

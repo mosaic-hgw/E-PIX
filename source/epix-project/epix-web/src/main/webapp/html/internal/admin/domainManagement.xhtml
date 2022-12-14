@@ -1,0 +1,600 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+<!-- author: Arne Blumentritt -->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:components="http://java.sun.com/jsf/composite/components"
+	  xmlns:f="http://java.sun.com/jsf/core" xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:p="http://primefaces.org/ui" xmlns:ui="http://java.sun.com/jsf/facelets">
+
+<h:body>
+	<ui:composition template="/resources/templates/epix.xhtml">
+
+		<ui:define name="header_title">
+			<h:outputText value="#{msg['domain.titleHeader']}" />
+		</ui:define>
+
+		<ui:define name="title">
+			<h:outputText value="#{msg['domain.title']}" />
+		</ui:define>
+
+		<ui:define name="help">
+			<h:outputText value="#{msg['domain.help']}" escape="false" />
+		</ui:define>
+
+		<ui:define name="content">
+			<!-- Domains -->
+			<h:form id="domain_form" onkeypress="if (event.keyCode === 13) { return false; }">
+				<p:panel>
+					<h4>
+						<h:outputText value="#{msg['page.management.domain.manage']}" />
+					</h4>
+					<p:dataTable id="domains"
+								 currentPageReportTemplate="#{props.currentPageReport}"
+								 emptyMessage="#{cmsg['ui.table.empty']}"
+								 pageLinks="3" paginator="true" paginatorPosition="bottom" paginatorTemplate="#{props.paginatorTemplate}" rowIndexVar="_i"
+								 rowKey="#{managementController.convertKey(_domain.name)}" rows="10"
+								 selection="#{managementController.domain.selected}" selectionMode="single"
+								 value="#{managementController.domain.all}"
+								 var="_domain" widgetVar="domains">
+						<p:ajax event="contextMenu" ignoreAutoUpdate="true" update="@form:domains_menu" />
+						<p:ajax event="filter" ignoreAutoUpdate="true" />
+
+						<f:facet name="header">
+							<p:inputText id="globalFilter" onkeyup="PF('domains').filter()" placeholder="#{cmsg['ui.table.filter']}" />
+						</f:facet>
+
+						<!-- Domain Label -->
+						<p:column filterBy="#{_domain.label}" filterMatchMode="contains" filterStyle="display: none" headerText="#{msg['model.domain.label']}"
+								  sortBy="#{_domain.label}" sortOrder="asc" width="25%">
+							<h:outputText
+									value="#{_domain.label} #{domainSelector.selectedDomain.name eq _domain.name ? msg['page.management.domain.active'] : ''}" />
+						</p:column>
+
+						<!-- Domain Name -->
+						<p:column filterBy="#{_domain.name}" filterMatchMode="contains" filterStyle="display: none" headerText="#{msg['model.domain.name']}" width="25%">
+							<h:outputText value="#{_domain.name}" />
+						</p:column>
+
+						<!-- Domain Matching Mode -->
+						<p:column filterBy="#{msg['domain.mode.short.'.concat(_domain.matchingMode.name())]}" filterMatchMode="contains" filterStyle="display: none"
+								  headerText="#{msg['model.domain.matchingMode']}" width="17%">
+							<h:outputText value="#{msg['domain.mode.short.'.concat(_domain.matchingMode.name())]}" />
+						</p:column>
+
+						<!-- Domain MPI Domain -->
+						<p:column filterBy="#{_domain.mpiDomain.label}" filterMatchMode="contains" filterStyle="display: none"
+								  headerText="#{msg['model.domain.mpiIdentifierDomain']}" width="17%">
+							<h:outputText value="#{_domain.mpiDomain.label}" />
+						</p:column>
+
+						<!-- Domain Safe Source -->
+						<p:column filterBy="#{_domain.safeSource.label}" filterMatchMode="contains" filterStyle="display: none"
+								  headerText="#{msg['model.domain.safeSource']}" width="16%">
+							<h:outputText value="#{_domain.safeSource.label}" />
+						</p:column>
+
+						<p:column styleClass="small-icons">
+							<p:commandButton actionListener="#{managementController.domain.onShowDetails(_domain)}"
+											 alt="#{msg['page.management.domain.dialog.READ']}"
+											 icon="mdi mdi-information-outline"
+											 oncomplete="PF('domains_new_dialog').show();PF('domains_new_dialog').toggleMaximize();"
+											 title="#{msg['page.management.domain.dialog.READ']}"
+											 update="domains_new_dialog" />
+						</p:column>
+					</p:dataTable>
+					<components:rightclick />
+
+					<p:contextMenu id="domains_menu" for="domains">
+						<p:menuitem actionListener="#{managementController.domain.onShowDetails(managementController.domain.selected)}"
+									icon="mdi mdi-information-outline"
+									oncomplete="PF('domains_new_dialog').show();PF('domains_new_dialog').toggleMaximize();"
+									update="domains_new_dialog"
+									value="#{msg['page.management.domain.dialog.READ']}" />
+						<p:separator />
+
+						<p:menuitem actionListener="#{domainSelector.setSelectedDomain(managementController.domain.selected)}"
+									disabled="#{domainSelector.selectedDomain.name == managementController.domain.selected.name}"
+									icon="mdi mdi-cursor-pointer"
+									value="#{msg['page.management.domain.activate']}" />
+						<p:separator />
+
+						<p:menuitem actionListener="#{managementController.domain.onEdit(managementController.domain.selected)}"
+									icon="mdi mdi-pencil-outline"
+									oncomplete="PF('domains_new_dialog').show();PF('domains_new_dialog').toggleMaximize();"
+									update="@this, domains_new_dialog"
+									value="#{cmsg['ui.button.edit']}">
+						</p:menuitem>
+						<p:separator />
+
+						<p:menuitem
+								disabled="#{managementController.domain.selected ne null and not (managementController.domain.isEditable(managementController.domain.selected))}"
+								icon="mdi mdi-delete-empty" ignoreAutoUpdate="true" oncomplete="PF('domains_confirmDelete_dialog').show();"
+								update="domains_confirmDelete_dialog:message"
+								value="#{cmsg['ui.button.delete']}">
+						</p:menuitem>
+					</p:contextMenu>
+
+					<p:commandButton actionListener="#{managementController.domain.onNew}" icon="mdi mdi-plus"
+									 oncomplete="PF('domains_new_dialog').show();PF('domains_new_dialog').toggleMaximize();"
+									 update="@form, domains_new_dialog"
+									 value="#{cmsg['ui.button.create']}" />
+				</p:panel>
+			</h:form>
+
+			<components:confirm_dialog id="domains_confirmDelete_dialog" action="#{managementController.domain.onDeleteCurrent}"
+									   message="#{managementController.formatMessage('page.management.domain.delete.confirmation', [managementController.domain.selected.name])}"
+									   onyes="PF('domains').filter()"
+									   update="domain_form:domains, @widgetVar(projectMenu), :domainSelector" />
+
+			<p:dialog id="domains_new_dialog" blockScroll="true" showEffect="none"
+					  header="#{msg['page.management.domain.dialog.'.concat(managementController.domain.pageMode.name())]}"
+					  modal="true" responsive="true" widgetVar="domains_new_dialog" closeOnEscape="true" maximizable="true">
+				<p:ajax event="close" ignoreAutoUpdate="true" listener="#{managementController.domain.onCancel}"
+						update="domain_form:domains, domains_new_dialog" />
+				<h:form id="edit" onkeypress="if (event.keyCode === 13) { return false; }"
+						style="display: table; width: 100%; height: 100%">
+					<p:focus context="edit" />
+					<p:messages escape="false" />
+
+					<div style="display: table-row">
+						<p:panelGrid columns="2" columnClasses="ui-grid-col-1,ui-grid-col-11" layout="grid"
+									 styleClass="#{managementController.domain.pageMode == 'READ' ? 'mimic-datatable' : ''}">
+							<!-- Label -->
+							<p:outputLabel for="domain_label" value="#{msg['model.domain.label']}" />
+							<p:inputText id="domain_label" rendered="#{managementController.domain.pageMode != 'READ'}" required="true"
+										 value="#{managementController.domain.selected.label}" />
+							<h:outputText rendered="#{managementController.domain.pageMode == 'READ'}"
+										  value="#{managementController.domain.selected.label}" />
+
+							<!-- Name -->
+							<p:outputLabel for="domain_name" value="#{msg['model.domain.name']}" />
+							<p:inputText id="domain_name" disabled="#{!managementController.domain.new}"
+										 rendered="#{managementController.domain.pageMode != 'READ'}"
+										 value="#{managementController.domain.selected.name}" />
+							<h:outputText rendered="#{managementController.domain.pageMode == 'READ'}"
+										  value="#{managementController.domain.selected.name}" />
+
+							<!-- Matching Mode -->
+							<p:outputLabel rendered="#{managementController.domain.pageMode == 'READ'}"
+										   value="#{msg['model.domain.matchingMode']}" />
+							<h:outputText rendered="#{managementController.domain.pageMode == 'READ'}"
+										  value="#{managementController.domain.selected.matchingMode}" />
+
+							<!-- Description -->
+							<p:outputLabel for="domain_description" value="#{msg['model.domain.description']}" />
+							<p:inputTextarea id="domain_description" counter="domain_description_counter"
+											 counterTemplate="#{cmsg['ui.text.charsRemaining']}" maxlength="255"
+											 rendered="#{managementController.domain.pageMode != 'READ'}" rows="3"
+											 value="#{managementController.domain.selected.description}" />
+							<p:column rendered="#{managementController.domain.pageMode != 'READ'}" />
+							<h:outputText id="domain_description_counter"
+										  rendered="#{managementController.domain.pageMode != 'READ'}"
+										  styleClass="textCounter" />
+							<h:outputText rendered="#{managementController.domain.pageMode == 'READ'}"
+										  value="#{managementController.domain.selected.description}" />
+
+							<!-- MPI Identifier Domain -->
+							<p:outputLabel for="domain_mpiIdentifierDomain" value="#{msg['model.domain.mpiIdentifierDomain']}" />
+							<p:selectOneMenu id="domain_mpiIdentifierDomain" converter="#{identifierDomainDTOConverter}"
+											 disabled="#{managementController.domain.selected.inUse}"
+											 rendered="#{managementController.domain.pageMode != 'READ'}"
+											 value="#{managementController.domain.selected.mpiDomain}">
+								<f:selectItems value="#{managementController.identifierDomain.all}" var="_identifierDomain"
+											   itemLabel="#{_identifierDomain.label}"
+											   itemValue="#{_identifierDomain}" />
+							</p:selectOneMenu>
+							<h:outputText rendered="#{managementController.domain.pageMode == 'READ'}"
+										  value="#{managementController.domain.selected.mpiDomain.label}" />
+
+							<!-- Safe Source -->
+							<p:outputLabel for="domain_safeSource" value="#{msg['model.domain.safeSource']}" />
+							<p:selectOneMenu id="domain_safeSource" converter="#{sourceDTOConverter}"
+											 disabled="#{managementController.domain.selected.inUse}"
+											 rendered="#{managementController.domain.pageMode != 'READ'}"
+											 value="#{managementController.domain.selected.safeSource}">
+								<f:selectItems value="#{managementController.source.all}" var="_source" itemLabel="#{_source.label}"
+											   itemValue="#{_source}" />
+							</p:selectOneMenu>
+							<h:outputText rendered="#{managementController.domain.pageMode == 'READ'}"
+										  value="#{managementController.domain.selected.safeSource.label}" />
+
+							<!-- Created -->
+							<p:outputLabel rendered="#{managementController.domain.pageMode == 'READ'}"
+										   value="#{cmsg['model.common.created']}" />
+							<h:outputText rendered="#{managementController.domain.pageMode == 'READ'}"
+										  value="#{managementController.domain.selected.entryDate}" converter="datetime"/>
+
+							<!-- Updated -->
+							<p:outputLabel rendered="#{managementController.domain.pageMode == 'READ'}"
+										   value="#{cmsg['model.common.updated']}" />
+							<h:outputText rendered="#{managementController.domain.pageMode == 'READ'}"
+										  value="#{managementController.domain.selected.updateDate}" converter="datetime"/>
+						</p:panelGrid>
+					</div>
+					<div style="height: 100%; display: table-row">
+						<p:outputLabel for="value" value="#{msg['model.domain.config']}" />
+<!--						<p:commandLink id="icon" styleClass="tooltip-button mdi mdi-content-copy"-->
+<!--									   style="margin-top: -10px; margin-left: 3px; display: inline-block; position: relative; top: 1px;"-->
+<!--									   onclick="copyToClipboard('edit\:config_code'); PF('growl').renderMessage({'summary':\' #{msg['model.domain.config']}\', 'detail':-->
+<!--													\' #{cmsg['message.info.copiedToClipboard']}\', 'severity':'info'})" />-->
+						<p:inputTextarea id="value" disabled="#{managementController.domain.selected.inUse}"
+										 rendered="#{managementController.domain.pageMode != 'READ'}" styleClass="fit code"
+										 value="#{managementController.domain.selected.config}" />
+						<ui:fragment rendered="#{managementController.domain.pageMode == 'READ'}">
+							<pre class="fit code">#{managementController.domain.selected.config}</pre>
+						</ui:fragment>
+<!--						<h:outputText id="config_code" escape="false" value="#{managementController.domain.selected.config}"-->
+<!--									  styleClass="hide" />-->
+					</div>
+					<div style="padding-top: 40px; padding-bottom: 20px;">
+						<ui:fragment rendered="#{managementController.domain.pageMode != 'READ'}">
+							<p:commandButton actionListener="#{managementController.domain.onSaveCurrent}" ajax="true"
+											 icon="mdi mdi-check"
+											 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('domains_new_dialog').hide(); PF('domains').filter();"
+											 update="@form, domain_form:domains, @widgetVar(projectMenu), :domainSelector"
+											 value="#{managementController.domain.pageMode.name() == 'NEW' ? cmsg['ui.button.create'] : cmsg['ui.button.save']}" />
+							<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('domains_new_dialog').hide();" styleClass="secondary"
+											 value="#{cmsg['ui.button.cancel']}" />
+						</ui:fragment>
+						<ui:fragment rendered="#{managementController.domain.pageMode == 'READ'}">
+							<p:commandButton immediate="true" onclick="PF('domains_new_dialog').hide();" styleClass="secondary"
+											 value="#{cmsg['ui.button.close']}" />
+						</ui:fragment>
+					</div>
+				</h:form>
+			</p:dialog>
+
+			<!-- Sources -->
+			<h:form id="source_form" onkeypress="if (event.keyCode === 13) { return false; }">
+				<p:panel style="margin-top: 15px;">
+					<h4>
+						<h:outputText value="#{msg['page.management.source.manage']}" />
+					</h4>
+					<p:dataTable id="sources"
+								 currentPageReportTemplate="#{props.currentPageReport}"
+								 emptyMessage="#{cmsg['ui.table.empty']}"
+								 pageLinks="3" paginator="true" paginatorPosition="bottom" paginatorTemplate="#{props.paginatorTemplate}"
+								 rowIndexVar="_i" rowKey="#{managementController.convertKey(_source.name)}" rows="10"
+								 selection="#{managementController.source.selected}" selectionMode="single"
+								 value="#{managementController.source.all}"
+								 var="_source" widgetVar="sources">
+						<p:ajax event="contextMenu" ignoreAutoUpdate="true" update="@form:sources_menu" />
+						<p:ajax event="filter" ignoreAutoUpdate="true" />
+
+						<f:facet name="header">
+							<p:inputText id="globalFilter" onkeyup="PF('sources').filter()" placeholder="#{cmsg['ui.table.filter']}" />
+						</f:facet>
+
+						<!-- Source Label -->
+						<p:column filterBy="#{_source.label}" filterMatchMode="contains" filterStyle="display: none" headerText="#{msg['model.source.label']}"
+								  sortBy="#{_source.label}" sortOrder="asc" width="50%">
+							<h:outputText value="#{_source.label}" />
+						</p:column>
+
+						<!-- Source Name -->
+						<p:column filterBy="#{_source.name}" filterMatchMode="contains" filterStyle="display: none" headerText="#{msg['model.source.name']}" width="50%">
+							<h:outputText value="#{_source.name}" />
+						</p:column>
+
+						<p:column styleClass="small-icons">
+							<p:commandButton actionListener="#{managementController.source.onShowDetails(_source)}"
+											 alt="#{msg['page.management.source.dialog.READ']}"
+											 icon="mdi mdi-information-outline" oncomplete="PF('sources_new_dialog').show();"
+											 title="#{msg['page.management.source.dialog.READ']}" update="sources_new_dialog" />
+						</p:column>
+					</p:dataTable>
+					<components:rightclick />
+
+					<p:contextMenu id="sources_menu" for="sources">
+						<p:menuitem actionListener="#{managementController.source.onShowDetails(managementController.source.selected)}"
+									icon="mdi mdi-information-outline"
+									oncomplete="PF('sources_new_dialog').show();" update="sources_new_dialog"
+									value="#{msg['page.management.source.dialog.READ']}" />
+						<p:separator />
+
+						<p:menuitem actionListener="#{managementController.source.onEdit(managementController.source.selected)}"
+									icon="mdi mdi-pencil-outline"
+									oncomplete="PF('sources_new_dialog').show()" update="@this, sources_new_dialog"
+									value="#{cmsg['ui.button.edit']}">
+						</p:menuitem>
+						<p:separator />
+
+						<p:menuitem
+								disabled="#{managementController.source.selected ne null and not (managementController.source.isEditable(managementController.source.selected))}"
+								icon="mdi mdi-delete-empty" ignoreAutoUpdate="true" oncomplete="PF('sources_confirmDelete_dialog').show();"
+								update="sources_confirmDelete_dialog:message"
+								value="#{cmsg['ui.button.delete']}">
+						</p:menuitem>
+					</p:contextMenu>
+
+					<p:commandButton actionListener="#{managementController.source.onNew}" icon="mdi mdi-plus"
+									 oncomplete="PF('sources_new_dialog').show();" update="@form, sources_new_dialog"
+									 value="#{cmsg['ui.button.create']}" />
+				</p:panel>
+			</h:form>
+
+			<components:confirm_dialog id="sources_confirmDelete_dialog" action="#{managementController.source.onDeleteCurrent}"
+									   message="#{managementController.formatMessage('page.management.source.delete.confirmation', [managementController.source.selected.name])}"
+									   onyes="PF('sources').filter()"
+									   update="source_form:sources" />
+
+			<p:dialog id="sources_new_dialog" blockScroll="true"
+					  header="#{msg['page.management.source.dialog.'.concat(managementController.source.pageMode.name())]}"
+					  modal="true"
+					  responsive="true" widgetVar="sources_new_dialog" closeOnEscape="true">
+				<p:ajax event="close" ignoreAutoUpdate="true" listener="#{managementController.source.onCancel}"
+						update="source_form:sources, sources_new_dialog" />
+				<h:form onkeypress="if (event.keyCode === 13) { return false; }">
+					<p:focus context="@form" />
+					<p:messages escape="false" />
+
+					<!-- General info -->
+					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid"
+								 styleClass="#{managementController.source.pageMode == 'READ' ? 'mimic-datatable' : ''}">
+
+						<!-- Label -->
+						<p:outputLabel for="source_label" value="#{msg['model.source.label']}" />
+						<p:inputText id="source_label" rendered="#{managementController.source.pageMode != 'READ'}" required="true"
+									 value="#{managementController.source.selected.label}" />
+						<h:outputText rendered="#{managementController.source.pageMode == 'READ'}"
+									  value="#{managementController.source.selected.label}" />
+
+						<!-- Name -->
+						<p:outputLabel for="source_name" value="#{msg['model.source.name']}" />
+						<p:inputText id="source_name" disabled="#{!managementController.source.new}"
+									 rendered="#{managementController.source.pageMode != 'READ'}"
+									 value="#{managementController.source.selected.name}" />
+						<h:outputText rendered="#{managementController.source.pageMode == 'READ'}"
+									  value="#{managementController.source.selected.name}" />
+
+						<!-- Description -->
+						<p:outputLabel for="source_description" value="#{msg['model.source.description']}" />
+						<p:inputTextarea id="source_description" counter="source_description_counter"
+										 counterTemplate="#{cmsg['ui.text.charsRemaining']}" maxlength="255"
+										 rendered="#{managementController.source.pageMode != 'READ'}" rows="3"
+										 value="#{managementController.source.selected.description}" />
+						<p:column rendered="#{managementController.source.pageMode != 'READ'}" />
+						<h:outputText id="source_description_counter"
+									  rendered="#{managementController.source.pageMode != 'READ'}"
+									  styleClass="textCounter" />
+						<h:outputText rendered="#{managementController.source.pageMode == 'READ'}"
+									  value="#{managementController.source.selected.description}" />
+
+						<!-- Created -->
+						<p:outputLabel rendered="#{managementController.source.pageMode == 'READ'}"
+									   value="#{cmsg['model.common.created']}" />
+						<h:outputText rendered="#{managementController.source.pageMode == 'READ'}"
+									  value="#{managementController.source.selected.entryDate}" converter="datetime"/>
+
+						<!-- Updated -->
+						<p:outputLabel rendered="#{managementController.source.pageMode == 'READ'}"
+									   value="#{cmsg['model.common.updated']}" />
+						<h:outputText rendered="#{managementController.source.pageMode == 'READ'}"
+									  value="#{managementController.source.selected.updateDate}" converter="datetime"/>
+					</p:panelGrid>
+
+					<ui:fragment rendered="#{managementController.source.pageMode != 'READ'}">
+						<p:commandButton actionListener="#{managementController.source.onSaveCurrent}" ajax="true"
+										 icon="mdi mdi-check"
+										 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('sources_new_dialog').hide(); PF('sources').filter();"
+										 update="@form, source_form:sources"
+										 value="#{managementController.source.pageMode.name() == 'NEW' ? cmsg['ui.button.create'] : cmsg['ui.button.save']}" />
+						<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('sources_new_dialog').hide();" styleClass="secondary"
+										 value="#{cmsg['ui.button.cancel']}" />
+					</ui:fragment>
+					<ui:fragment rendered="#{managementController.source.pageMode == 'READ'}">
+						<p:commandButton immediate="true" onclick="PF('sources_new_dialog').hide();" styleClass="secondary"
+										 value="#{cmsg['ui.button.close']}" />
+					</ui:fragment>
+				</h:form>
+			</p:dialog>
+
+			<!-- Identifier-Domains -->
+			<h:form id="identifierDomain_form" onkeypress="if (event.keyCode === 13) { return false; }">
+				<p:panel style="margin-top: 15px;">
+					<h4>
+						<h:outputText value="#{msg['page.management.identifierDomain.manage']}" />
+					</h4>
+					<p:dataTable id="identifierDomains"
+								 currentPageReportTemplate="#{props.currentPageReport}"
+								 emptyMessage="#{cmsg['ui.table.empty']}"
+								 pageLinks="3" paginator="true" paginatorPosition="bottom" paginatorTemplate="#{props.paginatorTemplate}"
+								 rowIndexVar="_i" rowKey="#{managementController.convertKey(_identifierDomain.name)}" rows="10"
+								 selection="#{managementController.identifierDomain.selected}" selectionMode="single"
+								 value="#{managementController.identifierDomain.all}"
+								 var="_identifierDomain" widgetVar="identifierDomains">
+						<p:ajax event="contextMenu" ignoreAutoUpdate="true" update="@form:identifierDomains_menu" />
+						<p:ajax event="filter" ignoreAutoUpdate="true" />
+
+						<f:facet name="header">
+							<p:inputText id="globalFilter" onkeyup="PF('identifierDomains').filter()"
+										 placeholder="#{cmsg['ui.table.filter']}" />
+						</f:facet>
+
+						<!-- Identifier-Domain Label -->
+						<p:column filterBy="#{_identifierDomain.label}" filterMatchMode="contains" filterStyle="display: none"
+								  headerText="#{msg['model.identifierDomain.label']}"
+								  sortBy="#{_identifierDomain.label}" sortOrder="asc" width="50%">
+							<h:outputText value="#{_identifierDomain.label}" />
+						</p:column>
+
+						<!-- Identifier-Domain Name -->
+						<p:column filterBy="#{_identifierDomain.name}" filterMatchMode="contains" filterStyle="display: none" headerText="#{msg['model.identifierDomain.name']}"
+								  width="25%">
+							<h:outputText value="#{_identifierDomain.name}" />
+						</p:column>
+
+						<!-- Identifier-Domain OID -->
+						<p:column filterBy="#{_identifierDomain.oid}" filterMatchMode="contains" filterStyle="display: none" headerText="#{msg['model.identifierDomain.oid']}"
+								  width="25%">
+							<h:outputText value="#{_identifierDomain.oid}" />
+						</p:column>
+
+						<p:column styleClass="small-icons">
+							<p:commandButton actionListener="#{managementController.identifierDomain.onShowDetails(_identifierDomain)}"
+											 alt="#{msg['page.management.identifierDomain.dialog.READ']}"
+											 icon="mdi mdi-information-outline" oncomplete="PF('identifierDomains_new_dialog').show();"
+											 title="#{msg['page.management.identifierDomain.dialog.READ']}"
+											 update="identifierDomains_new_dialog" />
+						</p:column>
+					</p:dataTable>
+					<components:rightclick />
+
+					<p:contextMenu id="identifierDomains_menu" for="identifierDomains">
+						<p:menuitem
+								actionListener="#{managementController.identifierDomain.onShowDetails(managementController.identifierDomain.selected)}"
+								icon="mdi mdi-information-outline"
+								oncomplete="PF('identifierDomains_new_dialog').show();" update="identifierDomains_new_dialog"
+								value="#{msg['page.management.identifierDomain.dialog.READ']}" />
+						<p:separator />
+
+						<p:menuitem
+								actionListener="#{managementController.identifierDomain.onEdit(managementController.identifierDomain.selected)}"
+								icon="mdi mdi-pencil-outline"
+								oncomplete="PF('identifierDomains_new_dialog').show()" update="@this, identifierDomains_new_dialog"
+								value="#{cmsg['ui.button.edit']}">
+						</p:menuitem>
+						<p:separator />
+
+						<p:menuitem
+								disabled="#{managementController.identifierDomain.selected ne null and not (managementController.identifierDomain.isEditable(managementController.identifierDomain.selected))}"
+								icon="mdi mdi-delete-empty" ignoreAutoUpdate="true"
+								oncomplete="PF('identifierDomains_confirmDelete_dialog').show();"
+								update="identifierDomains_confirmDelete_dialog:message"
+								value="#{cmsg['ui.button.delete']}">
+						</p:menuitem>
+					</p:contextMenu>
+
+					<p:commandButton actionListener="#{managementController.identifierDomain.onNew}" icon="mdi mdi-plus"
+									 oncomplete="PF('identifierDomains_new_dialog').show();" update="@form, identifierDomains_new_dialog"
+									 value="#{cmsg['ui.button.create']}" />
+				</p:panel>
+			</h:form>
+
+			<components:confirm_dialog id="identifierDomains_confirmDelete_dialog"
+									   action="#{managementController.identifierDomain.onDeleteCurrent}"
+									   message="#{managementController.formatMessage('page.management.identifierDomain.delete.confirmation', [managementController.identifierDomain.selected.name])}"
+									   onyes="PF('identifierDomains').filter()"
+									   update="identifierDomain_form:identifierDomains" />
+
+			<p:dialog id="identifierDomains_new_dialog" blockScroll="true"
+					  header="#{msg['page.management.identifierDomain.dialog.'.concat(managementController.identifierDomain.pageMode.name())]}"
+					  modal="true"
+					  responsive="true" widgetVar="identifierDomains_new_dialog" closeOnEscape="true">
+				<p:ajax event="close" ignoreAutoUpdate="true" listener="#{managementController.identifierDomain.onCancel}"
+						update="identifierDomain_form:identifierDomains, identifierDomains_new_dialog" />
+				<h:form onkeypress="if (event.keyCode === 13) { return false; }">
+					<p:focus context="@form" />
+					<p:messages id="identifierDomains_messages" escape="false" />
+
+					<!-- General info -->
+					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid"
+								 styleClass="#{managementController.identifierDomain.pageMode == 'READ' ? 'mimic-datatable' : ''}">
+
+
+						<!-- Label -->
+						<p:outputLabel for="identifierDomain_label" value="#{msg['model.identifierDomain.label']}" />
+						<p:inputText id="identifierDomain_label" rendered="#{managementController.identifierDomain.pageMode != 'READ'}"
+									 required="true" value="#{managementController.identifierDomain.selected.label}" />
+						<h:outputText rendered="#{managementController.identifierDomain.pageMode == 'READ'}"
+									  value="#{managementController.identifierDomain.selected.label}" />
+
+						<!-- Name -->
+						<p:outputLabel for="identifierDomain_name" value="#{msg['model.identifierDomain.name']}" />
+						<p:inputText id="identifierDomain_name" disabled="#{!managementController.identifierDomain.new}"
+									 rendered="#{managementController.identifierDomain.pageMode != 'READ'}"
+									 value="#{managementController.identifierDomain.selected.name}" />
+						<h:outputText rendered="#{managementController.identifierDomain.pageMode == 'READ'}"
+									  value="#{managementController.identifierDomain.selected.name}" />
+
+						<!-- Description -->
+						<p:outputLabel for="identifierDomain_description" value="#{msg['model.identifierDomain.description']}" />
+						<p:inputTextarea id="identifierDomain_description" counter="identifierDomain_description_counter"
+										 counterTemplate="#{cmsg['ui.text.charsRemaining']}" maxlength="255"
+										 rendered="#{managementController.identifierDomain.pageMode != 'READ'}" rows="3"
+										 value="#{managementController.identifierDomain.selected.description}" />
+						<p:column rendered="#{managementController.identifierDomain.pageMode != 'READ'}" />
+						<h:outputText id="identifierDomain_description_counter"
+									  rendered="#{managementController.identifierDomain.pageMode != 'READ'}"
+									  styleClass="textCounter" />
+						<h:outputText rendered="#{managementController.identifierDomain.pageMode == 'READ'}"
+									  value="#{managementController.identifierDomain.selected.description}" />
+
+						<!-- OID -->
+						<p:outputLabel for="identifierDomain_oid" value="#{msg['model.identifierDomain.oid']}" />
+						<p:inputText id="identifierDomain_oid" rendered="#{managementController.identifierDomain.pageMode != 'READ'}"
+									 value="#{managementController.identifierDomain.selected.oid}" />
+						<h:outputText rendered="#{managementController.identifierDomain.pageMode == 'READ'}"
+									  value="#{managementController.identifierDomain.selected.oid}" />
+
+						<!-- Created -->
+						<p:outputLabel rendered="#{managementController.identifierDomain.pageMode == 'READ'}"
+									   value="#{cmsg['model.common.created']}" />
+						<h:outputText rendered="#{managementController.identifierDomain.pageMode == 'READ'}"
+									  value="#{managementController.identifierDomain.selected.entryDate}" converter="datetime"/>
+
+						<!-- Updated -->
+						<p:outputLabel rendered="#{managementController.identifierDomain.pageMode == 'READ'}"
+									   value="#{cmsg['model.common.updated']}" />
+						<h:outputText rendered="#{managementController.identifierDomain.pageMode == 'READ'}"
+									  value="#{managementController.identifierDomain.selected.updateDate}" converter="datetime"/>
+					</p:panelGrid>
+
+
+					<ui:fragment rendered="#{managementController.identifierDomain.pageMode != 'READ'}">
+						<p:commandButton actionListener="#{managementController.identifierDomain.onSaveCurrent}" ajax="true"
+										 icon="mdi mdi-check"
+										 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('identifierDomains_new_dialog').hide(); PF('identifierDomains').filter();"
+										 update="identifierDomains_messages, identifierDomain_form:identifierDomains"
+										 value="#{managementController.identifierDomain.pageMode.name() == 'NEW' ? cmsg['ui.button.create'] : cmsg['ui.button.save']}" />
+						<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('identifierDomains_new_dialog').hide();" styleClass="secondary"
+										 value="#{cmsg['ui.button.cancel']}" />
+					</ui:fragment>
+					<ui:fragment rendered="#{managementController.identifierDomain.pageMode == 'READ'}">
+						<p:commandButton immediate="true" onclick="PF('identifierDomains_new_dialog').hide();" styleClass="secondary"
+										 value="#{cmsg['ui.button.close']}" />
+					</ui:fragment>
+				</h:form>
+			</p:dialog>
+		</ui:define>
+
+	</ui:composition>
+</h:body>
+</html>

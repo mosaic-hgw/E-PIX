@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ###license-information-start### E-PIX - Enterprise Identifier Cross-Referencing __ Copyright (C) 2009 - 2020 The MOSAIC Project - Institut fuer Community 
+	Medicine der Universitaetsmedizin Greifswald - mosaic-projekt@uni-greifswald.de concept and implementation c. schack, l. geidel, d. langner, g. koetzschke 
+	web client a. blumentritt please cite our publications http://dx.doi.org/10.3414/ME14-01-0133 http://dx.doi.org/10.1186/s12967-015-0545-6 __ This program 
+	is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, 
+	either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+	WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
+	You should have received a copy of the GNU Affero General Public License along with this program. If not, see <http://www.gnu.org/licenses/>. ###license-information-end### -->
+
+<xs:schema xmlns:ma="http://www.ttp.icmvc.emau.org/deduplication/config/model" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.ttp.icmvc.emau.org/deduplication/config/model" elementFormDefault="unqualified" version="2.9.0">
+	<xs:element name="MatchingConfiguration" type="ma:MatchingConfiguration" />
+	<xs:simpleType name="Char">
+		<xs:restriction base="xs:string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="1" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="MultipleValues">
+		<xs:sequence>
+			<xs:element name="separator" type="ma:Char" />
+			<xs:element name="penalty-not-a-perfect-match" type="xs:double" default="0.1" minOccurs="0" />
+			<xs:element name="penalty-one-short" type="xs:double" default="0.1" minOccurs="0" />
+			<xs:element name="penalty-both-short" type="xs:double" default="0.2" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Field">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string" />
+			<xs:element name="blocking-threshold" type="xs:double" default="0.0" minOccurs="0" />
+			<xs:element name="blocking-mode" type="xs:string" default="TEXT" minOccurs="0" />
+			<xs:element name="matching-threshold" type="xs:double" />
+			<xs:element name="weight" type="xs:double" default="1.0" minOccurs="0" />
+			<xs:element name="algorithm" type="xs:string" />
+			<xs:element name="multiple-values" type="ma:MultipleValues" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Matching">
+		<xs:sequence>
+			<xs:element name="threshold-possible-match" type="xs:double" default="4" minOccurs="0" />
+			<xs:element name="threshold-automatic-match" type="xs:double" default="20" minOccurs="0" />
+			<xs:element name="use-cemfim" type="xs:boolean" default="false" minOccurs="0" />
+			<xs:element name="parallel-matching-after" type="xs:integer" default="1000" minOccurs="0" />
+			<xs:element name="number-of-threads-for-matching" type="xs:integer" default="-1" minOccurs="0" />
+			<xs:element name="field" type="ma:Field" minOccurs="1" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="MatchingConfiguration">
+		<xs:sequence>
+			<xs:element name="matching-mode" type="xs:string" />
+			<xs:element name="mpi-generator" type="xs:string" />
+			<xs:element name="mpi-prefix" type="xs:string" />
+			<xs:element name="use-notifications" type="xs:boolean" default="false" minOccurs="0" />
+			<xs:element name="limit-search-to-reduce-memory-consumption" type="xs:boolean" default="false" minOccurs="0" />
+			<xs:element name="persist-mode" type="xs:string" default="IDENTIFYING" minOccurs="0" />
+			<xs:element name="required-fields" type="ma:RequiredFields" minOccurs="0" />
+			<xs:element name="value-fields-mapping" type="ma:ValueFieldsMapping" minOccurs="0" />
+			<xs:element name="deduplication" type="ma:Deduplication" minOccurs="0" maxOccurs="1" />
+			<xs:element name="privacy" type="ma:Privacy" minOccurs="0" />
+			<xs:element name="preprocessing-config" type="ma:PreprocessingConfig" minOccurs="0" />
+			<xs:element name="matching" type="ma:Matching" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Deduplication">
+		<xs:sequence>
+			<xs:element name="reason" type="ma:Reason" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Reason">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="description" type="xs:string" minOccurs="0" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Privacy">
+		<xs:sequence>
+			<xs:element name="bloomfilter-config" type="ma:BloomfilterConfig" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="BloomfilterConfig">
+			<xs:sequence>
+				<xs:element name="algorithm" type="xs:string" minOccurs="1" maxOccurs="1" />
+				<xs:element name="field" type="xs:string" minOccurs="1" maxOccurs="1" />
+				<xs:element name="length" type="xs:integer" default="500" minOccurs="0" maxOccurs="1" />
+				<xs:element name="ngrams" type="xs:integer" default="2" minOccurs="0" maxOccurs="1" />
+				<xs:element name="bits-per-ngram" type="xs:integer" default="15" minOccurs="0" maxOccurs="1" />
+				<xs:element name="fold" type="xs:integer" minOccurs="0" maxOccurs="1" />
+				<xs:element name="alphabet" type="xs:string" minOccurs="0" maxOccurs="1" />
+				<xs:element name="balanced" type="ma:Balanced" minOccurs="0" maxOccurs="1" />
+				<xs:element name="source-field" type="ma:SourceField" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Balanced">
+		<xs:sequence minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="seed" type="xs:long" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SourceField">
+		<xs:sequence minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="name" type="xs:string" />
+			<xs:element name="salt-value" type="xs:string" minOccurs="0" />
+			<xs:element name="salt-field" type="xs:string" minOccurs="0"/>
+			<xs:element name="seed" type="xs:long" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="PreprocessingConfig">
+		<xs:sequence maxOccurs="unbounded">
+			<xs:element name="preprocessing-field" type="ma:PreprocessingField" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="PreprocessingField">
+		<xs:sequence>
+			<xs:element name="field-name" type="xs:string" />
+			<xs:element name="simple-transformation-type" type="ma:SimpleTransformation" minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="complex-transformation-type" type="ma:ComplexTransformation" minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="simple-filter-type" type="ma:SimpleFilter" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ValueFieldsMapping">
+		<xs:sequence>
+			<xs:element name="value1" type="xs:string" minOccurs="0" />
+			<xs:element name="value2" type="xs:string" minOccurs="0" />
+			<xs:element name="value3" type="xs:string" minOccurs="0" />
+			<xs:element name="value4" type="xs:string" minOccurs="0" />
+			<xs:element name="value5" type="xs:string" minOccurs="0" />
+			<xs:element name="value6" type="xs:string" minOccurs="0" />
+			<xs:element name="value7" type="xs:string" minOccurs="0" />
+			<xs:element name="value8" type="xs:string" minOccurs="0" />
+			<xs:element name="value9" type="xs:string" minOccurs="0" />
+			<xs:element name="value10" type="xs:string" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="ComplexTransformation" mixed="false">
+		<xs:sequence>
+			<xs:element name="qualified-class-name" type="xs:string" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SimpleTransformation" mixed="false">
+		<xs:sequence>
+			<xs:element name="input-pattern" type="xs:string" default="" minOccurs="0" />
+			<xs:element name="output-pattern" type="xs:string" default="" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SimpleFilter" mixed="false">
+		<xs:sequence>
+			<xs:element name="pass-alphabet" type="xs:string" default="" minOccurs="0" />
+			<xs:element name="replace-character" type="xs:string" default="" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="RequiredFields">
+		<xs:sequence minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="name" type="xs:string" />
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>

@@ -1,0 +1,208 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:components="http://java.sun.com/jsf/composite/components" xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:file="http://java.sun.com/jsf/composite/components/file" xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui"
+	  xmlns:ui="http://java.sun.com/jsf/facelets">
+
+<!-- author: Arne Blumentritt -->
+
+<h:body>
+	<ui:composition template="/resources/templates/epix.xhtml">
+
+		<ui:define name="header_title">
+			<h:outputText value="#{msg['import.titleHeader']}" />
+		</ui:define>
+
+		<ui:define name="title">
+			<h:outputText value="#{msg['import.title']}" />
+		</ui:define>
+
+		<ui:define name="help">
+			<h:outputText escape="false" value="#{msg['import.help']}" />
+		</ui:define>
+
+		<ui:define name="content">
+
+			<h:form id="main">
+				<ui:fragment rendered="#{empty importController.successfulImports and empty importController.failedImports}">
+					<p:panel>
+						<h4>
+							<h:outputText value="#{msg['import.label.step1']}" />
+						</h4>
+
+						<file:upload webFile="#{importController.webFile}" rendered="#{empty importController.webFile.uploadFile}" />
+						<file:details onNewUpload="#{importController.onNewUpload}" rendered="#{not empty importController.webFile.uploadFile}"
+									  webFile="#{importController.webFile}" />
+					</p:panel>
+
+					<p:panel rendered="#{not empty importController.webFile.elements}" style="margin-top: 15px;">
+						<h4>
+							<h:outputText value="#{msg['import.label.step2']}" />
+							<components:tooltip id="checkDataHint" value="#{msg['import.label.step2.info']}" />
+						</h4>
+						<p:dataTable id="personsToImport" rowIndexVar="_i" rowKey="#{_column}" rowSelectMode="checkbox"
+									 selection="#{importController.webFile.selectedColumns}" styleClass="checkbox-select"
+									 value="#{importController.webFile.columns}" var="_column">
+							<p:ajax event="rowSelectCheckbox" update="@form:options" />
+							<p:ajax event="rowUnselectCheckbox" update="@form:options" />
+							<p:column selectionMode="multiple" width="1" />
+							<p:column headerText="#{msg['import.label.step2.column']}" width="1">
+								<h:outputText value="#{_column}" />
+							</p:column>
+							<p:column headerText="#{msg['import.label.step2.field']}" width="1">
+								<h:panelGroup layout="block" id="type">
+									<p:selectOneMenu filter="true" filterMatchMode="contains" value="#{importController.webFile.columnTypeMapping[_column]}">
+										<f:selectItems itemLabel="#{importController.getValueFieldLabel(_columnType)}" itemValue="#{_columnType}"
+													   value="#{importController.webFile.types}" var="_columnType" />
+										<p:ajax event="itemSelect" process="@this" update="main:personsToImport:#{_i}:type, @form:options" />
+									</p:selectOneMenu>
+									<ui:fragment rendered="#{importController.webFile.isLocalIdentifierColumn(_column)}">
+										<h:outputText value="#{msg['import.label.noIdentifierDomains']}" rendered="#{empty importController.identifierDomainsFiltered}" />
+										<p:selectOneMenu rendered="#{not empty importController.identifierDomainsFiltered}"
+														 value="#{importController.webFile.columnTypeMapping[_column]}">
+											<f:selectItem itemDisabled="true" itemLabel="#{cmsg['ui.select.pleaseSelect']}" noSelectionOption="true" />
+											<f:selectItems itemLabel="#{_idDomain.label}" itemValue="#{'localId.'.concat(_idDomain.name)}"
+														   value="#{importController.identifierDomainsFiltered}" var="_idDomain" />
+										</p:selectOneMenu>
+									</ui:fragment>
+								</h:panelGroup>
+							</p:column>
+							<p:column headerText="#{msg['import.label.step2.example']} 1">
+								<h:outputText value="#{importController.webFile.elements.get(0).size() > _i ? importController.webFile.elements.get(0).get(_i) : ''}" />
+							</p:column>
+							<p:column headerText="#{msg['import.label.step2.example']} 2" rendered="#{importController.webFile.elements.size() ge 2}">
+								<h:outputText value="#{importController.webFile.elements.get(1).size() > _i ? importController.webFile.elements.get(1).get(_i) : ''}" />
+							</p:column>
+							<p:column headerText="#{msg['import.label.step2.example']} 3" rendered="#{importController.webFile.elements.size() ge 3}">
+								<h:outputText value="#{importController.webFile.elements.get(2).size() > _i ? importController.webFile.elements.get(2).get(_i) : ''}" />
+							</p:column>
+						</p:dataTable>
+					</p:panel>
+
+					<p:panel rendered="#{!empty importController.webFile.elements}" id="options" style="margin-top: 15px;">
+						<h4>
+							<h:outputText value="#{msg['import.label.step3']}" />
+						</h4>
+
+						<p:panelGrid columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
+							<p:outputLabel for="source" value="#{msg['import.label.source']}" />
+							<p:selectOneMenu id="source" required="true" value="#{importController.selectedSource}" converter="#{sourceDTOConverter}">
+								<f:selectItem noSelectionOption="true" itemLabel="#{cmsg['ui.select.pleaseSelect']}" itemDisabled="true" />
+								<f:selectItems value="#{importController.sources}" var="_source" itemLabel="#{_source.label}" itemValue="#{_source}" />
+								<p:ajax event="itemSelect" process="@this" />
+							</p:selectOneMenu>
+
+							<h:panelGroup>
+								<p:outputLabel value="#{msg['import.label.detectUpdatesInPerfectMatch']}" escape="false" />
+								<components:tooltip value="#{msg['import.label.detectUpdatesInPerfectMatch.tooltip']}" />
+							</h:panelGroup>
+							<p:selectBooleanCheckbox value="#{importController.detectUpdatesInPerfectMatch}">
+								<p:ajax process="@this" />
+							</p:selectBooleanCheckbox>
+
+							<h:panelGroup>
+								<p:outputLabel value="#{msg['import.label.preview']}" escape="false" />
+							</h:panelGroup>
+							<p:selectBooleanCheckbox value="#{importController.preview}">
+								<p:ajax process="@this" update="dontSaveOnPerfectMatch, startButton" />
+							</p:selectBooleanCheckbox>
+						</p:panelGrid>
+
+						<p:panelGrid id="dontSaveOnPerfectMatch" columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
+							<h:panelGroup rendered="#{!importController.preview}">
+								<p:outputLabel value="#{msg['import.label.dontSaveOnPerfectMatch']}" escape="false" />
+								<components:tooltip value="#{msg['import.label.dontSaveOnPerfectMatch.tooltip']}" />
+							</h:panelGroup>
+							<p:selectBooleanCheckbox rendered="#{!importController.preview}" value="#{importController.dontSaveOnPerfectMatch}">
+								<p:ajax process="@this" />
+							</p:selectBooleanCheckbox>
+						</p:panelGrid>
+
+						<p:panelGrid columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
+							<h:panelGroup rendered="#{importController.webFile.hasMpi()}">
+								<p:outputLabel value="#{msg['import.label.forceUpdate']}" escape="false" />
+								<components:tooltip value="#{msg['import.label.forceUpdate.tooltip']}" />
+							</h:panelGroup>
+							<p:selectBooleanCheckbox value="#{importController.forceUpdate}" rendered="#{importController.webFile.hasMpi()}">
+								<p:ajax process="@this" />
+							</p:selectBooleanCheckbox>
+
+							<p:commandButton id="startButton" value="#{msg['import.label.startProcess']}" onclick="PF('progressDialog').show();PF('progressBar').start();"
+											 actionListener="#{importController.onImport}" update="msg, @form" oncomplete="PF('progressDialog').hide();PF('progressBar').cancel();">
+								<p:confirm header="#{msg['common.confirmation']}" message="#{msg['import.label.confirmImport']}" disabled="#{importController.preview}" icon="mdi mdi-alert-outline" />
+							</p:commandButton>
+						</p:panelGrid>
+					</p:panel>
+				</ui:fragment>
+
+				<p:panel rendered="#{!empty importController.successfulImports}" style="margin-top: 15px;">
+					<h4>
+						<h:outputFormat value="#{msg['import.label.successfulImports']}">
+							<f:param value="#{importController.successfulImports.size()}" />
+						</h:outputFormat>
+					</h4>
+					<components:persons_table controller="#{importController}" downloadCSV="true" downloadFilename="successful_imports" webPersonList="#{importController.successfulImports}" />
+				</p:panel>
+				<p:panel rendered="#{!empty importController.failedImports}" style="margin-top: 15px;">
+					<h4>
+						<h:outputFormat value="#{msg['import.label.failedImports']}">
+							<f:param value="#{importController.failedImports.size()}" />
+						</h:outputFormat>
+					</h4>
+					<components:persons_table controller="#{importController}" downloadCSV="true" downloadFilename="failed_imports" webPersonList="#{importController.failedImports}" />
+				</p:panel>
+
+				<p:panel rendered="#{not empty importController.successfulImports or not empty importController.failedImports}" style="margin-top: 15px;">
+					<p:commandButton value="#{msg['import.label.new']}" icon="mdi mdi-reload" actionListener="#{importController.onNewUpload}" update="main, @form"
+									 styleClass="secondary" process="@this" />
+				</p:panel>
+			</h:form>
+
+			<p:confirmDialog global="true">
+				<p:commandButton icon="mdi mdi-check" value="#{msg['common.button.yes']}" type="button" styleClass="ui-confirmdialog-yes" />
+				<p:commandButton icon="mdi mdi-close" value="#{msg['common.button.no']}" type="button" styleClass="ui-confirmdialog-no" />
+			</p:confirmDialog>
+
+			<file:progress message="#{msg['import.label.processingEntries']}" progress="#{importController.progress}" webFile="#{importController.webFile}" />
+		</ui:define>
+
+	</ui:composition>
+</h:body>
+</html>

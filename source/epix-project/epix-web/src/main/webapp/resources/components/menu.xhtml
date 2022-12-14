@@ -1,0 +1,84 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:p="http://primefaces.org/ui"
+	  xmlns:composite="http://java.sun.com/jsf/composite">
+
+<!-- author: Arne Blumentritt -->
+
+<composite:interface>
+</composite:interface>
+
+<composite:implementation>
+	<p:menu widgetVar="projectMenu">
+		<p:submenu style="border-top: none; margin-top: -2px !important;">
+			<p:menuitem value="#{msg['menu.dashboard']}" outcome="/html/internal/dashboard.xhtml" icon="mdi mdi-home-analytics"
+						class="#{view.viewId eq '/html/internal/dashboard.xhtml' ? 'active' : ''}" />
+		</p:submenu>
+		<p:submenu label="#{msg['menu.identityManagement']}">
+			<p:menuitem value="#{msg['menu.resolve']}" outcome="/html/internal/resolve.xhtml" icon="mdi mdi-account-multiple"
+						class="#{view.viewId eq '/html/internal/resolve.xhtml' ? 'active' : ''}" onclick="PF('loading').show();" oncomplete="PF('loading').hide();"
+						disabled="#{empty domainSelector.selectedDomain or (domainSelector.selectedDomain.matchingMode.name() == 'NO_DECISION')}"
+						title="#{domainSelector.selectedDomain.matchingMode.name() == 'NO_DECISION' ? msg['resolve.label.menuDisabled'] : ''}" />
+			<p:menuitem value="#{msg['menu.search']}" outcome="/html/internal/search.xhtml" icon="mdi mdi-account-search"
+						class="#{(view.viewId eq '/html/internal/search.xhtml' or (view.viewId eq '/html/internal/add.xhtml' and not empty addController.mpi)) ? 'active' : ''}"
+						disabled="#{empty domainSelector.selectedDomain}" />
+			<p:menuitem value="
+				#{msg['menu.add']}" outcome="/html/internal/add.xhtml" icon="mdi mdi-account-plus"
+						class="#{(view.viewId eq '/html/internal/add.xhtml' and empty addController.mpi) ? 'active' : ''}"
+						disabled="#{empty domainSelector.selectedDomain}" />
+		</p:submenu>
+		<p:submenu label="#{msg['menu.batchProcessing']}">
+			<p:menuitem value="#{msg['menu.import']}" outcome="/html/internal/admin/import.xhtml" icon="mdi mdi-upload"
+						class="#{view.viewId eq '/html/internal/admin/import.xhtml' ? 'active' : ''}" disabled="#{empty domainSelector.selectedDomain}" />
+			<p:menuitem value="#{msg['menu.export']}" outcome="/html/internal/admin/export.xhtml" icon="mdi mdi-download"
+						class="#{view.viewId eq '/html/internal/admin/export.xhtml' ? 'active' : ''}" disabled="#{empty domainSelector.selectedDomain}" />
+		</p:submenu>
+		<p:submenu label="#{msg['menu.management']}">
+			<p:menuitem value="#{msg['menu.domainManagement']}" outcome="/html/internal/admin/domainManagement.xhtml" icon="mdi mdi-cog"
+						class="#{view.viewId eq '/html/internal/admin/domainManagement.xhtml' ? 'active' : ''}" />
+			<p:menuitem value="#{msg['menu.reports']}" outcome="/html/internal/reports.xhtml" icon="mdi mdi-history"
+						class="#{view.viewId eq '/html/internal/reports.xhtml' ? 'active' : ''}" onclick="PF('loading').show();" oncomplete="PF('loading').hide();"
+						disabled="#{empty domainSelector.selectedDomain}" />
+			<p:menuitem value="#{msg['menu.about']}" outcome="/html/public/about.xhtml" icon="mdi mdi-information-outline"
+						class="#{view.viewId eq '/html/public/about.xhtml' ? 'active' : ''}" />
+		</p:submenu>
+	</p:menu>
+</composite:implementation>
+
+</html>

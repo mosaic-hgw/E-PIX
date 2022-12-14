@@ -1,0 +1,131 @@
+# add datasource for epix
+set epixDbHost=${EPIX_DB_HOST}
+if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_HOST})
+	set epixDbHost=mysql
+end-if
+set epixDbPort=${EPIX_DB_PORT}
+if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_PORT})
+	set epixDbPort=3306
+end-if
+set epixDbName=${EPIX_DB_NAME}
+if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_NAME})
+	set epixDbName=epix
+end-if
+set epixDbUser=${EPIX_DB_USER}
+if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_USER})
+	set epixDbUser=epix_user
+end-if
+set epixDbPass=${EPIX_DB_PASS}
+if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_PASS})
+	set epixDbPass=epix_password
+end-if
+
+if (outcome != "success") of /subsystem=datasources/data-source=EPIXDS:read-resource
+	try
+		echo \>\>\> add datasources EPIXDS
+		data-source add \
+			--name=EPIXDS \
+			--driver-name=mysql \
+			--jndi-name=java:jboss/datasources/EPIXDS \
+			--connection-url=jdbc:mysql://$epixDbHost:$epixDbPort/$epixDbName?useSSL=false&allowPublicKeyRetrieval=true \
+			--user-name=$epixDbUser \
+			--password=$epixDbPass \
+			--use-ccm=true \
+			--min-pool-size=0 \
+			--max-pool-size=20 \
+			--flush-strategy=FailingConnectionOnly \
+			--use-java-context=true \
+			--jta=true \
+			--enabled=true
+	catch
+		echo \<\<\< FAILED add datasources EPIXDS
+		data-source remove --name=EPIXDS
+	end-try
+end-if
+
+
+# add logger for epix
+set epixLogLevel=${EPIX_LOG_LEVEL}
+if (result ~= "(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)") of :resolve-expression(expression=$epixLogLevel)
+	echo \>\>\> set epix-log-level to $epixLogLevel
+else
+	set epixLogLevel="INFO"
+end-if
+set epixFileLog=${EPIX_FILE_LOG}
+if (result ~= "(?i)(on|true|yes|1)") of :resolve-expression(expression=$epixFileLog)
+	echo \>\>\> add epix-logger as separate file
+	/subsystem=logging/size-rotating-file-handler=epix-handler:add(file={"relative-to"=>"jboss.server.log.dir", "path"=>"epix.log"})
+	/subsystem=logging/logger=org.emau.icmvc.ttp.epix:add(use-parent-handlers=false,handlers=["epix-handler"])
+	/subsystem=logging/logger=org.emau.icmvc.ttp.epix:write-attribute(name=level,value=$epixLogLevel)
+	/subsystem=logging/logger=org.emau.icmvc.ttp.deduplication:add(use-parent-handlers=false,handlers=["epix-handler"])
+	/subsystem=logging/logger=org.emau.icmvc.ttp.deduplication:write-attribute(name=level,value=$epixLogLevel)
+else
+	echo \>\>\> add epix-logger to console-logger
+	/subsystem=logging/logger=org.emau.icmvc.ttp.epix:add(use-parent-handlers=false,handlers=["CONSOLE"])
+	/subsystem=logging/logger=org.emau.icmvc.ttp.epix:write-attribute(name=level,value=$epixLogLevel)
+	/subsystem=logging/logger=org.emau.icmvc.ttp.deduplication:add(use-parent-handlers=false,handlers=["CONSOLE"])
+	/subsystem=logging/logger=org.emau.icmvc.ttp.deduplication:write-attribute(name=level,value=$epixLogLevel)
+end-if
+
+
+set authMode=${EPIX_AUTH_MODE}
+# gRAS-Authentication
+if (result ~= "(?i)(gras)") of :resolve-expression(expression=$authMode)
+	try
+		echo \>\>\> install epix-Authentication for $authMode-Authentication
+		deployment-overlay add \
+			--name=epixGrasAuth \
+			--content=/WEB-INF/web.xml=${docker.wildfly.jboss}/epix_gras_web.xml,/WEB-INF/jboss-web.xml=${docker.wildfly.jboss}/epix_gras_jboss-web.xml \
+			--deployments=epix-web-*.war \
+			--redeploy-affected
+	catch
+		echo \<\<\< FAILED install epix-Authentication for $authMode-Authentication
+		deployment-overlay remove \
+			--name=epixGrasAuth \
+			--redeploy-affected
+	end-try
+end-if
+
+# KeyCloak-Authentication
+if (result ~= "(?i)(keycloak-json)") of :resolve-expression(expression=$authMode)
+	try
+		echo \>\>\> install epix-Authentication for $authMode-Authentication
+		deployment-overlay add \
+			--name=epixKeycloakAuth \
+			--content=/WEB-INF/web.xml=${docker.wildfly.jboss}/epix_keycloak_web.xml,/WEB-INF/keycloak.json=${docker.wildfly.jboss}/keycloak.json \
+			--deployments=epix-web-*.war \
+			--redeploy-affected
+	catch
+		echo \<\<\< FAILED install epix-Authentication for $authMode-Authentication
+		deployment-overlay remove \
+			--name=epixKeycloakAuth \
+			--redeploy-affected
+	end-try
+end-if
+
+# KeyCloak-Authentication (alternative Methode)
+if (result ~= "(?i)(keycloak)") of :resolve-expression(expression=$authMode)
+	try
+		echo \>\>\> install epix-Authentication for $authMode-Authentication
+		deployment-overlay add \
+			--name=epixKeycloakAuth \
+			--content=/WEB-INF/web.xml=${docker.wildfly.jboss}/epix_keycloak_web.xml \
+			--deployments=epix-web-*.war \
+			--redeploy-affected
+		set epixVersion=${EPIX_VERSION}
+		/subsystem=keycloak/secure-deployment=epix-web-$epixVersion.war:add( \
+			realm=${env.KEYCLOAK_REALM}, \
+			resource=${env.KEYCLOAK_RESOURCE}, \
+			auth-server-url=${env.KEYCLOAK_SERVER_URL}, \
+			ssl-required=${env.KEYCLOAK_SSL_REQUIRED}, \
+			confidential-port=${env.KEYCLOAK_CONFIDENTIAL_PORT}, \
+			use-resource-role-mappings=${env.KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS} \
+		)
+		/subsystem=keycloak/secure-deployment=epix-web-$epixVersion.war/credential=secret:add(value=${env.KEYCLOAK_CLIENT_SECRET})
+	catch
+		echo \<\<\< FAILED install epix-Authentication for $authMode-Authentication
+		deployment-overlay remove \
+			--name=epixKeycloakAuth \
+			--redeploy-affected
+	end-try
+end-if

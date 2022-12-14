@@ -1,0 +1,291 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:p="http://primefaces.org/ui" xmlns:ui="http://java.sun.com/jsf/facelets"
+>
+
+<!-- author: Arne Blumentritt -->
+
+<h:body>
+	<ui:composition template="/resources/templates/epix.xhtml">
+
+		<ui:define name="meta">
+			<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+			<meta http-equiv="Pragma" content="no-cache" />
+			<meta http-equiv="Expires" content="0" />
+		</ui:define>
+
+		<ui:define name="css">
+			<style media="screen" type="text/css">
+				.combine .table-content th {
+					padding: 0 18px 0 10px;
+					cursor: pointer;
+					text-align: left;
+					white-space: nowrap;
+				}
+
+				.combine .ui-button-icon-only {
+					width: 16px;
+					height: 16px;
+					border: none !important;
+					background: none !important;
+					z-index: 1;
+					color: #999;
+					font-size: 0.7em;
+					float: right;
+					margin-top: -7px;
+					margin-right: -23px;
+				}
+
+				.combine .grey {
+					color: lightgrey;
+				}
+			</style>
+		</ui:define>
+
+		<ui:define name="header_title">
+			<h:outputText value="#{msg['export.titleHeader']}" />
+		</ui:define>
+
+		<ui:define name="title">
+			<h:outputText value="#{msg['export.title']}" />
+		</ui:define>
+
+		<ui:define name="help">
+			<h:outputText value="#{msg['export.help']}" escape="false" />
+		</ui:define>
+
+		<ui:define name="content">
+
+			<h:form id="main" onkeypress="if (event.keyCode === 13) { return false; }">
+				<p:poll listener="#{exportController.keepUserSessionAlive()}" interval="#{exportController.timeoutInterval}" />
+
+				<!-- Choose mode -->
+				<!-- =========== -->
+				<p:panel id="choose_panel" style="margin-bottom: 15px;">
+					<h4>#{msg['export.label.chooseMode']}</h4>
+					<p:commandButton icon="mdi mdi-magnify" update="main" value="#{msg['export.label.exportAllPersons']}"
+									 actionListener="#{exportController.chooseExportAllPersons}"
+									 style="margin-right:15px;"
+									 styleClass="#{exportController.mode == 'start' || exportController.mode == 'exportAllPersons' ? '' : 'secondary'}">
+					</p:commandButton>
+					<p:commandButton disabled="#{empty exportController.identifierDomainsFiltered}"
+									 icon="mdi mdi-folder-search-outline" update="main"
+									 value="#{msg['export.label.exportByIdentifierDomain']}"
+									 actionListener="#{exportController.chooseExportByIdentifierDomain}" style="margin-right:15px;"
+									 styleClass="#{exportController.mode == 'start' || exportController.mode == 'exportByIdentifierDomain' ? '' : 'secondary'}">
+					</p:commandButton>
+					<p:commandButton disabled="#{empty exportController.identifierDomainsFiltered}"
+									 icon="mdi mdi-text-search" update="main" value="#{msg['export.label.exportByIdentifiers']}"
+									 actionListener="#{exportController.chooseExportByIdentifiers}"
+									 styleClass="#{exportController.mode == 'start' || exportController.mode == 'exportByIdentifiers' ? '' : 'secondary'}">
+					</p:commandButton>
+				</p:panel>
+
+				<!-- Export all -->
+				<!-- ========== -->
+				<ui:fragment rendered="#{exportController.mode == 'exportAllPersons'}">
+					<p:panel id="exportAllPersons_panel">
+						<h4>#{msg['export.label.options']}</h4>
+						<p:selectBooleanCheckbox value="#{exportController.onlyMainIdentityIdentifiers}">
+							<p:ajax process="@this" ignoreAutoUpdate="true" />
+						</p:selectBooleanCheckbox>
+						<p:outputLabel value=" #{msg['export.label.onlyMainIdentityIdentifiers']}" />
+						<br />
+						<p:commandButton id="exportAllPersons" update="msg, main" value="#{msg['export.label.findPersons']}"
+										 actionListener="#{exportController.exportAllPersons}" onclick="PF('loading').show();"
+										 oncomplete="PF('loading').hide();">
+						</p:commandButton>
+						<br />
+						<br />
+						<h:outputText value="#{msg['export.label.found']}: #{exportController.exportData.size()}"
+									  rendered="#{exportController.searched}" />
+					</p:panel>
+				</ui:fragment>
+
+				<!-- Export by domain -->
+				<!-- ================ -->
+				<ui:fragment rendered="#{exportController.mode == 'exportByIdentifierDomain'}">
+					<p:panel id="exportByIdentifierDomain_panel">
+						<h4>#{msg['export.label.options']}</h4>
+						<p:panelGrid columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
+							<h:outputLabel value="#{msg['export.identifier.domain']}" />
+							<p:selectOneMenu value="#{exportController.selectedIndentifierDomain}"
+											 converter="#{identifierDomainDTOConverter}">
+								<f:selectItem noSelectionOption="true" itemDisabled="true"
+											  itemLabel="#{msg['export.label.pleaseSelectDomain']}" />
+								<f:selectItems value="#{exportController.identifierDomainsFiltered}" var="identifierDomain"
+											   itemLabel="#{identifierDomain.name}"
+											   itemValue="#{identifierDomain}" />
+							</p:selectOneMenu>
+							<h:outputLabel value="#{msg['export.identity']}" />
+							<p:selectOneMenu value="#{exportController.exportIdentity}">
+								<f:selectItem noSelectionOption="true" itemDisabled="true"
+											  itemLabel="#{msg['export.label.pleaseSelectIdentity']}" />
+								<f:selectItems value="#{exportController.identityTypes}" var="_identityType"
+											   itemLabel="#{msg['export.label.'.concat(_identityType.name())]}"
+											   itemValue="#{_identityType}" />
+							</p:selectOneMenu>
+						</p:panelGrid>
+						<p:commandButton id="exportByIdentifierDomain" update="msg, main" value="#{msg['export.label.findPersons']}"
+										 actionListener="#{exportController.exportByIdentifierDomain}" onclick="PF('loading').show();"
+										 oncomplete="PF('loading').hide();">
+						</p:commandButton>
+						<br />
+						<br />
+						<h:outputText value="#{msg['export.label.found']}: #{exportController.exportData.size()}"
+									  rendered="#{exportController.searched}" />
+					</p:panel>
+				</ui:fragment>
+
+				<!-- Export by identifier list -->
+				<!-- ========================= -->
+				<ui:fragment rendered="#{exportController.mode == 'exportByIdentifiers'}">
+					<p:panel id="exportByIdentifierList_panel">
+						<h4>#{msg['export.label.options']}</h4>
+						<p:panelGrid columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
+							<h:outputLabel value="#{msg['export.identifier.domain']}" />
+							<p:selectOneMenu value="#{exportController.selectedIndentifierDomain}"
+											 converter="#{identifierDomainDTOConverter}">
+								<f:selectItem noSelectionOption="true" itemDisabled="true"
+											  itemLabel="#{msg['export.label.pleaseSelectDomain']}" />
+								<f:selectItems value="#{exportController.identifierDomainsFiltered}" var="identifierDomain"
+											   itemLabel="#{identifierDomain.name}"
+											   itemValue="#{identifierDomain}" />
+								<p:ajax event="itemSelect" update="exportByIdentifierList_panel" process="@this" />
+							</p:selectOneMenu>
+							<h:outputLabel value="#{msg['export.identity']}" />
+							<p:selectOneMenu value="#{exportController.exportIdentity}">
+								<f:selectItem noSelectionOption="true" itemDisabled="true"
+											  itemLabel="#{msg['export.label.pleaseSelectIdentity']}" />
+								<f:selectItems value="#{exportController.identityTypes}" var="_identityType"
+											   itemLabel="#{msg['export.label.'.concat(_identityType.name())]}"
+											   itemValue="#{_identityType}" />
+								<p:ajax event="itemSelect" update="exportByIdentifierList_panel" process="@this" />
+							</p:selectOneMenu>
+							<h:outputLabel value="#{msg['export.identifier.list']}" />
+							<ui:fragment>
+								<p:selectBooleanCheckbox value="#{exportController.firstLineIsHeader}">
+									<p:ajax process="@this" ignoreAutoUpdate="true" />
+								</p:selectBooleanCheckbox>
+								<p:outputLabel value=" #{msg['import.label.useFirstLineAsHeader']}" />
+								<p:fileUpload label="#{cmsg['ui.file.choose']}" uploadLabel="#{cmsg['ui.file.upload']}"
+											  cancelLabel="#{cmsg['ui.file.cancel']}"
+											  mode="advanced" allowTypes="/(\.|\/)(csv|txt|CSV|TXT)$/" auto="true" multiple="false"
+											  fileLimit="1"
+											  listener="#{exportController.handleUploadIdentifiers}" update="exportByIdentifierList_panel"
+											  rendered="#{empty exportController.uploadFile}">
+								</p:fileUpload>
+								<ui:fragment rendered="#{not empty exportController.uploadFile}">
+									<h:outputFormat value="#{msg['export.identifier.listUploaded']}" escape="false"
+													style="padding: 3px 0 7px; display: block;">
+										<f:param value="#{exportController.data.size()}" />
+									</h:outputFormat>
+
+									<p:commandButton value="#{msg['export.label.upload.discard']}" icon="mdi mdi-reload"
+													 actionListener="#{exportController.onNewUpload}"
+													 update="@form" styleClass="secondary" process="@this" />
+								</ui:fragment>
+							</ui:fragment>
+
+						</p:panelGrid>
+						<p:commandButton id="exportByIdentifierList" update="msg, main" value="#{msg['export.label.findPersons']}"
+										 actionListener="#{exportController.exportByIdentitifers}" onclick="PF('loading').show();"
+										 oncomplete="PF('loading').hide();"
+										 disabled="#{empty exportController.selectedIndentifierDomain
+										 or empty exportController.exportIdentity or empty exportController.data}">
+						</p:commandButton>
+						<br />
+						<br />
+						<h:outputText value="#{msg['export.label.found']}: #{exportController.exportData.size()}"
+									  rendered="#{exportController.searched}" />
+					</p:panel>
+				</ui:fragment>
+
+
+				<!-- Arrange Columns -->
+				<!-- =============== -->
+				<ui:fragment rendered="#{exportController.mode != 'start' and !empty exportController.exportData}">
+					<p:panel id="dateOutput_panel" style="margin-top: 15px;">
+						<h4>#{msg['export.label.arrangeColumns']}</h4>
+						<div class="combine">
+							<p:dataTable id="persons_table" value="#{exportController.exportData}" var="_person" draggableColumns="true"
+										 style="white-space:nowrap;"
+										 styleClass="table-content" paginator="true" paginatorPosition="bottom"
+										 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+										 currentPageReportTemplate="{startRecord}-{endRecord} #{cmsg['ui.table.of']} {totalRecords}"
+										 rows="10" pageLinks="3"
+										 emptyMessage="#{cmsg['ui.table.empty']}">
+								<p:columns value="#{exportController.columns}" var="_column" columnIndexVar="i">
+									<f:facet name="header">
+										<h:outputText value="#{exportController.getColumnText(_column.name)}"
+													  styleClass="#{!_column.active ? 'grey' : ''}" />
+										<p:commandButton update="main:persons_table" process="main:persons_table" icon="fa fa-fw fa-close"
+														 actionListener="#{exportController.toggle(_column)}" immediate="true"
+														 rendered="#{_column.active}" />
+										<p:commandButton update="main:persons_table" process="main:persons_table" icon="fa fa-fw fa-plus"
+														 actionListener="#{exportController.toggle(_column)}" immediate="true"
+														 rendered="#{!_column.active}" />
+									</f:facet>
+									<h:outputText value="#{webUtil.cut(exportController.getColumnText(_person[i]), 50, ' [...]')}" styleClass="#{!_column.active ? 'grey' : ''}" />
+								</p:columns>
+							</p:dataTable>
+						</div>
+					</p:panel>
+				</ui:fragment>
+
+				<!-- Download -->
+				<!-- ======== -->
+				<ui:fragment rendered="#{!empty exportController.exportData}">
+					<p:panel id="download_panel" style="margin-top: 15px;">
+						<h4>#{msg['export.label.download']}</h4>
+						<p:commandButton value="#{cmsg['ui.button.download.csv']}" ajax="false"
+										 actionListener="#{exportController.handleDownloadResult}"
+										 icon="mdi mdi-file-excel" onclick="PrimeFaces.monitorDownload(showLoading, hideLoading)">
+							<p:fileDownload value="#{exportController.downloadFile}" />
+						</p:commandButton>
+					</p:panel>
+				</ui:fragment>
+			</h:form>
+		</ui:define>
+
+	</ui:composition>
+</h:body>
+</html>

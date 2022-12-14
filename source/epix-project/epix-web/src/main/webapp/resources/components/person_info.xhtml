@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+		"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:p="http://primefaces.org/ui" xmlns:composite="http://java.sun.com/jsf/composite"
+	  xmlns:c="http://java.sun.com/jsf/composite/components">
+
+<!-- INTERFACE -->
+<composite:interface>
+	<composite:attribute name="i1" type="org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO" required="true" />
+	<composite:attribute name="i2" type="org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO" required="true" />
+	<composite:attribute name="mpi1" type="java.lang.String" required="true" />
+	<composite:attribute name="mpi2" type="java.lang.String" required="true" />
+</composite:interface>
+
+<!-- IMPLEMENTATION -->
+<composite:implementation>
+	<c:person_info_row label="#{msg['common.person.MPI']}" value="#{cc.attrs.mpi1}" compareValue="#{cc.attrs.mpi2}" compare="false" />
+	<c:person_info_row label="#{msg['resolve.label.lastUpdate']}" value="#{cc.attrs.i1.identityLastEdited}"
+					   compareValue="#{cc.attrs.i2.identityLastEdited}" datePattern="#{cmsg['ui.date.pattern.datetime']}" compare="false" />
+
+	<div class="ui-g-12 ui-md-4 ui-lg-2 label">
+		<h:outputLabel value="#{msg['common.identifier.localIdentifiers']}" />
+	</div>
+	<div class="ui-g-6 ui-md-4 ui-lg-5 left">
+		<h:outputText value="#{cc.attrs.i1.identifiers.size()}" />
+		<p:commandLink value="(#{msg['common.identifier.showAll']})" onclick="PF('#{cc.id}_identifiers_i1').show(); return false;"
+					  rendered="#{cc.attrs.i1.identifiers.size()>0}"
+					  style="margin-left: 5px;" />
+	</div>
+	<div class="ui-g-6 ui-md-4 ui-lg-5 right">
+		<h:outputText value="#{cc.attrs.i2.identifiers.size()}" />
+		<p:commandLink
+				value="(#{msg['common.identifier.showAll']})" onclick="PF('#{cc.id}_identifiers_i2').show(); return false;"
+				rendered="#{cc.attrs.i2.identifiers.size()>0}"
+				style="margin-left: 5px;" />
+	</div>
+
+	<c:person_info_row label="#{msg['common.person.externalDate']}" value="#{cc.attrs.i1.externalDate}"
+					   compareValue="#{cc.attrs.i2.externalDate}"
+					   datePattern="#{cmsg['ui.date.pattern.datetime']}" />
+
+	<c:person_info_row label="#{msg['common.person.firstName']}" value="#{cc.attrs.i1.firstName}" compareValue="#{cc.attrs.i2.firstName}" />
+	<c:person_info_row label="#{msg['common.person.lastName']}" value="#{cc.attrs.i1.lastName}" compareValue="#{cc.attrs.i2.lastName}" />
+	<c:person_info_row label="#{msg['common.person.degree']}" value="#{cc.attrs.i1.degree}" compareValue="#{cc.attrs.i2.degree}" />
+	<c:person_info_row label="#{msg['common.person.middleName']}" value="#{cc.attrs.i1.middleName}"
+					   compareValue="#{cc.attrs.i2.middleName}" />
+	<c:person_info_row label="#{msg['common.person.mothersMaidenName']}" value="#{cc.attrs.i1.mothersMaidenName}"
+					   compareValue="#{cc.attrs.i2.mothersMaidenName}" />
+	<c:person_info_row label="#{msg['common.person.gender']}" value="#{cc.attrs.i1.gender}" compareValue="#{cc.attrs.i2.gender}"
+					   gender="true" />
+	<c:person_info_row label="#{msg['common.person.birthDate']}" value="#{cc.attrs.i1.birthDate}" compareValue="#{cc.attrs.i2.birthDate}"
+					   datePattern="#{cmsg['ui.date.pattern.date']}" />
+	<c:person_info_row label="#{msg['common.person.birthPlace']}" value="#{cc.attrs.i1.birthPlace}"
+					   compareValue="#{cc.attrs.i2.birthPlace}" />
+	<c:person_info_row label="#{msg['common.person.nationality']}" value="#{cc.attrs.i1.nationality}"
+					   compareValue="#{cc.attrs.i2.nationality}" />
+
+	<c:person_info_row label="#{msg['common.person.streetAndNumber']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).street}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).street}" />
+	<c:person_info_row label="#{msg['common.person.zipCode']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).zipCode}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).zipCode}" />
+	<c:person_info_row label="#{msg['common.person.city']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).city}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).city}" />
+	<c:person_info_row label="#{msg['common.person.state']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).state}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).state}" />
+	<c:person_info_row label="#{msg['common.person.country']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).country}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).country}" />
+	<c:person_info_row label="#{msg['common.person.countryCode']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).countryCode}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).countryCode}" />
+	<c:person_info_row label="#{msg['common.person.email']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).email}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).email}" />
+	<c:person_info_row label="#{msg['common.person.phone']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).phone}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).phone}" />
+	<c:person_info_row label="#{msg['common.person.district']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).district}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).district}" />
+	<c:person_info_row label="#{msg['common.person.municipalityKey']}"
+					   value="#{empty cc.attrs.i1.contacts ? '' : cc.attrs.i1.contacts.get(cc.attrs.i1.contacts.size() - 1).municipalityKey}"
+					   compareValue="#{empty cc.attrs.i2.contacts ? '' : cc.attrs.i2.contacts.get(cc.attrs.i2.contacts.size() - 1).municipalityKey}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value1')}" value="#{cc.attrs.i1.value1}"
+					   compareValue="#{cc.attrs.i2.value1}"
+					   rendered="#{resolveController.showValueField('value1')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value2')}" value="#{cc.attrs.i1.value2}"
+					   compareValue="#{cc.attrs.i2.value2}"
+					   rendered="#{resolveController.showValueField('value2')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value3')}" value="#{cc.attrs.i1.value3}"
+					   compareValue="#{cc.attrs.i2.value3}"
+					   rendered="#{resolveController.showValueField('value3')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value4')}" value="#{cc.attrs.i1.value4}"
+					   compareValue="#{cc.attrs.i2.value4}"
+					   rendered="#{resolveController.showValueField('value4')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value5')}" value="#{cc.attrs.i1.value5}"
+					   compareValue="#{cc.attrs.i2.value5}"
+					   rendered="#{resolveController.showValueField('value5')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value6')}" value="#{webUtil.cut(cc.attrs.i1.value6, 50, ' [...]')}"
+					   compareValue="#{webUtil.cut(cc.attrs.i2.value6, 50, ' [...]')}"
+					   rendered="#{resolveController.showValueField('value6')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value7')}" value="#{webUtil.cut(cc.attrs.i1.value7, 50, ' [...]')}"
+					   compareValue="#{webUtil.cut(cc.attrs.i2.value7, 50, ' [...]')}"
+					   rendered="#{resolveController.showValueField('value7')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value8')}" value="#{webUtil.cut(cc.attrs.i1.value8, 50, ' [...]')}"
+					   compareValue="#{webUtil.cut(cc.attrs.i2.value8, 50, ' [...]')}"
+					   rendered="#{resolveController.showValueField('value8')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value9')}" value="#{webUtil.cut(cc.attrs.i1.value9, 50, ' [...]')}"
+					   compareValue="#{webUtil.cut(cc.attrs.i2.value9, 50, ' [...]')}"
+					   rendered="#{resolveController.showValueField('value9')}" />
+	<c:person_info_row label="#{resolveController.getValueFieldLabel('value10')}" value="#{webUtil.cut(cc.attrs.i1.value10, 50, ' [...]')}"
+					   compareValue="#{webUtil.cut(cc.attrs.i2.value10, 50, ' [...]')}"
+					   rendered="#{resolveController.showValueField('value10')}" />
+
+	<div class="ui-g-12 ui-md-4 ui-lg-2 label last">
+		<h:outputText value="#{msg['common.person.contacts']}" />
+	</div>
+	<div class="ui-g-6 ui-md-4 ui-lg-5 left last">
+		#{resolveController.getContactsFromPersonForIdentity(cc.attrs.i1.identityId).size()} <p:commandLink
+			value="#{msg['common.person.showAll']}" onclick="PF('#{cc.id}_contacts_i1').show(); return false;"
+			rendered="#{resolveController.getContactsFromPersonForIdentity(cc.attrs.i1.identityId).size()>1}" />
+	</div>
+	<div class="ui-g-6 ui-md-4 ui-lg-5 right last">
+		#{resolveController.getContactsFromPersonForIdentity(cc.attrs.i2.identityId).size()} <p:commandLink
+			value="#{msg['common.person.showAll']}" onclick="PF('#{cc.id}_contacts_i2').show(); return false;"
+			rendered="#{resolveController.getContactsFromPersonForIdentity(cc.attrs.i2.identityId).size()>1}" />
+	</div>
+
+	<p:dialog widgetVar="#{cc.id}_identifiers_i1" closeOnEscape="true" header="#{cc.attrs.i1.firstName} #{cc.attrs.i1.lastName}">
+		<p:dataTable value="#{cc.attrs.i1.identifiers}" var="_identifier">
+			<p:column headerText="#{msg['common.identifier.localIdentifierDomain']}">
+				<h:outputText value="#{_identifier.identifierDomain.label}" />
+			</p:column>
+			<p:column headerText="#{msg['common.identifier.localIdentifier']}">
+				<h:outputText value="#{_identifier.value}" />
+			</p:column>
+		</p:dataTable>
+	</p:dialog>
+
+	<p:dialog widgetVar="#{cc.id}_identifiers_i2" closeOnEscape="true" header="#{cc.attrs.i2.firstName} #{cc.attrs.i2.lastName}">
+		<p:dataTable value="#{cc.attrs.i2.identifiers}" var="_identifier" styleClass="identity-table">
+			<p:column headerText="#{msg['resolve.identifiersOf']} #{msg['common.identifier.localIdentifierDomain']}">
+				<h:outputText value="#{_identifier.identifierDomain.label}" />
+			</p:column>
+			<p:column headerText="#{msg['common.identifier.localIdentifier']}">
+				<h:outputText value="#{_identifier.value}" />
+			</p:column>
+		</p:dataTable>
+	</p:dialog>
+
+	<p:dialog widgetVar="#{cc.id}_contacts_i1" closeOnEscape="true"
+			  header="#{msg['resolve.contactsOf']} #{cc.attrs.i1.firstName} #{cc.attrs.i1.lastName}">
+		<p:dataTable value="#{resolveController.getContactsFromPersonForIdentity(cc.attrs.i1.identityId)}" var="_contact"
+					 styleClass="identity-table">
+			<p:column headerText="#{msg['common.person.streetAndNumber']}">
+				<h:outputText value="#{_contact.street}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.zipCode']}">
+				<h:outputText value="#{_contact.zipCode}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.city']}">
+				<h:outputText value="#{_contact.city}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.state']}">
+				<h:outputText value="#{_contact.state}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.country']}">
+				<h:outputText value="#{_contact.country}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.countryCode']}">
+				<h:outputText value="#{_contact.countryCode}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.email']}">
+				<h:outputText value="#{_contact.email}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.phone']}">
+				<h:outputText value="#{_contact.phone}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.district']}">
+				<h:outputText value="#{_contact.district}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.municipalityKey']}">
+				<h:outputText value="#{_contact.municipalityKey}" />
+			</p:column>
+		</p:dataTable>
+	</p:dialog>
+
+	<p:dialog widgetVar="#{cc.id}_contacts_i2" closeOnEscape="true"
+			  header="#{msg['resolve.contactsOf']} #{cc.attrs.i2.firstName} #{cc.attrs.i2.lastName}">
+		<p:dataTable value="#{resolveController.getContactsFromPersonForIdentity(cc.attrs.i2.identityId)}" var="_contact">
+			<p:column headerText="#{msg['common.person.streetAndNumber']}">
+				<h:outputText value="#{_contact.street}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.zipCode']}">
+				<h:outputText value="#{_contact.zipCode}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.city']}">
+				<h:outputText value="#{_contact.city}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.state']}">
+				<h:outputText value="#{_contact.state}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.country']}">
+				<h:outputText value="#{_contact.country}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.countryCode']}">
+				<h:outputText value="#{_contact.countryCode}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.email']}">
+				<h:outputText value="#{_contact.email}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.phone']}">
+				<h:outputText value="#{_contact.phone}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.district']}">
+				<h:outputText value="#{_contact.district}" />
+			</p:column>
+			<p:column headerText="#{msg['common.person.municipalityKey']}">
+				<h:outputText value="#{_contact.municipalityKey}" />
+			</p:column>
+		</p:dataTable>
+	</p:dialog>
+</composite:implementation>
+
+</html>
