@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -75,8 +75,8 @@
 			<p:menuitem value="#{msg['menu.reports']}" outcome="/html/internal/reports.xhtml" icon="mdi mdi-history"
 						class="#{view.viewId eq '/html/internal/reports.xhtml' ? 'active' : ''}" onclick="PF('loading').show();" oncomplete="PF('loading').hide();"
 						disabled="#{empty domainSelector.selectedDomain}" />
-			<p:menuitem value="#{msg['menu.about']}" outcome="/html/public/about.xhtml" icon="mdi mdi-information-outline"
-						class="#{view.viewId eq '/html/public/about.xhtml' ? 'active' : ''}" />
+			<p:menuitem value="#{msg['menu.about']}" outcome="/html/internal/about.xhtml" icon="mdi mdi-information-outline"
+						class="#{view.viewId eq '/html/internal/about.xhtml' ? 'active' : ''}" />
 		</p:submenu>
 	</p:menu>
 </composite:implementation>

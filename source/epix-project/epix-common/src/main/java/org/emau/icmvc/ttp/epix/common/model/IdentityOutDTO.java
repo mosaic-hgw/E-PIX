@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 public class IdentityOutDTO extends IdentityOutBaseDTO
 {
 	private static final long serialVersionUID = -4359958257749792958L;
-	private List<ContactOutDTO> contacts = new ArrayList<>();
+	private final List<ContactOutDTO> contacts = new ArrayList<>();
 
 	public IdentityOutDTO()
 	{
@@ -61,10 +61,7 @@ public class IdentityOutDTO extends IdentityOutBaseDTO
 	public IdentityOutDTO(IdentityOutBaseDTO superDTO, List<ContactOutDTO> contacts)
 	{
 		super(superDTO);
-		if (contacts != null)
-		{
-			this.contacts = contacts;
-		}
+		setContacts(contacts);
 	}
 
 	public IdentityOutDTO(IdentityOutDTO dto)
@@ -79,13 +76,13 @@ public class IdentityOutDTO extends IdentityOutBaseDTO
 
 	public void setContacts(List<ContactOutDTO> contacts)
 	{
+		this.contacts.clear();
 		if (contacts != null)
 		{
-			this.contacts = contacts;
-		}
-		else
-		{
-			this.contacts.clear();
+			for (ContactOutDTO cDTO : contacts)
+			{
+				this.contacts.add(new ContactOutDTO(cDTO));
+			}
 		}
 	}
 

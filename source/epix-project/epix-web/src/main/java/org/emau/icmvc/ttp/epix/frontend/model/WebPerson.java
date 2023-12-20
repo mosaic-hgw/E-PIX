@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -44,45 +44,65 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.ContactOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInBaseDTO;
+import org.emau.icmvc.ttp.epix.common.model.IdentityOutBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.MatchStatus;
+import org.icmvc.ttp.web.model.WebTag;
 
-public class WebPerson extends IdentityInBaseDTO
+public class WebPerson extends IdentityOutBaseDTO
 {
 	private static final long serialVersionUID = -7889422396542984987L;
 
-	private List<ContactInDTO> contacts = new ArrayList<>();
+	private List<ContactOutDTO> contacts = new ArrayList<>();
 	private String mpiId;
 	private MatchStatus matchStatus;
 	private Date lastEdited;
 	private Date created;
 	private String errorMsg;
+	private WebTag tag;
+	private boolean reference;
 
 	public WebPerson()
 	{}
-
-	public WebPerson(IdentityOutDTO dto, List<ContactOutDTO> contacts, String mpiId)
+	
+	public WebPerson(IdentityOutDTO dto, List<ContactOutDTO> contacts)
 	{
 		super(dto);
 		this.created = dto.getIdentityCreated();
 		this.lastEdited = dto.getIdentityLastEdited();
-		this.contacts = contacts.stream().map(ContactInDTO::new).collect(Collectors.toList());
+		this.contacts = contacts;
+	}
+	
+	public WebPerson (String mpiId)
+	{
 		this.mpiId = mpiId;
+	}
+	
+	public WebPerson(IdentityOutDTO dto, List<ContactOutDTO> contacts, String mpiId)
+	{
+		this(dto, contacts);
+		this.mpiId = mpiId;
+	}
+
+	public WebPerson(IdentityOutDTO dto, List<ContactOutDTO> contacts, WebTag tag)
+	{
+		this(dto, contacts);
+		this.tag = tag;
+	}
+
+	public WebPerson(IdentityOutDTO dto, List<ContactOutDTO> contacts, WebTag tag, boolean reference)
+	{
+		this(dto, contacts, tag);
+		this.reference = reference;
 	}
 
 	public WebPerson(IdentityOutDTO dto, List<ContactOutDTO> contacts, String mpiId, MatchStatus matchStatus)
 	{
-		super(dto);
-		this.created = dto.getIdentityCreated();
-		this.lastEdited = dto.getIdentityLastEdited();
-		this.contacts = contacts.stream().map(ContactInDTO::new).collect(Collectors.toList());
-		this.mpiId = mpiId;
+		this(dto, contacts, mpiId);
 		this.matchStatus = matchStatus;
 	}
 
@@ -98,12 +118,12 @@ public class WebPerson extends IdentityInBaseDTO
 		return null;
 	}
 
-	public List<ContactInDTO> getContacts()
+	public List<ContactOutDTO> getContacts()
 	{
 		return contacts;
 	}
 
-	public void setContacts(List<ContactInDTO> contacts)
+	public void setContacts(List<ContactOutDTO> contacts)
 	{
 		this.contacts = contacts;
 	}
@@ -163,16 +183,36 @@ public class WebPerson extends IdentityInBaseDTO
 		this.errorMsg = errorMsg;
 	}
 
-	public ContactInDTO getContact()
+	public WebTag getTag()
+	{
+		return tag;
+	}
+
+	public void setTag(WebTag tag)
+	{
+		this.tag = tag;
+	}
+
+	public ContactOutDTO getContact()
 	{
 		if (getContacts().isEmpty())
 		{
-			return new ContactInDTO();
+			return new ContactOutDTO();
 		}
 		else
 		{
 			return getContacts().get(getContacts().size() - 1);
 		}
+	}
+
+	public boolean isReference()
+	{
+		return reference;
+	}
+
+	public void setReference(boolean reference)
+	{
+		this.reference = reference;
 	}
 
 	@Override

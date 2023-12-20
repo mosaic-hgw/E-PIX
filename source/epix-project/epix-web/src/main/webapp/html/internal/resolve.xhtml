@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -42,8 +42,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
 	  xmlns:c="http://java.sun.com/jsp/jstl/core"
 	  xmlns:components="http://java.sun.com/jsf/composite/components"
+	  xmlns:idat-display="http://java.sun.com/jsf/composite/components/idat/display"
 	  xmlns:f="http://java.sun.com/jsf/core"
-	  xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui" xmlns:ui="http://java.sun.com/jsf/facelets">
+	  xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:p="http://primefaces.org/ui"
+	  xmlns:ui="http://java.sun.com/jsf/facelets">
 <h:body>
 	<ui:composition template="/resources/templates/epix.xhtml">
 
@@ -110,105 +113,145 @@
 			</h:form>
 			<h:form id="main" onkeypress="if (event.keyCode === 13) { return false; }"
 					rendered="#{domainSelector.selectedDomain.matchingMode.name() == 'MATCHING_IDENTITIES'}">
-				<p:panel id="matches_panel" style="max-width: 1350px;">
-					<h4 style="max-width: 60%;">
-						<h:outputFormat id="rowCount" value="#{msg['resolve.label.possibleMatchesList']}">
-							<f:param value="#{resolveController.possibleMatchDTOLazyModel.rowCount}" />
-						</h:outputFormat>
-					</h4>
+				<f:event listener="#{resolveController.load(param['domain'], param['mpi'])}" type="preRenderView" />
 
-					<p:blockUI block="matches" widgetVar="blockMatches" animate="false">
-						<h:outputFormat escape="false" value="#{msg['resolve.label.filteringEntries']}" />
-					</p:blockUI>
+				<p:panel id="matches_panel">
+					<div style="max-width: 1500px;">
+						<h4 style="max-width: 60%;">
+							<h:outputFormat id="rowCount" value="#{resolveController.showPostponed ? msg['resolve.label.possibleMatchesListPostponed'] : msg['resolve.label.possibleMatchesList']}">
+								<f:param value="#{resolveController.possibleMatchDTOLazyModel.rowCount}" />
+							</h:outputFormat>
+						</h4>
 
-					<!--
-					In PF11 you must use an explicit 'lazy' tag when the 'value' tag can be null or does not exist at all,
-					otherwise the framework tries to derive the lazy mode from the 'value' tag which points to null.
-					-->
-					<p:dataTable lazy="false" styleClass="no-table no-border no-background ui-sm-0">
-						<p:column styleClass="spacer" style="min-width: 196px;" />
-						<p:column colspan="3" headerText="Person 1" width="48%" styleClass="left" />
-						<p:column styleClass="spacer s" />
-						<p:column colspan="3" headerText="Person 2" width="52%" styleClass="left" />
-					</p:dataTable>
+						<p:blockUI block="matches" widgetVar="blockMatches" animate="false">
+							<h:outputFormat escape="false" value="#{msg['resolve.label.filteringEntries']}" />
+						</p:blockUI>
 
-					<p:remoteCommand name="updateRowCount" update="@form:rowCount" />
+						<!--
+						In PF11 you must use an explicit 'lazy' tag when the 'value' tag can be null or does not exist at all,
+						otherwise the framework tries to derive the lazy mode from the 'value' tag which points to null.
+						-->
+						<p:dataTable lazy="false" styleClass="no-table no-border no-background ui-sm-0">
+							<p:column styleClass="spacer" style="min-width: 196px;" />
+							<p:column colspan="3" headerText="Person 1" width="48%" styleClass="left" />
+							<p:column styleClass="spacer s" />
+							<p:column colspan="3" headerText="Person 2" width="52%" styleClass="left" />
+						</p:dataTable>
 
-					<p:dataTable id="matches" lazy="true"
-								 currentPageReportTemplate="#{props.currentPageReport}"
-								 emptyMessage="#{msg['resolve.label.possibleMatchesEmpty']}"
-								 pageLinks="3" paginator="true" paginatorPosition="bottom" paginatorTemplate="#{props.paginatorTemplate}"
-								 reflow="true" rowExpandMode="single"
-								 rowKey="#{_match.linkId}" rows="5" rowsPerPageTemplate="5,10,20" rowsPerPageLabel="#{cmsg['ui.table.pageSize']}"
-								 selection="#{resolveController.selectedPossibleMatch}" selectionMode="single"
-								 styleClass="possible-matches"
-								 value="#{resolveController.possibleMatchDTOLazyModel}"
-								 var="_match" widgetVar="matches">
-						<p:ajax event="filter" oncomplete="unBlockDataTable('blockMatches'); updateRowCount();" onstart="blockDataTable('blockMatches');" delay="700" />
-						<p:ajax event="sort" oncomplete="unBlockDataTable('blockMatches');" onstart="blockDataTable('blockMatches');" />
+						<p:remoteCommand name="updateRowCount" update="@form:rowCount" ignoreAutoUpdate="true" />
 
-						<f:facet name="header" style="text-align:left; padding: 0;">
-							<p:inputText id="globalFilter" oninput="PF('matches').filter()" placeholder="#{cmsg['ui.table.filter']}" />
-						</f:facet>
+						<p:dataTable id="matches" lazy="true"
+									 currentPageReportTemplate="#{props.currentPageReport}"
+									 emptyMessage="#{msg['resolve.label.possibleMatchesEmpty']}"
+									 pageLinks="5" paginator="true" paginatorPosition="bottom" paginatorTemplate="#{props.paginatorTemplate}"
+									 reflow="true" rowExpandMode="single"
+									 rowKey="#{_match.linkId}" rows="5" rowsPerPageTemplate="5,10,20" rowsPerPageLabel="#{cmsg['ui.table.pageSize']}"
+									 selection="#{resolveController.selectedPossibleMatch}" selectionMode="single"
+									 styleClass="possible-matches"
+									 value="#{resolveController.possibleMatchDTOLazyModel}"
+									 var="_match" widgetVar="matches">
+							<p:ajax event="filter" oncomplete="unBlockDataTable('blockMatches'); updateRowCount();" onstart="blockDataTable('blockMatches');" delay="700" />
+							<p:ajax event="sort" oncomplete="unBlockDataTable('blockMatches');" onstart="blockDataTable('blockMatches');" />
 
-						<p:column headerText="#{msg['resolve.label.creationDate']}" style="min-width: 178px;" styleClass="no-identity">
-							<h:outputText value="#{_match.possibleMatchCreated}" converter="datetime" />
-						</p:column>
-						<p:column style="display: none;">
-							<p:rowToggler />
-						</p:column>
-						<p:column styleClass="spacer s" />
+							<f:facet name="header" style="text-align:left; padding: 0;">
+								<p:inputText id="globalFilter" oninput="PF('matches').filter()" placeholder="#{cmsg['ui.table.filter']}" />
+							</f:facet>
 
-						<p:column headerText="#{msg['common.person.firstName']}" width="24%" style="min-width: 80px;" styleClass="left">
-							<h:outputText value="#{_match.matchingMPIIdentities.toArray()[0].identity.firstName}" />
-						</p:column>
-						<p:column headerText="#{msg['common.person.lastName']}" width="24%" style="min-width: 80px;" styleClass="left">
-							<h:outputText value="#{_match.matchingMPIIdentities.toArray()[0].identity.lastName}" />
-						</p:column>
-						<p:column headerText="#{msg['common.person.birthDate']}" style="min-width: 80px;" styleClass="left">
-							<h:outputText value="#{_match.matchingMPIIdentities.toArray()[0].identity.birthDate}" converter="date" />
-						</p:column>
-						<p:column styleClass="spacer s" />
+							<p:column headerText="#{msg['resolve.label.creationDate']}" style="min-width: 203px;" styleClass="no-identity">
+								<h:outputText value="#{_match.possibleMatchCreated}" converter="datetime" />
+							</p:column>
+							<p:column style="display: none;">
+								<p:rowToggler />
+							</p:column>
+							<p:column styleClass="spacer s" />
 
-						<p:column headerText="#{msg['common.person.firstName']}" width="26%" style="min-width: 80px;" styleClass="right">
-							<h:outputText value="#{_match.matchingMPIIdentities.toArray()[1].identity.firstName}" />
-						</p:column>
-						<p:column headerText="#{msg['common.person.lastName']}" width="26%" style="min-width: 80px;" styleClass="right">
-							<h:outputText value="#{_match.matchingMPIIdentities.toArray()[1].identity.lastName}" />
-						</p:column>
-						<p:column headerText="#{msg['common.person.birthDate']}" style="min-width: 80px;" styleClass="right">
-							<h:outputText value="#{_match.matchingMPIIdentities.toArray()[1].identity.birthDate}" converter="date" />
-						</p:column>
+							<p:column headerText="#{msg['common.person.firstName']}" width="24%" style="min-width: 80px;" styleClass="left">
+								<h:outputText value="#{_match.matchingMPIIdentities.toArray()[0].identity.firstName}" />
+							</p:column>
+							<p:column headerText="#{msg['common.person.lastName']}" width="24%" style="min-width: 80px;" styleClass="left">
+								<h:outputText value="#{_match.matchingMPIIdentities.toArray()[0].identity.lastName}" />
+							</p:column>
+							<p:column headerText="#{msg['common.person.birthDate']}" style="min-width: 85px;" styleClass="left">
+								<h:outputText value="#{_match.matchingMPIIdentities.toArray()[0].identity.birthDate}" converter="date" />
+							</p:column>
+							<p:column headerText="#{msg['common.person.MPI']}" width="120">
+								<h:outputText value="#{_match.matchingMPIIdentities.toArray()[0].mpiId.value}" />
+							</p:column>
+							<p:column styleClass="spacer s" />
 
-						<p:rowExpansion>
-							<h:panelGroup layout="block" styleClass="expansion">
-								<div class="ui-g" style="margin:0">
-									<div class="ui-g-12 ui-md-4 ui-lg-2 label" style="font-weight: bold; position: relative; top: 7px;">#{msg['resolve.action']}</div>
-									<div class="ui-g-12 ui-md-8 ui-lg-10 left" style="text-align: center; margin-left: -9px;">
-										<p:commandButton value="#{msg['resolve.button.keep']} 1"
-														 actionListener="#{resolveController.setAssignTargetId(_match.matchingMPIIdentities.toArray()[0].identity.identityId, 1)}"
-														 update=":reason_dialog" process="@this"
-														 oncomplete="PF('reason_dialog').show();" icon="mdi mdi-call-merge flip-h" />
-										<p:commandButton actionListener="#{resolveController.setAction('SPLIT')}"
-														 icon="mdi mdi-call-split"
-														 oncomplete="PF('reason_dialog').show();" process="@this"
-														 styleClass="darkgrey" update="reason_dialog"
-														 value="#{msg['resolve.button.split']}" />
-										<p:commandButton value="#{msg['resolve.button.keep']} 2"
-														 actionListener="#{resolveController.setAssignTargetId(_match.matchingMPIIdentities.toArray()[1].identity.identityId, 2)}"
-														 update=":reason_dialog" process="@this"
-														 oncomplete="PF('reason_dialog').show();" icon="mdi mdi-call-merge" iconPos="right" />
+							<p:column headerText="#{msg['common.person.firstName']}" width="26%" style="min-width: 80px;" styleClass="right">
+								<h:outputText value="#{_match.matchingMPIIdentities.toArray()[1].identity.firstName}" />
+							</p:column>
+							<p:column headerText="#{msg['common.person.lastName']}" width="26%" style="min-width: 80px;" styleClass="right">
+								<h:outputText value="#{_match.matchingMPIIdentities.toArray()[1].identity.lastName}" />
+							</p:column>
+							<p:column headerText="#{msg['common.person.birthDate']}" style="min-width: 85px;" styleClass="right">
+								<h:outputText value="#{_match.matchingMPIIdentities.toArray()[1].identity.birthDate}" converter="date" />
+							</p:column>
+							<p:column headerText="#{msg['common.person.MPI']}" width="120">
+								<h:outputText value="#{_match.matchingMPIIdentities.toArray()[1].mpiId.value}" />
+							</p:column>
+
+							<p:rowExpansion rendered="#{not empty resolveController.selectedPossibleMatch}">
+								<h:panelGroup layout="block" styleClass="expansion">
+									<div class="ui-g" style="margin:0">
+										<div class="ui-g-12 ui-md-4 ui-lg-2 label" style="font-weight: bold;">#{msg['resolve.action']}</div>
+										<div class="ui-g-12 ui-md-8 ui-lg-10 left ui-panel bg-alt"
+											 style="margin:-10px 0 10px -10px; padding: 10px; display: flex; justify-content: space-between;">
+											<p:commandButton value="#{msg['resolve.button.keep']} 1"
+															 actionListener="#{resolveController.setAssignTargetId(_match.matchingMPIIdentities.toArray()[0].identity.identityId, 1)}"
+															 update=":reason_dialog" process="@this"
+															 oncomplete="PF('reason_dialog').show();" icon="mdi mdi-call-merge flip-h" />
+											<div>
+												<p:commandButton actionListener="#{resolveController.setAction('SPLIT')}"
+																 icon="mdi mdi-call-split"
+																 oncomplete="PF('reason_dialog').show();" process="@this"
+																 styleClass="darkgrey" update="reason_dialog"
+																 value="#{msg['resolve.button.split']}" />
+												<p:commandButton value="#{msg['resolve.button.prioritize.POSTPONED']}"
+																 actionListener="#{resolveController.onPrioritize('POSTPONED')}"
+																 update="@form" process="@this"
+																 oncomplete="updateRowCount(); rowExpansion('matches');"
+																 rendered="#{!resolveController.showPostponed}"
+																 styleClass="secondary darkgrey"
+																 icon="mdi mdi-archive-plus" />
+												<p:commandButton value="#{msg['resolve.button.prioritize.OPEN']}"
+																 actionListener="#{resolveController.onPrioritize('OPEN')}"
+																 update="@form" process="@this"
+																 oncomplete="updateRowCount(); rowExpansion('matches');"
+																 rendered="#{resolveController.showPostponed}"
+																 styleClass="secondary darkgrey"
+																 icon="mdi mdi-archive-remove" />
+											</div>
+											<p:commandButton value="#{msg['resolve.button.keep']} 2"
+															 actionListener="#{resolveController.setAssignTargetId(_match.matchingMPIIdentities.toArray()[1].identity.identityId, 2)}"
+															 update=":reason_dialog" process="@this"
+															 oncomplete="PF('reason_dialog').show();" icon="mdi mdi-call-merge" iconPos="right" />
+										</div>
 									</div>
-								</div>
-								<div class="ui-g possible-match" style="margin:0">
-									<components:person_info i1="#{_match.matchingMPIIdentities.toArray()[0].identity}"
-															i2="#{_match.matchingMPIIdentities.toArray()[1].identity}"
-															mpi1="#{_match.matchingMPIIdentities.toArray()[0].mpiId.value}"
-															mpi2="#{_match.matchingMPIIdentities.toArray()[1].mpiId.value}" />
-								</div>
-							</h:panelGroup>
-						</p:rowExpansion>
-					</p:dataTable>
+									<div class="ui-g possible-match" style="margin:0">
+										<idat-display:person_info i1="#{_match.matchingMPIIdentities.toArray()[0].identity}"
+																i2="#{_match.matchingMPIIdentities.toArray()[1].identity}"
+																mpi1="#{_match.matchingMPIIdentities.toArray()[0].mpiId.value}"
+																mpi2="#{_match.matchingMPIIdentities.toArray()[1].mpiId.value}" />
+									</div>
+								</h:panelGroup>
+							</p:rowExpansion>
+						</p:dataTable>
+						<p:commandButton ajax="false" disabled="#{resolveController.possibleMatchDTOLazyModel.rowCount == 0}" icon="mdi mdi-download" styleClass="secondary" style="float: left"
+										 oncomplete="rowExpansion('matches');"
+										 value="#{msg['resolve.button.download.'.concat(resolveController.showPostponed)]}">
+							<p:fileDownload value="#{resolveController.onDownloadPossibleMatches()}" />
+						</p:commandButton>
+						<p:commandButton actionListener="#{resolveController.onShowPostponed(!resolveController.showPostponed)}"
+										 icon="mdi mdi-#{resolveController.showPostponed ? 'format-list-bulleted-square' : 'archive'}"
+										 oncomplete="updateRowCount(); rowExpansion('matches');"
+										 process="@this" styleClass="secondary" style="float: right"
+										 update="@form" value="#{msg['resolve.button.showPostponed.'.concat(resolveController.showPostponed)]}" />
+						<div style="clear: both"></div>
+					</div>
+				</p:panel>
+				<p:panel style="margin-top: 15px;">
 					<p:commandButton id="newPossibleMatchButton" actionListener="#{resolveController.onNewPossibleMatch}"
 									 icon="mdi mdi-plus" oncomplete="PF('newPossibleMatch').show();"
 									 process="@this" styleClass="secondary"
@@ -248,7 +291,7 @@
 						</c:forEach>
 					</p:panelGrid>
 
-					<ui:fragment rendered="#{domainSelector.selectedDomainConfiguration.useNotifications}">
+					<ui:fragment rendered="#{resolveController.useNotifications}">
 						<p:selectBooleanCheckbox value="#{resolveController.sendMergeNotification}" />
 						<p:outputLabel value=" #{msg['resolve.label.sendMergeNotification']}" />
 						<br />
@@ -269,7 +312,7 @@
 			<p:dialog id="newPossibleMatch" header="#{msg['resolve.label.newPossibleMatch']}" modal="true" widgetVar="newPossibleMatch"
 					  closeOnEscape="true">
 				<h:form>
-					<p:messages escape="false" />
+					<p:messages />
 					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
 						<p:outputLabel for="type" value="#{msg['resolve.label.externalPossibleMatchIdType']}" />
 						<p:selectOneMenu id="type" value="#{resolveController.externalPossibleMatchIdType}">

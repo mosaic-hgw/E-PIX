@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,25 +39,27 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class PossibleMatchHistoryDTO implements Serializable
 {
-	private static final long serialVersionUID = -1717508050127614356L;
+	@Serial
+	private static final long serialVersionUID = -6632460376246033623L;
 	private long id;
 	private long identity1Id;
 	private long identity2Id;
 	private long identityLinkId;
-	private Double threshold;
+	private double threshold;
 	private String algorithm;
 	private Date historyTimestamp;
 	/**
@@ -68,25 +70,32 @@ public class PossibleMatchHistoryDTO implements Serializable
 	private long person2Id;
 	private PossibleMatchSolution solution;
 	private String explanation;
+	private String user;
 
 	public PossibleMatchHistoryDTO()
 	{}
 
-	public PossibleMatchHistoryDTO(long id, long identity1Id, long identity2Id, long identityLinkId, Double threshold, String algorithm,
-			Date historyTimestamp, long updatedIdentityId, long person1Id, long person2Id, PossibleMatchSolution solution, String explanation)
+	public PossibleMatchHistoryDTO(long id, long identity1Id, long identity2Id, long identityLinkId, double threshold, String algorithm, Date historyTimestamp, long updatedIdentityId, long person1Id,
+			long person2Id, PossibleMatchSolution solution, String explanation, String user)
 	{
-		super();
 		this.id = id;
 		this.identity1Id = identity1Id;
 		this.identity2Id = identity2Id;
 		this.threshold = threshold;
 		this.algorithm = algorithm;
-		this.historyTimestamp = new Date(historyTimestamp.getTime());
+		setHistoryTimestamp(historyTimestamp);
 		this.updatedIdentityId = updatedIdentityId;
 		this.person1Id = person1Id;
 		this.person2Id = person2Id;
 		this.solution = solution;
 		this.explanation = explanation;
+		this.user = user;
+	}
+
+	public PossibleMatchHistoryDTO(PossibleMatchHistoryDTO dto)
+	{
+		this(dto.getId(), dto.getIdentity1Id(), dto.getIdentity2Id(), dto.getIdentityLinkId(), dto.getThreshold(), dto.getAlgorithm(), dto.getHistoryTimestamp(), dto.getUpdatedIdentityId(),
+				dto.getPerson1Id(), dto.getPerson2Id(), dto.getSolution(), dto.getExplanation(), dto.getUser());
 	}
 
 	public long getId()
@@ -129,12 +138,12 @@ public class PossibleMatchHistoryDTO implements Serializable
 		this.identityLinkId = identityLinkId;
 	}
 
-	public Double getThreshold()
+	public double getThreshold()
 	{
 		return threshold;
 	}
 
-	public void setThreshold(Double threshold)
+	public void setThreshold(double threshold)
 	{
 		this.threshold = threshold;
 	}
@@ -156,7 +165,7 @@ public class PossibleMatchHistoryDTO implements Serializable
 
 	public void setHistoryTimestamp(Date historyTimestamp)
 	{
-		this.historyTimestamp = historyTimestamp;
+		this.historyTimestamp = historyTimestamp != null ? new Date(historyTimestamp.getTime()) : null;
 	}
 
 	/**
@@ -212,23 +221,36 @@ public class PossibleMatchHistoryDTO implements Serializable
 		this.explanation = explanation;
 	}
 
+	public String getUser()
+	{
+		return user;
+	}
+
+	public void setUser(String user)
+	{
+		this.user = user;
+	}
+
 	@Override
 	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((algorithm == null) ? 0 : algorithm.hashCode());
-		result = prime * result + ((explanation == null) ? 0 : explanation.hashCode());
-		result = prime * result + ((historyTimestamp == null) ? 0 : historyTimestamp.hashCode());
-		result = prime * result + (int) (id ^ (id >>> 32));
-		result = prime * result + (int) (identity1Id ^ (identity1Id >>> 32));
-		result = prime * result + (int) (identity2Id ^ (identity2Id >>> 32));
-		result = prime * result + (int) (identityLinkId ^ (identityLinkId >>> 32));
-		result = prime * result + (int) (person1Id ^ (person1Id >>> 32));
-		result = prime * result + (int) (person2Id ^ (person2Id >>> 32));
-		result = prime * result + ((solution == null) ? 0 : solution.hashCode());
-		result = prime * result + ((threshold == null) ? 0 : threshold.hashCode());
-		result = prime * result + (int) (updatedIdentityId ^ (updatedIdentityId >>> 32));
+		result = prime * result + (algorithm == null ? 0 : algorithm.hashCode());
+		result = prime * result + (explanation == null ? 0 : explanation.hashCode());
+		result = prime * result + (historyTimestamp == null ? 0 : historyTimestamp.hashCode());
+		result = prime * result + (int) (id ^ id >>> 32);
+		result = prime * result + (int) (identity1Id ^ identity1Id >>> 32);
+		result = prime * result + (int) (identity2Id ^ identity2Id >>> 32);
+		result = prime * result + (int) (identityLinkId ^ identityLinkId >>> 32);
+		result = prime * result + (int) (person1Id ^ person1Id >>> 32);
+		result = prime * result + (int) (person2Id ^ person2Id >>> 32);
+		result = prime * result + (solution == null ? 0 : solution.hashCode());
+		long temp;
+		temp = Double.doubleToLongBits(threshold);
+		result = prime * result + (int) (temp ^ temp >>> 32);
+		result = prime * result + (int) (updatedIdentityId ^ updatedIdentityId >>> 32);
+		result = prime * result + (user == null ? 0 : user.hashCode());
 		return result;
 	}
 
@@ -236,65 +258,116 @@ public class PossibleMatchHistoryDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		PossibleMatchHistoryDTO other = (PossibleMatchHistoryDTO) obj;
 		if (algorithm == null)
 		{
 			if (other.algorithm != null)
+			{
 				return false;
+			}
 		}
 		else if (!algorithm.equals(other.algorithm))
+		{
 			return false;
+		}
 		if (explanation == null)
 		{
 			if (other.explanation != null)
+			{
 				return false;
+			}
 		}
 		else if (!explanation.equals(other.explanation))
+		{
 			return false;
+		}
 		if (historyTimestamp == null)
 		{
 			if (other.historyTimestamp != null)
+			{
 				return false;
+			}
 		}
 		else if (!historyTimestamp.equals(other.historyTimestamp))
-			return false;
-		if (id != other.id)
-			return false;
-		if (identity1Id != other.identity1Id)
-			return false;
-		if (identity2Id != other.identity2Id)
-			return false;
-		if (identityLinkId != other.identityLinkId)
-			return false;
-		if (person1Id != other.person1Id)
-			return false;
-		if (person2Id != other.person2Id)
-			return false;
-		if (solution != other.solution)
-			return false;
-		if (threshold == null)
 		{
-			if (other.threshold != null)
-				return false;
+			return false;
 		}
-		else if (!threshold.equals(other.threshold))
+		if (id != other.id)
+		{
 			return false;
+		}
+		if (identity1Id != other.identity1Id)
+		{
+			return false;
+		}
+		if (identity2Id != other.identity2Id)
+		{
+			return false;
+		}
+		if (identityLinkId != other.identityLinkId)
+		{
+			return false;
+		}
+		if (person1Id != other.person1Id)
+		{
+			return false;
+		}
+		if (person2Id != other.person2Id)
+		{
+			return false;
+		}
+		if (solution != other.solution)
+		{
+			return false;
+		}
+		if (Double.doubleToLongBits(threshold) != Double.doubleToLongBits(other.threshold))
+		{
+			return false;
+		}
 		if (updatedIdentityId != other.updatedIdentityId)
+		{
 			return false;
+		}
+		if (user == null)
+		{
+			if (other.user != null)
+			{
+				return false;
+			}
+		}
+		else if (!user.equals(other.user))
+		{
+			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "PossibleMatchHistoryDTO [id=" + id + ", identity1Id=" + identity1Id + ", identity2Id=" + identity2Id + ", identityLinkId="
-				+ identityLinkId + ", threshold=" + threshold + ", algorithm=" + algorithm + ", historyTimestamp=" + historyTimestamp
-				+ ", updatedIdentityId=" + updatedIdentityId + ", person1Id=" + person1Id + ", person2Id=" + person2Id + ", solution=" + solution
-				+ ", explanation=" + explanation + "]";
+		return "PossibleMatchHistoryDTO [id=" + id + ", historyTimestamp=" + historyTimestamp
+				+ ", identity1Id=" + identity1Id
+				+ ", identity2Id=" + identity2Id
+				+ ", identityLinkId=" + identityLinkId
+				+ ", threshold=" + threshold
+				+ ", algorithm=" + algorithm
+				+ ", updatedIdentityId=" + updatedIdentityId
+				+ ", person1Id=" + person1Id
+				+ ", person2Id=" + person2Id
+				+ ", solution=" + solution
+				+ ", explanation=" + explanation
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+				+ "]";
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,6 +40,7 @@ package org.emau.icmvc.ttp.epix.service;
  */
 
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Remote;
 import javax.ejb.Stateless;
@@ -59,6 +60,7 @@ import org.emau.icmvc.ttp.epix.common.model.MPIRequestDTO;
 import org.emau.icmvc.ttp.epix.common.model.MPIResponseDTO;
 import org.emau.icmvc.ttp.epix.common.model.RequestConfig;
 import org.emau.icmvc.ttp.epix.common.model.ResponseEntryDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentifierDeletionResult;
 import org.jboss.ejb3.annotation.TransactionTimeout;
 
 /**
@@ -70,13 +72,11 @@ import org.jboss.ejb3.annotation.TransactionTimeout;
 @Stateless
 public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements EPIXServiceWithNotification
 {
-
 	@Override
 	public ResponseEntryDTO requestMPI(String notificationClientID, String domainName, IdentityInDTO identity, String sourceName, String comment)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("requestMPI without config - use default");
-		return requestMPIInternal(notificationClientID, domainName, identity, sourceName, comment, DEFAULT_REQUEST_CONFIG);
+		return requestMPIInternal(notificationClientID, domainName, identity, sourceName, comment, null);
 	}
 
 	@Override
@@ -84,7 +84,6 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 			String sourceName, String comment, RequestConfig requestConfig)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("requestMPIWithConfig");
 		return requestMPIInternal(notificationClientID, domainName, identity, sourceName, comment, requestConfig);
 	}
 
@@ -101,8 +100,7 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 			String sourceName, boolean force, String comment)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("updatePerson without config - use default");
-		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, DEFAULT_REQUEST_CONFIG);
+		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, null);
 	}
 
 	@Override
@@ -110,7 +108,6 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 			String sourceName, boolean force, String comment, RequestConfig requestConfig)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("updatePersonWithConfig");
 		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, requestConfig);
 	}
 
@@ -167,7 +164,7 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 	public void addLocalIdentifierToMPI(String notificationClientID, String domainName, String mpiId, List<IdentifierDTO> localIds)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		addLocalIdentifierToMPIInternal(notificationClientID, domainName, mpiId, localIds);
+		addLocalIdentifierToActivePersonWithMPIInternal(notificationClientID, domainName, mpiId, localIds);
 	}
 
 	@Override
@@ -178,8 +175,15 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 	}
 
 	@Override
+	public Map<IdentifierDTO, IdentifierDeletionResult> removeLocalIdentifier(String notificationClientID, String domainName, List<IdentifierDTO> localIds)
+			throws InvalidParameterException, MPIException, UnknownObjectException
+	{
+		return removeLocalIdentifierInternal(notificationClientID, domainName, localIds);
+	}
+
+	@Override
 	public void assignIdentity(String notificationClientID, long possibleMatchId, long winningIdentityId, String comment)
-			throws InvalidParameterException, MPIException
+			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		assignIdentityInternal(notificationClientID, possibleMatchId, winningIdentityId, comment);
 	}

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,12 +39,11 @@ package org.emau.icmvc.ttp.deduplication;
  * ###license-information-end###
  */
 
-
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.deduplication.config.model.ComplexTransformation;
 import org.emau.icmvc.ttp.deduplication.config.model.PreprocessingConfig;
 import org.emau.icmvc.ttp.deduplication.config.model.PreprocessingField;
@@ -57,10 +56,10 @@ import org.emau.icmvc.ttp.epix.persistence.model.IdentityPreprocessed;
 import org.emau.icmvc.ttp.utils.ReflectionUtil;
 
 /**
- * 
+ *
  * @author Christian Schack, geidell
  * @since 23.09.2011
- * 
+ *
  */
 public class PreprocessingStrategy
 {
@@ -194,7 +193,7 @@ public class PreprocessingStrategy
 		{
 			String passAlphabet = transformationConfig.getPassAlphabet();
 			String replaceChar = transformationConfig.getReplaceCharacter();
-			String replace = (replaceChar.length() > 0) ? Character.toString(replaceChar.charAt(0)) : replaceChar;
+			String replace = replaceChar.length() > 0 ? Character.toString(replaceChar.charAt(0)) : replaceChar;
 
 			String propertyValue = (String) ReflectionUtil.getProperty(processable, propertyName);
 
@@ -213,7 +212,9 @@ public class PreprocessingStrategy
 							--idx;
 						}
 						else
+						{
 							sb.setCharAt(idx, replace.charAt(0));
+						}
 					}
 					++idx;
 				}

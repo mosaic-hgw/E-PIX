@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -45,57 +45,68 @@ import java.util.List;
 
 public class DeduplicationDTO implements Serializable
 {
-    private static final long serialVersionUID = 8127303336851324589L;
+	private static final long serialVersionUID = -5227949714576210262L;
+	private final List<ReasonDTO> reasons = new ArrayList<>();
 
-    private List<ReasonDTO> reasons;
+	public DeduplicationDTO()
+	{}
 
-    public DeduplicationDTO()
-    {
-        reasons = new ArrayList<>();
-    }
+	public DeduplicationDTO(List<ReasonDTO> reasons)
+	{
+		setReasons(reasons);
+	}
 
-    public DeduplicationDTO(List<ReasonDTO> reasons)
-    {
-        super();
-        this.reasons = reasons;
-    }
+	public DeduplicationDTO(DeduplicationDTO dto)
+	{
+		this(dto.getReasons());
+	}
 
-    public List<ReasonDTO> getReasons()
-    {
-        return reasons;
-    }
+	public List<ReasonDTO> getReasons()
+	{
+		return reasons;
+	}
 
-    public void setReasons(List<ReasonDTO> reasons)
-    {
-        this.reasons = reasons;
-    }
+	public void setReasons(List<ReasonDTO> reasons)
+	{
+		this.reasons.clear();
+		if (reasons != null)
+		{
+			for (ReasonDTO reasonDTO : reasons)
+			{
+				this.reasons.add(new ReasonDTO(reasonDTO));
+			}
+		}
+	}
 
-    @Override public boolean equals(Object obj)
-    {
-        if (this == obj)
-        {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass())
-        {
-            return false;
-        }
-        DeduplicationDTO other = (DeduplicationDTO) obj;
-        return reasons.equals(other.reasons);
-    }
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (this == obj)
+		{
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass())
+		{
+			return false;
+		}
+		DeduplicationDTO other = (DeduplicationDTO) obj;
+		return reasons.equals(other.reasons);
+	}
 
-    @Override public int hashCode()
-    {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + reasons.hashCode();
-        return result;
-    }
+	@Override
+	public int hashCode()
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + reasons.hashCode();
+		return result;
+	}
 
-    @Override public String toString()
-    {
-        return "DeduplicationDTO [" +
-                "reasons=" + reasons +
-                ']';
-    }
+	@Override
+	public String toString()
+	{
+		return "DeduplicationDTO [" +
+				"reasons=" + reasons +
+				']';
+	}
 }

@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+		"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:composite="http://java.sun.com/jsf/composite"
+>
+
+<!-- INTERFACE -->
+<composite:interface>
+	<composite:attribute name="identity" type="org.emau.icmvc.ttp.epix.common.model.IdentityOutBaseDTO" required="true" />
+	<composite:attribute name="styleTitle" type="java.lang.String" required="false" />
+</composite:interface>
+
+<!-- IMPLEMENTATION -->
+<composite:implementation>
+	<h:outputText value="#{cc.attrs.identity.degree} #{cc.attrs.identity.firstName} #{cc.attrs.identity.lastName}" style="#{cc.attrs.styleTitle}" />
+	<br />
+	<!-- gender, age-->
+	<h:outputText value="#{msg['common.person.gender.'.concat(cc.attrs.identity.gender.name())] }"
+				  rendered="#{not empty cc.attrs.identity.gender}" />
+	<h:outputText value=", #{personController.getAge(cc.attrs.identity)} #{msg['page.person.general.years']}" rendered="#{not empty cc.attrs.identity.birthDate}" />
+	<br />
+
+	<!-- birth -->
+	<h:outputText value="#{msg['page.person.general.born']} "
+				  rendered="#{not empty cc.attrs.identity.birthDate or not empty cc.attrs.identity.birthPlace}" />
+	<h:outputText value="#{cc.attrs.identity.birthDate}" converter="date" />
+	<h:outputText value=" #{msg['page.person.general.in']} "
+				  rendered="#{not empty cc.attrs.identity.birthPlace}" />
+	<h:outputText value="#{cc.attrs.identity.birthPlace}" />
+	<br />
+
+	<!-- death -->
+	<h:outputText value="#{msg['page.person.general.deceased']} "
+				  rendered="#{not empty cc.attrs.identity.dateOfDeath}" />
+	<h:outputText value="#{cc.attrs.identity.dateOfDeath}" converter="date" />
+</composite:implementation>
+
+</html>

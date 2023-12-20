@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,19 +39,21 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.emau.icmvc.ttp.epix.common.model.config.PreprocessingFieldDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -67,6 +69,17 @@ public class PreprocessingField
 	private final List<ComplexTransformation> complexTransformationTypes = new ArrayList<>();
 	@XmlElement(name = "simple-filter-type", required = false)
 	private final List<SimpleFilter> simpleFilterTypes = new ArrayList<>();
+
+	public PreprocessingField()
+	{}
+
+	public PreprocessingField(PreprocessingFieldDTO fieldDTO)
+	{
+		fieldName = fieldDTO.getFieldName();
+		setSimpleTransformationTypesFromDTO(fieldDTO.getSimpleTransformationTypes());
+		setComplexTransformationTypeFromDTO(fieldDTO.getComplexTransformationClasses());
+		setSimpleFilterTypesFromDTO(fieldDTO.getSimpleFilterTypes());
+	}
 
 	public FieldName getFieldName()
 	{
@@ -89,6 +102,15 @@ public class PreprocessingField
 		this.simpleTransformationTypes.addAll(simpleTransformationTypes);
 	}
 
+	private void setSimpleTransformationTypesFromDTO(Map<String, String> simpleTransformationTypes)
+	{
+		this.simpleTransformationTypes.clear();
+		for (Entry<String, String> entry : simpleTransformationTypes.entrySet())
+		{
+			this.simpleTransformationTypes.add(new SimpleTransformation(entry.getKey(), entry.getValue()));
+		}
+	}
+
 	public List<ComplexTransformation> getComplexTransformationTypes()
 	{
 		return complexTransformationTypes;
@@ -98,6 +120,15 @@ public class PreprocessingField
 	{
 		this.complexTransformationTypes.clear();
 		this.complexTransformationTypes.addAll(complexTransformationTypes);
+	}
+
+	private void setComplexTransformationTypeFromDTO(List<String> complexTransformationClasses)
+	{
+		this.complexTransformationTypes.clear();
+		for (String entry : complexTransformationClasses)
+		{
+			this.complexTransformationTypes.add(new ComplexTransformation(entry));
+		}
 	}
 
 	public List<SimpleFilter> getSimpleFilterTypes()
@@ -111,14 +142,23 @@ public class PreprocessingField
 		this.simpleFilterTypes.addAll(simpleFilterTypes);
 	}
 
+	private void setSimpleFilterTypesFromDTO(Map<String, Character> simpleFilterTypes)
+	{
+		this.simpleFilterTypes.clear();
+		for (Entry<String, Character> entry : simpleFilterTypes.entrySet())
+		{
+			this.simpleFilterTypes.add(new SimpleFilter(entry.getKey(), entry.getValue()));
+		}
+	}
+
 	@Override
 	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((complexTransformationTypes == null) ? 0 : complexTransformationTypes.hashCode());
-		result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
-		result = prime * result + ((simpleTransformationTypes == null) ? 0 : simpleTransformationTypes.hashCode());
+		result = prime * result + (complexTransformationTypes == null ? 0 : complexTransformationTypes.hashCode());
+		result = prime * result + (fieldName == null ? 0 : fieldName.hashCode());
+		result = prime * result + (simpleTransformationTypes == null ? 0 : simpleTransformationTypes.hashCode());
 		result = prime * result + simpleFilterTypes.hashCode();
 		return result;
 	}
@@ -127,33 +167,51 @@ public class PreprocessingField
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		PreprocessingField other = (PreprocessingField) obj;
 		if (complexTransformationTypes == null)
 		{
 			if (other.complexTransformationTypes != null)
+			{
 				return false;
+			}
 		}
 		else if (!complexTransformationTypes.equals(other.complexTransformationTypes))
+		{
 			return false;
+		}
 		if (fieldName == null)
 		{
 			if (other.fieldName != null)
+			{
 				return false;
+			}
 		}
 		else if (!fieldName.equals(other.fieldName))
+		{
 			return false;
+		}
 		if (simpleTransformationTypes == null)
 		{
 			if (other.simpleTransformationTypes != null)
+			{
 				return false;
+			}
 		}
 		else if (!simpleTransformationTypes.equals(other.simpleTransformationTypes))
+		{
 			return false;
+		}
 		return simpleFilterTypes.equals(other.simpleFilterTypes);
 	}
 

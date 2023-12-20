@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
+import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
 import org.icmvc.ttp.web.controller.LanguageBean;
 import org.icmvc.ttp.web.model.WebFile;
@@ -69,12 +70,15 @@ public class EpixWebFile extends WebFile
 
 	// Stores the position of each column type (or local identifier domain) in the uploaded file (for performance improvements)
 	private Map<String, Integer> columnTypeIndex = new HashMap<>();
+	
+	private List<IdentifierDomainDTO> identifierDomains;
 
-	public EpixWebFile(LanguageBean languageBean, ConfigurationContainer domainConfiguration)
+	public EpixWebFile(LanguageBean languageBean, ConfigurationContainer domainConfiguration, List<IdentifierDomainDTO> identifierDomains)
 	{
 		super("E-PIX");
 		this.languageBean = languageBean;
 		this.domainConfiguration = domainConfiguration;
+		this.identifierDomains = identifierDomains;
 	}
 
 	@Override
@@ -160,22 +164,23 @@ public class EpixWebFile extends WebFile
 	private void generateColumnTypeMapping()
 	{
 		columnTypeMapping.clear();
+		String type;
 		for (String column : getColumns())
 		{
 			// Try to detect by matching the enum name
 			// Normalize the given column text
-			WebPersonField type = Arrays.stream(WebPersonField.values())
-					.filter(t -> t.name().equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, ""))).findAny().orElse(WebPersonField.unkown);
+			type = Arrays.stream(WebPersonField.values())
+					.filter(t -> t.name().equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, ""))).findAny().orElse(WebPersonField.unkown).name();
 
 			// Try to detect by matching the custom field value
 			// Normalize the given column text and the configured field label
-			if (WebPersonField.unkown.equals(type))
+			if (WebPersonField.unkown.name().equals(type))
 			{
 				Map.Entry<String, String> field = domainConfiguration.getValueFieldMapping().entrySet().stream()
 						.filter(e -> e.getValue().replaceAll(NORMALIZE_PATTERN, "").equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, ""))).findAny().orElse(null);
 				if (field != null)
 				{
-					type = WebPersonField.valueOf(field.getKey());
+					type = WebPersonField.valueOf(field.getKey()).name();
 				}
 			}
 
@@ -183,16 +188,28 @@ public class EpixWebFile extends WebFile
 			// Normalize the given column text and the translated column type
 			for (String language : languageBean.getSupportedLanguages())
 			{
-				if (WebPersonField.unkown.equals(type))
+				if (WebPersonField.unkown.name().equals(type))
 				{
 					type = Arrays.stream(WebPersonField.values())
 							.filter(t -> getBundle(language).getString("common.person." + t.name()).replaceAll(NORMALIZE_PATTERN, "").equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, "")))
 							.findAny()
-							.orElse(WebPersonField.unkown);
+							.orElse(WebPersonField.unkown).name();
 				}
 			}
-
-			columnTypeMapping.put(column, type.name());
+			
+			// Try to detect by matching the identifier domain name or label
+			if (WebPersonField.unkown.name().equals(type))
+			{
+				IdentifierDomainDTO identifierDomain = identifierDomains.stream()
+						.filter(d -> d.getName().equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, "")) || d.getLabel().equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, "")))
+						.findAny().orElse(null);
+				if (identifierDomain != null)
+				{
+					type = "localId." + identifierDomain.getName();
+				}
+			}
+			
+			columnTypeMapping.put(column, type);
 		}
 	}
 

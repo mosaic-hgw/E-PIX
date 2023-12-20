@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -55,8 +55,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityField;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 import org.emau.icmvc.ttp.epix.common.utils.PaginationConfig;
 import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
+import org.emau.icmvc.ttp.epix.frontend.util.HistoryHelper;
 import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
 import org.emau.icmvc.ttp.epix.service.EPIXService;
 import org.primefaces.model.FilterMeta;
@@ -69,6 +71,7 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 	protected final transient Logger logger = LoggerFactory.getLogger(getClass());
 	protected final transient EPIXService service;
 	protected final transient EPIXManagementService management;
+	protected final transient HistoryHelper historyHelper;
 	protected final transient DomainSelector domainSelector;
 	protected final transient List<T> resultList;
 	protected final transient Map<Long, T> resultMap;
@@ -78,21 +81,23 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 	private transient long lastAccess;
 	private transient String lastDomain;
 	private transient PaginationConfig lastConfig;
+	private transient int lastRowCount; // filtered but unpaged
 
 	public AbstractLazyDataModel(EPIXService service, DomainSelector domainSelector, String birthDateFormat, String creationTimeFormat)
 	{
-		this(service, null, domainSelector, birthDateFormat, creationTimeFormat);
+		this(service, null, null, domainSelector, birthDateFormat, creationTimeFormat);
 	}
 
-	public AbstractLazyDataModel(EPIXManagementService management, DomainSelector domainSelector, String birthDateFormat, String creationTimeFormat)
+	public AbstractLazyDataModel(EPIXManagementService management, HistoryHelper historyHelper, DomainSelector domainSelector, String birthDateFormat, String creationTimeFormat)
 	{
-		this(null, management, domainSelector, birthDateFormat, creationTimeFormat);
+		this(null, management, historyHelper, domainSelector, birthDateFormat, creationTimeFormat);
 	}
 
-	public AbstractLazyDataModel(EPIXService service, EPIXManagementService management, DomainSelector domainSelector, String birthDateFormat, String creationTimeFormat)
+	public AbstractLazyDataModel(EPIXService service, EPIXManagementService management, HistoryHelper historyHelper, DomainSelector domainSelector, String birthDateFormat, String creationTimeFormat)
 	{
 		this.service = service;
 		this.management = management;
+		this.historyHelper = historyHelper;
 		this.domainSelector = domainSelector;
 		this.resultList = new ArrayList<>();
 		this.resultMap = new LinkedHashMap<>();
@@ -133,7 +138,7 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 			entities.forEach(e -> resultMap.put(toId(e), e));
 		}
 
-		logger.debug("load: got {} (of overall {}) filtered entities for the current page (IDs={})", resultMap.size(), getRowCount(), resultMap.keySet());
+		logger.debug("load: got {} (of overall {}) filtered entities for the current page (IDs={})", resultMap.size(), lastRowCount, resultMap.keySet());
 	}
 
 	/**
@@ -290,8 +295,8 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 	}
 
 	/**
-	 * Returns the available gender strings from the resource bundle
-	 * (prefixed with "common.person.gender.") as {@link Gender} fields.
+	 * Returns the available localized gender strings from the resource bundle
+	 * (from the keys prefixed with "common.person.gender.") as {@link Gender} fields.
 	 * @return the available gender strings from the resource bundle
 	 */
 	protected Map<Gender, String> getGenderStrings()
@@ -299,6 +304,18 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 		ResourceBundle bundle = getBundle();
 		return Arrays.stream(Gender.values()).collect(Collectors.toMap(
 				g -> g, g -> bundle.getString("common.person.gender." + g.name())));
+	}
+
+	/**
+	 * Returns the available localized vital status strings from the resource bundle
+	 * (from the keys prefixed with "common.person.vitalStatus.") as {@link VitalStatus} fields.
+	 * @return the available vital status strings from the resource bundle
+	 */
+	protected Map<VitalStatus, String> getVitalStatusStrings()
+	{
+		ResourceBundle bundle = getBundle();
+		return Arrays.stream(VitalStatus.values()).collect(Collectors.toMap(
+				g -> g, g -> bundle.getString("common.person.vitalStatus." + g.name())));
 	}
 
 	/**
@@ -314,8 +331,23 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 	 * @param filterBy the filter map
 	 * @return the number of items in the database wrt. the filter configuration or any arbitrary value, when {@link #setRowCount(int)} is used correctly
 	 */
-	//@Override // TODO(PF11): uncomment after updating to PF11
+	@Override
 	public int count(Map<String, FilterMeta> filterBy) {
 		return 0;
+	}
+
+	@Override
+	public void setRowCount(int rowCount)
+	{
+		lastRowCount = rowCount;
+		super.setRowCount(rowCount);
+	}
+
+	/**
+	 * {@return the row count as set with the previous call to {@link #setRowCount(int)}}
+	 */
+	public final int getLastRowCount()
+	{
+		return lastRowCount;
 	}
 }

@@ -2,7 +2,7 @@
   ###license-information-start###
   gPAS - a Generic Pseudonym Administration Service
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -74,38 +74,43 @@
 				</p:panel>
 
 				<ui:fragment rendered="#{dashboardController.selectedDomain != null and dashboardController.init}">
-					<div class="p-grid">
-						<div class="p-col-12 section-heading">
-							<h:outputText value="#{msg['page.dashboard.allDomains']} (#{managementController.domain.all.size()})" />
+					<div class="grid">
+						<div class="col-12 section-heading">
+							<h:outputText value="#{msg['page.dashboard.domain.statsFor']} " />
+							<p:selectOneButton value="#{dashboardController.domain}">
+								<f:selectItem itemLabel="#{dashboardController.selectedDomain.label}" itemValue="CURRENT"/>
+								<f:selectItem itemLabel="#{msg['page.dashboard.domain.ALL']}" itemValue="ALL"/>
+								<p:ajax process="@this" partialSubmit="true" update="main" />
+							</p:selectOneButton>
 						</div>
 
 						<!-- All domains -->
-						<div class="p-col-12 p-md-8">
+						<div class="col-12 md:col-8">
 							<p:panel>
-								<div class="overview p-d-flex p-flex-wrap">
-									<p:repeat value="#{dashboardController.latestStatsAllDomainsLabels.entrySet()}" var="_stat" varStatus="_i">
+								<div class="overview flex flex-wrap">
+									<p:repeat value="#{dashboardController.latestStatsLabels.entrySet()}" var="_stat" varStatus="_i">
 										<div class="box">
 											<div>
-												<h:outputText styleClass="title p-d-block p-text-center" value="#{dashboardController.latestStats.mappedStatValue.get(_stat.key)}" />
-												<h:outputText styleClass="details p-d-block p-text-center" style="display: table-caption !important;" value="#{_stat.value}" />
+												<h:outputText styleClass="title block text-center" value="#{dashboardController.latestStats.mappedStatValue.get(_stat.key)}" />
+												<h:outputText styleClass="details block text-center" style="display: table-caption !important;" value="#{_stat.value}" />
 											</div>
 											<p:divider layout="vertical" />
 										</div>
 									</p:repeat>
 									<div class="box">
 										<div>
-											<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary title p-d-block p-text-center" value="#{cmsg['page.dashboard.export.current']}">
+											<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary title block text-center" value="#{cmsg['page.dashboard.export.current']}">
 												<p:fileDownload
-														value="#{dashboardController.latestStatsAllDomains}" />
+														value="#{dashboardController.latestStatsDownload}" />
 											</p:commandButton>
 										</div>
 										<p:divider layout="vertical" />
 									</div>
 									<div class="box">
 										<div>
-											<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary title p-d-block p-text-center" value="#{cmsg['page.dashboard.export.history']}">
+											<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary title block text-center" value="#{cmsg['page.dashboard.export.history']}">
 												<p:fileDownload
-														value="#{dashboardController.historyStatsAllDomains}" />
+														value="#{dashboardController.historyStatsDownload}" />
 											</p:commandButton>
 										</div>
 									</div>
@@ -114,27 +119,27 @@
 						</div>
 
 						<!-- Meta -->
-						<div class="p-col-12 p-md-4">
+						<div class="col-12 md:col-4">
 							<p:panel>
-								<div class="overview p-d-flex p-flex-wrap" style="min-height: 98px;">
+								<div class="overview flex flex-wrap" style="min-height: 98px;">
 									<div class="box">
 										<div>
-											<h:outputText styleClass="title p-d-block p-text-center" value="#{webUtil.showTimeInAutoFormat(dashboardController.latestStatsCalculationTime)}" />
-											<h:outputText styleClass="details p-d-block p-text-center" value="#{cmsg['page.dashboard.meta.calculation']}" />
+											<h:outputText styleClass="title block text-center" value="#{webUtil.showTimeInAutoFormat(dashboardController.latestStatsCalculationTime)}" />
+											<h:outputText styleClass="details block text-center" value="#{cmsg['page.dashboard.meta.calculation']}" />
 										</div>
 										<p:divider layout="vertical" />
 									</div>
 									<div class="box">
 										<div>
-											<h:outputText styleClass="toptitle p-d-block p-text-center" value="#{dashboardController.latestStatsDate}" />
-											<h:outputText styleClass="title p-d-block p-text-center" value="#{dashboardController.latestStatsTime}" />
-											<h:outputText styleClass="details p-d-block p-text-center" value="#{cmsg['page.dashboard.meta.latestDateTime']}" />
+											<h:outputText styleClass="toptitle block text-center" value="#{dashboardController.latestStatsDate}" />
+											<h:outputText styleClass="title block text-center" value="#{dashboardController.latestStatsTime}" />
+											<h:outputText styleClass="details block text-center" value="#{cmsg['page.dashboard.meta.latestDateTime']}" />
 										</div>
 										<p:divider layout="vertical" />
 									</div>
 									<div class="box">
 										<div>
-											<p:commandButton actionListener="#{dashboardController.updateStats}" icon="mdi mdi-refresh" styleClass="secondary title p-d-block p-text-center"
+											<p:commandButton actionListener="#{dashboardController.updateStats}" icon="mdi mdi-refresh" styleClass="secondary title block text-center"
 															 update="@form"
 															 value="#{cmsg['ui.button.refresh']}" onclick="PF('loading').show();" oncomplete="PF('loading').hide();" />
 										</div>
@@ -143,47 +148,9 @@
 							</p:panel>
 						</div>
 
-						<div class="p-col-12 section-heading">
-							<h:outputText value="#{msg['model.domain']} #{dashboardController.selectedDomain.label}" />
-						</div>
-
-						<!-- Current domain -->
-						<div class="p-col-12">
-							<p:panel>
-								<div class="overview p-d-flex p-flex-wrap">
-									<p:repeat value="#{dashboardController.latestStatsActiveDomainLabels.entrySet()}" var="_stat" varStatus="_i">
-										<div class="box">
-											<div>
-												<h:outputText styleClass="title p-d-block p-text-center" value="#{dashboardController.latestStats.mappedStatValue.get(_stat.key)}" />
-												<h:outputText styleClass="details p-d-block p-text-center" style="display: table-caption !important;" value="#{_stat.value}" />
-											</div>
-											<p:divider layout="vertical" />
-										</div>
-									</p:repeat>
-									<div class="box">
-										<div>
-											<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary title p-d-block p-text-center" value="#{cmsg['page.dashboard.export.current']}">
-												<p:fileDownload
-														value="#{dashboardController.latestStatsActiveDomain}" />
-											</p:commandButton>
-										</div>
-										<p:divider layout="vertical" />
-									</div>
-									<div class="box">
-										<div>
-											<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary title p-d-block p-text-center" value="#{cmsg['page.dashboard.export.history']}">
-												<p:fileDownload
-														value="#{dashboardController.historyStatsActiveDomain}" />
-											</p:commandButton>
-										</div>
-									</div>
-								</div>
-							</p:panel>
-						</div>
-
 						<!-- Person + Identity History -->
-						<div class="p-col-12 p-xl-6">
-							<p:panel styleClass="flex-full-height">
+						<div class="col-12 xl:col-6">
+							<p:panel styleClass="h-full">
 								<h4>
 									#{msg['page.dashboard.persons.history']}
 								</h4>
@@ -197,8 +164,8 @@
 						</div>
 
 						<!-- Person + Identity Bar Chart -->
-						<div class="p-col-12 p-xl-4">
-							<p:panel styleClass="flex-full-height" id="personsIdentityBarChart">
+						<div class="col-12 xl:col-4">
+							<p:panel styleClass="h-full" id="personsIdentityBarChart">
 								<h4 style="float: left">
 									#{msg['page.dashboard.persons.accumulation']}
 								</h4>
@@ -220,8 +187,8 @@
 						</div>
 
 						<!-- Person + Identity Ratio -->
-						<div class="p-col-12 p-xl-2">
-							<p:panel styleClass="flex-full-height">
+						<div class="col-12 xl:col-2">
+							<p:panel styleClass="h-full">
 								<h4>
 									#{msg['page.dashboard.persons']}
 								</h4>
@@ -245,8 +212,8 @@
 						</div>
 
 						<!-- Matching Current -->
-						<div class="p-col-12 p-xl-6">
-							<p:panel styleClass="flex-full-height">
+						<div class="col-12 xl:col-6">
+							<p:panel styleClass="h-full">
 								<h4>
 									#{msg['page.dashboard.matching']}
 								</h4>
@@ -261,8 +228,8 @@
 						</div>
 
 						<!-- Matching History -->
-						<div class="p-col-12 p-xl-6">
-							<p:panel styleClass="flex-full-height">
+						<div class="col-12 xl:col-6">
+							<p:panel styleClass="h-full">
 								<h4>
 									#{msg['page.dashboard.matching.history']}
 								</h4>
@@ -276,12 +243,12 @@
 						</div>
 
 						<!-- Possible Matches Current -->
-						<div class="p-col-12 p-xl-6">
-							<p:panel styleClass="flex-full-height">
+						<div class="col-12 xl:col-6">
+							<p:panel styleClass="h-full">
 								<h4>
 									#{msg['page.dashboard.possibleMatches']}
 								</h4>
-								<h:outputText value="#{msg['page.dashboard.possibleMatches.hint']}" escape="false" />
+								<h:outputText value="#{msg['page.dashboard.possibleMatches.hint']}" />
 								<p:pieChart model="#{dashboardController.getPossibleMatchesChart(false)}" style="width: 100%; height: 300px; margin-top: 20px;" styleClass="ui-sm-0" />
 								<p:pieChart model="#{dashboardController.getPossibleMatchesChart(true)}" style="width: 100%; height: 300px; margin-top: 20px;"
 											styleClass="ui-sm-block ui-md-0 ui-g-0" />
@@ -293,8 +260,8 @@
 						</div>
 
 						<!-- Possible Matches History -->
-						<div class="p-col-12 p-xl-6">
-							<p:panel styleClass="flex-full-height">
+						<div class="col-12 xl:col-6">
+							<p:panel styleClass="h-full">
 								<h4>
 									#{msg['page.dashboard.possibleMatches.history']}
 								</h4>
@@ -309,6 +276,7 @@
 					</div>
 				</ui:fragment>
 			</h:form>
+			<component:dummy />
 			<!-- ${disclaimer.enable.start}
 			<component:demo_disclaimer/>
 			${disclaimer.enable.end} -->

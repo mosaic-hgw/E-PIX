@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,6 +39,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-end###
  */
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -65,12 +66,14 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
+import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 
 /**
  *
@@ -86,7 +89,8 @@ import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
 		@NamedQuery(name = "IdentityHistory.findByPerson", query = "SELECT ih FROM IdentityHistory ih WHERE ih.person = :person") })
 public class IdentityHistory implements Serializable
 {
-	private static final long serialVersionUID = -6439011370851530330L;
+	@Serial
+	private static final long serialVersionUID = -2430065296798657156L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "identity_history_index")
 	private long id;
@@ -140,6 +144,13 @@ public class IdentityHistory implements Serializable
 	private boolean deactivated;
 	private String comment;
 	private double matchingScore;
+	@Column(name = "vital_status")
+	@Enumerated
+	private VitalStatus vitalStatus;
+	@Column(name = "date_of_death")
+	private Date dateOfDeath;
+	private String user;
+
 	@ManyToMany
 	@JoinTable(name = "identity_history_identifier", joinColumns = {
 			@JoinColumn(name = "identity_history_id", referencedColumnName = "id") }, inverseJoinColumns = {
@@ -160,7 +171,7 @@ public class IdentityHistory implements Serializable
 		historyTimestamp = new Timestamp(System.currentTimeMillis());
 	}
 
-	public IdentityHistory(Identity identity, IdentityHistoryEvent event, String comment, double matchingScore, Timestamp timestamp)
+	public IdentityHistory(Identity identity, IdentityHistoryEvent event, String comment, double matchingScore, Timestamp timestamp, String user)
 	{
 		identityVersion = identity.getVersion();
 		firstName = getValidString(identity.getFirstName());
@@ -200,6 +211,10 @@ public class IdentityHistory implements Serializable
 		this.event = event;
 		this.comment = comment;
 		this.matchingScore = matchingScore;
+
+		vitalStatus = identity.getVitalStatus();
+		dateOfDeath = identity.getDateOfDeath();
+		this.user = user;
 	}
 
 	private String getValidString(String obj)
@@ -587,6 +602,36 @@ public class IdentityHistory implements Serializable
 		this.person = person;
 	}
 
+	public VitalStatus getVitalStatus()
+	{
+		return vitalStatus;
+	}
+
+	public void setVitalStatus(VitalStatus vitalStatus)
+	{
+		this.vitalStatus = vitalStatus;
+	}
+
+	public Date getDateOfDeath()
+	{
+		return dateOfDeath;
+	}
+
+	public void setDateOfDeath(Date dateOfDeath)
+	{
+		this.dateOfDeath = dateOfDeath;
+	}
+
+	public String getUser()
+	{
+		return user;
+	}
+
+	public void setUser(String user)
+	{
+		this.user = user;
+	}
+
 	public IdentityHistoryDTO toDTO()
 	{
 		List<IdentifierDTO> identifierDTOs = new ArrayList<>();
@@ -597,10 +642,10 @@ public class IdentityHistory implements Serializable
 		IdentityInBaseDTO inBase = new IdentityInBaseDTO(firstName, middleName, lastName, prefix, suffix,
 				gender == ' ' || gender == Character.MIN_VALUE ? null : Gender.fromValue(gender), birthDate, identifierDTOs, birthPlace, race, religion, mothersMaidenName, degree,
 				motherTongue, nationality, civilStatus, externalTimestamp == null ? null : new Date(externalTimestamp.getTime()), value1, value2,
-				value3, value4, value5, value6, value7, value8, value9, value10);
+				value3, value4, value5, value6, value7, value8, value9, value10, vitalStatus, dateOfDeath);
 		IdentityOutBaseDTO outBase = new IdentityOutBaseDTO(inBase, identity.getId(), identityVersion, person.getId(), source.toDTO(), deactivated,
 				new Date(identity.getCreateTimestamp().getTime()), new Date(identity.getTimestamp().getTime()));
-		return new IdentityHistoryDTO(outBase, id, new Date(historyTimestamp.getTime()), event, matchingScore, comment);
+		return new IdentityHistoryDTO(outBase, id, new Date(historyTimestamp.getTime()), event, matchingScore, comment, user);
 	}
 
 	@Override
@@ -641,21 +686,30 @@ public class IdentityHistory implements Serializable
 		return "IdentityHistory [id=" + id + ", identityVersion=" + identityVersion + ", forcedReference=" + forcedReference + ", deactivated="
 				+ deactivated + ", comment=" + comment + ", matchingScore=" + matchingScore + ", identifiers="
 				+ (identifiers == null ? "null" : identifiers.stream().map(Object::toString).collect(Collectors.joining(", "))) + ", identityId="
-				+ (identity == null ? "null" : identity.getId()) + ", source=" + source + ", person=" + person + "]";
+				+ (identity == null ? "null" : identity.getId()) + ", source=" + source + ", person=" + person
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+				+ "]";
 	}
 
 	public String toLongString()
 	{
-		return "IdentityHistory [id=" + id + ", identityVersion=" + identityVersion + ", firstName=" + firstName + ", event=" + event
+		return "IdentityHistory [id=" + id + ", historyTimestamp=" + historyTimestamp
+				+ (event != null ? ", event=" + event : "")
+				+ ", identityVersion=" + identityVersion + ", firstName=" + firstName
 				+ ", middleName=" + middleName + ", lastName=" + lastName + ", prefix=" + prefix + ", suffix=" + suffix + ", birthDate=" + birthDate
-				+ ", gender=" + gender + ", externalTimestamp=" + externalTimestamp + ", historyTimestamp=" + historyTimestamp + ", birthPlace="
+				+ ", gender=" + gender + ", externalTimestamp=" + externalTimestamp + ", birthPlace="
 				+ birthPlace + ", race=" + race + ", religion=" + religion + ", mothersMaidenName=" + mothersMaidenName + ", degree=" + degree
 				+ ", motherTongue=" + motherTongue + ", nationality=" + nationality + ", civilStatus=" + civilStatus + ", value1=" + value1
 				+ ", value2=" + value2 + ", value3=" + value3 + ", value4=" + value4 + ", value5=" + value5 + ", value6=" + value6 + ", value7="
-				+ value7 + ", value8=" + value8 + ", value9=" + value9 + ", value10=" + value10 + ", forcedReference=" + forcedReference
-				+ ", deactivated=" + deactivated + ", comment=" + comment + ", matchingScore=" + matchingScore + ", identifiers="
+				+ value7 + ", value8=" + value8 + ", value9=" + value9 + ", value10=" + value10
+				+ (vitalStatus != null ? ", vitalStatus=" + vitalStatus : "")
+				+ (dateOfDeath != null ? ", dateOfDeath=" + dateOfDeath : "")
+				+ ", forcedReference=" + forcedReference
+				+ ", deactivated=" + deactivated + ", matchingScore=" + matchingScore + ", identifiers="
 				+ (identifiers == null ? "null" : identifiers.stream().map(Object::toString).collect(Collectors.joining(", "))) + ", identityId="
 				+ (identity == null ? "null" : identity.getId()) + ", source=" + source + ", personId=" + (person == null ? "null" : person.getId())
+				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
 				+ "]";
 	}
 }

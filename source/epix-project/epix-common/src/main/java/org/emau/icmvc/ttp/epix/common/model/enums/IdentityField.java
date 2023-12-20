@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.enums;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -55,7 +55,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 public enum IdentityField
 {
 	// bei hinzufuegen org.emau.icmvc.ttp.epix.persistence.PaginatedHelper beachten
-	NONE, IDENTITY_ID, PERSON_ID, FIRST_NAME, LAST_NAME, MIDDLE_NAME, PREFIX, SUFFIX, GENDER, BIRTH_DATE, BIRTHPLACE, RACE, RELIGION, MOTHERS_MAIDEN_NAME, DEGREE, MOTHER_TONGUE, NATIONALITY, CIVIL_STATUS, EXTERNAL_DATE, VALUE1, VALUE2, VALUE3, VALUE4, VALUE5, VALUE6, VALUE7, VALUE8, VALUE9, VALUE10, IDENTITY_CREATED, IDENTITY_LAST_EDITED, SOURCE;
+	NONE, IDENTITY_ID, PERSON_ID, FIRST_NAME, LAST_NAME, MIDDLE_NAME, PREFIX, SUFFIX, GENDER, BIRTH_DATE, BIRTHPLACE, RACE, RELIGION, MOTHERS_MAIDEN_NAME, DEGREE, MOTHER_TONGUE, NATIONALITY, CIVIL_STATUS, EXTERNAL_DATE, VALUE1, VALUE2, VALUE3, VALUE4, VALUE5, VALUE6, VALUE7, VALUE8, VALUE9, VALUE10, IDENTITY_CREATED, IDENTITY_LAST_EDITED, SOURCE, VITAL_STATUS, DATE_OF_DEATH;
 
 	public FieldName toFieldName()
 	{

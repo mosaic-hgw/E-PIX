@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,6 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * ###license-information-end###
  */
 
-
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.UUID;
@@ -53,25 +52,33 @@ import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.ICRUDObject;
+import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
 import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
+import org.icmvc.ttp.web.controller.Text;
 
 public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObject<IdentifierDomainDTO>
 {
 	private IdentifierDomainDTO selected;
+	private EpixHelper epixHelper;
 
 	@Override
-	public void init(EPIXManagementService managementService)
+	public void init(EPIXManagementService managementService, EpixHelper epixHelper, Text text)
 	{
 		this.managementService = managementService;
+		this.epixHelper = epixHelper;
+		this.text = text;
+		pageMode = PageMode.READ;
 		reload();
 	}
 
 	@Override
 	public void reload()
 	{
+		epixHelper.resetCachedFilteredIdentifierDomains();
 	}
 
-	@Override public void onShowDetails(IdentifierDomainDTO object)
+	@Override
+	public void onShowDetails(IdentifierDomainDTO object)
 	{
 		selected = object;
 		pageMode = PageMode.READ;
@@ -122,10 +129,14 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 		{
 			try
 			{
-				selected.setName(StringUtils.isEmpty(selected.getName()) ? selected.getLabel().replace(" ", "_") : selected.getName());
-				selected.setOid(StringUtils.isEmpty(selected.getOid()) ? UUID.randomUUID().toString() : selected.getOid());
-				managementService.addIdentifierDomain(selected);
+				// operate on a copy for the case that we stay on the dialog after a warning
+				IdentifierDomainDTO tmp = new IdentifierDomainDTO(selected);
+				tmp.setName(StringUtils.isEmpty(tmp.getName()) ? tmp.getLabel().replace(" ", "_") : tmp.getName());
+				tmp.setOid(StringUtils.isEmpty(tmp.getOid()) ? UUID.randomUUID().toString() : tmp.getOid());
+				managementService.addIdentifierDomain(tmp);
 				logMessage(new MessageFormat(getBundle().getString("domain.message.identifierDomain.add.success")).format(args), Severity.INFO);
+				// on success write back changes on selected (currently unused)
+				selected = new IdentifierDomainDTO(tmp);
 			}
 			catch (DuplicateEntryException e)
 			{
@@ -142,7 +153,6 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 		}
 
 		reload();
-		selected = null;
 	}
 
 	@Override
@@ -151,7 +161,8 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 		selected = null;
 	}
 
-	@Override public boolean isEditable(IdentifierDomainDTO object)
+	@Override
+	public boolean isEditable(IdentifierDomainDTO object)
 	{
 		return true;
 	}
@@ -190,9 +201,15 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 		return managementService.getIdentifierDomains();
 	}
 
+	@Override
 	public boolean isNew()
 	{
 		if (selected == null || selected.getName() == null)
+		{
+			return true;
+		}
+
+		if (pageMode == PageMode.NEW)
 		{
 			return true;
 		}
@@ -207,12 +224,14 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 		return true;
 	}
 
-	@Override public IdentifierDomainDTO getSelected()
+	@Override
+	public IdentifierDomainDTO getSelected()
 	{
 		return selected;
 	}
 
-	@Override public void setSelected(IdentifierDomainDTO selected)
+	@Override
+	public void setSelected(IdentifierDomainDTO selected)
 	{
 		this.selected = selected != null ? selected : this.selected;
 	}

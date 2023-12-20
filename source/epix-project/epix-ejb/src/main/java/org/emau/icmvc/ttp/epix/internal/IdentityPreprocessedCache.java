@@ -4,21 +4,21 @@ package org.emau.icmvc.ttp.epix.internal;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
- *
+ * 
  * 							concept and implementation
  * 							l.geidel,c.schack, d.langner, g.koetzschke
- *
+ * 
  * 							web client
  * 							a.blumentritt, f.m. moser
- *
+ * 
  * 							docker
  * 							r.schuldt
- *
+ * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
- *
+ * 
  * 							please cite our publications
  * 							http://dx.doi.org/10.3414/ME14-01-0133
  * 							http://dx.doi.org/10.1186/s12967-015-0545-6
@@ -28,12 +28,12 @@ package org.emau.icmvc.ttp.epix.internal;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ###license-information-end###
@@ -50,6 +50,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.deduplication.FellegiSunterAlgorithm;
@@ -64,11 +68,6 @@ import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
 import org.emau.icmvc.ttp.epix.pdqquery.model.SearchMask;
 import org.emau.icmvc.ttp.epix.persistence.model.IdentityPreprocessed;
-
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 
 /**
  *
@@ -236,7 +235,7 @@ public class IdentityPreprocessedCache
 	 *
 	 * @param identityId
 	 */
-	public void deleteIdentity(long identityId)
+	public void removeIdentity(long identityId)
 	{
 		rwl.writeLock().lock();
 		try
@@ -831,29 +830,36 @@ public class IdentityPreprocessedCache
 				continue;
 			}
 
-			if (useDay)
+			if (cachedIdentityPreprocessed.getBirthDate().length() == 8)
 			{
-				String day = cachedIdentityPreprocessed.getBirthDate().substring(6, 8);
-				if (!day.equals(maskDay))
+				if (useDay)
 				{
-					continue;
+					String day = cachedIdentityPreprocessed.getBirthDate().substring(6, 8);
+					if (!day.equals(maskDay))
+					{
+						continue;
+					}
+				}
+				if (useMonth)
+				{
+					String month = cachedIdentityPreprocessed.getBirthDate().substring(4, 6);
+					if (!month.equals(maskMonth))
+					{
+						continue;
+					}
+				}
+				if (useYear)
+				{
+					String year = cachedIdentityPreprocessed.getBirthDate().substring(0, 4);
+					if (!year.equals(maskYear))
+					{
+						continue;
+					}
 				}
 			}
-			if (useMonth)
+			else
 			{
-				String month = cachedIdentityPreprocessed.getBirthDate().substring(4, 6);
-				if (!month.equals(maskMonth))
-				{
-					continue;
-				}
-			}
-			if (useYear)
-			{
-				String year = cachedIdentityPreprocessed.getBirthDate().substring(0, 4);
-				if (!year.equals(maskYear))
-				{
-					continue;
-				}
+				continue;
 			}
 
 			result.add(cachedIdentityPreprocessed.getPersonId());
@@ -1067,31 +1073,34 @@ public class IdentityPreprocessedCache
 				continue;
 			}
 
-			if (useDay)
+			if (cachedIdentityPreprocessed.getBirthDate().length() == 8)
 			{
-				String day = cachedIdentityPreprocessed.getBirthDate().substring(6, 8);
-				if (day.equals(maskDay))
+				if (useDay)
 				{
-					result.add(cachedIdentityPreprocessed.getPersonId());
-					continue;
+					String day = cachedIdentityPreprocessed.getBirthDate().substring(6, 8);
+					if (day.equals(maskDay))
+					{
+						result.add(cachedIdentityPreprocessed.getPersonId());
+						continue;
+					}
 				}
-			}
-			else if (useMonth)
-			{
-				String month = cachedIdentityPreprocessed.getBirthDate().substring(4, 6);
-				if (month.equals(maskMonth))
+				else if (useMonth)
 				{
-					result.add(cachedIdentityPreprocessed.getPersonId());
-					continue;
+					String month = cachedIdentityPreprocessed.getBirthDate().substring(4, 6);
+					if (month.equals(maskMonth))
+					{
+						result.add(cachedIdentityPreprocessed.getPersonId());
+						continue;
+					}
 				}
-			}
-			else if (useYear)
-			{
-				String year = cachedIdentityPreprocessed.getBirthDate().substring(0, 4);
-				if (year.equals(maskYear))
+				else if (useYear)
 				{
-					result.add(cachedIdentityPreprocessed.getPersonId());
-					continue;
+					String year = cachedIdentityPreprocessed.getBirthDate().substring(0, 4);
+					if (year.equals(maskYear))
+					{
+						result.add(cachedIdentityPreprocessed.getPersonId());
+						continue;
+					}
 				}
 			}
 		}

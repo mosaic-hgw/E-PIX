@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -42,11 +42,13 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
 
 import java.util.List;
 
+import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
 import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
+import org.icmvc.ttp.web.controller.Text;
 
 public interface ICRUDObject<T>
 {
-	public void init(EPIXManagementService service);
+	void init(EPIXManagementService managementService, EpixHelper epixHelper, Text text);
 
 	public void reload();
 

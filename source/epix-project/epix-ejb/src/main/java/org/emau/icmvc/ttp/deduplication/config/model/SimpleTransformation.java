@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,14 +39,13 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -58,6 +57,15 @@ public class SimpleTransformation
 	private String inputPattern;
 	@XmlElement(name = "output-pattern", required = false, defaultValue = "")
 	private String outputPattern;
+
+	public SimpleTransformation()
+	{}
+
+	public SimpleTransformation(String inputPattern, String outputPattern)
+	{
+		this.inputPattern = inputPattern;
+		this.outputPattern = outputPattern;
+	}
 
 	public String getInputPattern()
 	{
@@ -84,8 +92,8 @@ public class SimpleTransformation
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((inputPattern == null) ? 0 : inputPattern.hashCode());
-		result = prime * result + ((outputPattern == null) ? 0 : outputPattern.hashCode());
+		result = prime * result + (inputPattern == null ? 0 : inputPattern.hashCode());
+		result = prime * result + (outputPattern == null ? 0 : outputPattern.hashCode());
 		return result;
 	}
 
@@ -93,26 +101,40 @@ public class SimpleTransformation
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		SimpleTransformation other = (SimpleTransformation) obj;
 		if (inputPattern == null)
 		{
 			if (other.inputPattern != null)
+			{
 				return false;
+			}
 		}
 		else if (!inputPattern.equals(other.inputPattern))
+		{
 			return false;
+		}
 		if (outputPattern == null)
 		{
 			if (other.outputPattern != null)
+			{
 				return false;
+			}
 		}
 		else if (!outputPattern.equals(other.outputPattern))
+		{
 			return false;
+		}
 		return true;
 	}
 

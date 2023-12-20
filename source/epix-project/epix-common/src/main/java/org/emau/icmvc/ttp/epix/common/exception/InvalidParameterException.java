@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.exception;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -49,40 +49,60 @@ package org.emau.icmvc.ttp.epix.common.exception;
 public class InvalidParameterException extends Exception
 {
 	private static final long serialVersionUID = -4492138095108531958L;
+
+	public enum ErrorCode
+	{
+		FUTURE_DATE_OF_BIRTH, FUTURE_DATE_OF_DEATH // to be continued
+	}
+
 	private final String parameterName;
+	private final ErrorCode errorCode;
 
 	public InvalidParameterException()
 	{
 		super();
 		parameterName = null;
+		errorCode = null;
 	}
 
 	public InvalidParameterException(String message, Throwable cause)
 	{
 		super(message, cause);
 		parameterName = null;
+		errorCode = null;
 	}
 
 	public InvalidParameterException(Throwable cause)
 	{
-		super(cause);
-		parameterName = null;
+		this(null, cause);
 	}
 
 	public InvalidParameterException(String message)
 	{
-		super(message);
-		parameterName = null;
+		this(message, (Throwable) null);
 	}
 
 	public InvalidParameterException(String parameterName, String message)
 	{
 		super(message);
 		this.parameterName = parameterName;
+		this.errorCode = null;
+	}
+
+	public InvalidParameterException(String parameterName, ErrorCode errorCode)
+	{
+		super(errorCode != null ? errorCode.toString() : null);
+		this.parameterName = parameterName;
+		this.errorCode = errorCode;
 	}
 
 	public String getParameterName()
 	{
 		return parameterName;
+	}
+
+	public ErrorCode getErrorCode()
+	{
+		return errorCode;
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,11 +39,11 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-end###
  */
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-
 import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class AbstractBatchBeanTest
 {

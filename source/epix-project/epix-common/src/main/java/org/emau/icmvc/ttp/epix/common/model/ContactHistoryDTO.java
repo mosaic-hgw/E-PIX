@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,28 +39,43 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
+import java.io.Serial;
 import java.util.Date;
 
+import org.apache.logging.log4j.util.Strings;
+import org.emau.icmvc.ttp.epix.common.model.enums.ContactHistoryEvent;
+
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class ContactHistoryDTO extends ContactOutDTO
 {
-	private static final long serialVersionUID = 127591428823679180L;
+	@Serial
+	private static final long serialVersionUID = 8077094623579003186L;
 	private long historyId;
 	private Date historyTimestamp;
+	private ContactHistoryEvent event;
+	private String comment;
+	private String user;
 
 	public ContactHistoryDTO()
 	{}
 
-	public ContactHistoryDTO(ContactOutDTO superDTO, long historyId, Date historyTimestamp)
+	public ContactHistoryDTO(ContactOutDTO superDTO, ContactHistoryEvent event, String comment, long historyId, Date historyTimestamp, String user)
 	{
 		super(superDTO);
 		this.historyId = historyId;
-		this.historyTimestamp = historyTimestamp;
+		setHistoryTimestamp(historyTimestamp);
+		this.event = event;
+		this.comment = comment;
+		this.user = user;
+	}
+
+	public ContactHistoryDTO(ContactHistoryDTO dto)
+	{
+		this(dto, dto.getEvent(), dto.getComment(), dto.getHistoryId(), dto.getHistoryTimestamp(), dto.getUser());
 	}
 
 	public long getHistoryId()
@@ -80,7 +95,37 @@ public class ContactHistoryDTO extends ContactOutDTO
 
 	public void setHistoryTimestamp(Date historyTimestamp)
 	{
-		this.historyTimestamp = historyTimestamp;
+		this.historyTimestamp = historyTimestamp != null ? new Date(historyTimestamp.getTime()) : null;
+	}
+
+	public ContactHistoryEvent getEvent()
+	{
+		return event;
+	}
+
+	public void setEvent(ContactHistoryEvent event)
+	{
+		this.event = event;
+	}
+
+	public String getComment()
+	{
+		return comment;
+	}
+
+	public void setComment(String comment)
+	{
+		this.comment = comment;
+	}
+
+	public String getUser()
+	{
+		return user;
+	}
+
+	public void setUser(String user)
+	{
+		this.user = user;
 	}
 
 	@Override
@@ -88,8 +133,11 @@ public class ContactHistoryDTO extends ContactOutDTO
 	{
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + (int) (historyId ^ (historyId >>> 32));
-		result = prime * result + ((historyTimestamp == null) ? 0 : historyTimestamp.hashCode());
+		result = prime * result + (comment == null ? 0 : comment.hashCode());
+		result = prime * result + (event == null ? 0 : event.hashCode());
+		result = prime * result + (user == null ? 0 : user.hashCode());
+		result = prime * result + (int) (historyId ^ historyId >>> 32);
+		result = prime * result + (historyTimestamp == null ? 0 : historyTimestamp.hashCode());
 		return result;
 	}
 
@@ -97,27 +145,70 @@ public class ContactHistoryDTO extends ContactOutDTO
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (!super.equals(obj))
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		ContactHistoryDTO other = (ContactHistoryDTO) obj;
-		if (historyId != other.historyId)
+		if (event != other.event)
+		{
 			return false;
+		}
+		if (comment == null)
+		{
+			if (other.comment != null)
+			{
+				return false;
+			}
+		}
+		else if (!comment.equals(other.comment))
+		{
+			return false;
+		}
+		if (user == null)
+		{
+			if (other.user != null)
+			{
+				return false;
+			}
+		}
+		else if (!user.equals(other.user))
+		{
+			return false;
+		}
+		if (historyId != other.historyId)
+		{
+			return false;
+		}
 		if (historyTimestamp == null)
 		{
 			if (other.historyTimestamp != null)
+			{
 				return false;
+			}
 		}
 		else if (!historyTimestamp.equals(other.historyTimestamp))
+		{
 			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "ContactHistoryDTO [historyId=" + historyId + "historyTimestamp=" + historyTimestamp + ", including " + super.toString() + "]";
+		return "ContactHistoryDTO [historyId=" + historyId + ", historyTimestamp=" + historyTimestamp
+				+ (event != null ? ", event=" + event : "")
+				+ ", including " + super.toString()
+				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+				+ "]";
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,39 +39,45 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
+import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
+
 /**
- * 
+ *
  * @author geidell
  *
  */
-public class PossibleMatchDTO implements Serializable
+public class PossibleMatchDTO extends PossibleMatchBaseDTO implements Serializable
 {
-	private static final long serialVersionUID = -558125912913762759L;
+	private static final long serialVersionUID = 6193372669052258377L;
 	private final Set<MPIIdentityDTO> matchingMPIIdentities = new HashSet<>();
-	private long linkId;
-	private Double probability;
-	private Date possibleMatchCreated;
 
 	public PossibleMatchDTO()
+	{}
+
+	public PossibleMatchDTO(MPIIdentityDTO mpiIdentity1, MPIIdentityDTO mpiIdentity2, long linkId, double probability, Date possibleMatchCreated, PossibleMatchPriority priority)
 	{
-		super();
+		super(linkId, probability, possibleMatchCreated, priority);
+		matchingMPIIdentities.add(new MPIIdentityDTO(mpiIdentity1));
+		matchingMPIIdentities.add(new MPIIdentityDTO(mpiIdentity2));
 	}
 
-	public PossibleMatchDTO(MPIIdentityDTO mpiIdentity1, MPIIdentityDTO mpiIdentity2, long linkId, Double probability, Date possibleMatchCreated)
+	public PossibleMatchDTO(PossibleMatchBaseDTO baseDTO, Set<MPIIdentityDTO> matchingMPIIdentities)
 	{
-		super();
-		matchingMPIIdentities.add(mpiIdentity1);
-		matchingMPIIdentities.add(mpiIdentity2);
-		this.linkId = linkId;
-		this.probability = probability;
-		this.possibleMatchCreated = possibleMatchCreated;
+		super(baseDTO);
+		setMatchingMPIIdentities(matchingMPIIdentities);
+	}
+
+	public PossibleMatchDTO(PossibleMatchDTO dto)
+	{
+		this(dto, dto.getMatchingMPIIdentities());
 	}
 
 	public Set<MPIIdentityDTO> getMatchingMPIIdentities()
@@ -81,95 +87,46 @@ public class PossibleMatchDTO implements Serializable
 
 	public void setMatchingMPIIdentities(Set<MPIIdentityDTO> matchingMPIIdentities)
 	{
-		if (!this.matchingMPIIdentities.equals(matchingMPIIdentities))
+		this.matchingMPIIdentities.clear();
+		if (matchingMPIIdentities != null)
 		{
-			this.matchingMPIIdentities.clear();
-			this.matchingMPIIdentities.addAll(matchingMPIIdentities);
+			for (MPIIdentityDTO mpiDTO : matchingMPIIdentities)
+			{
+				this.matchingMPIIdentities.add(new MPIIdentityDTO(mpiDTO));
+			}
 		}
 	}
 
-	public long getLinkId()
+	@Override
+	public boolean equals(Object o)
 	{
-		return linkId;
-	}
-
-	public void setLinkId(long linkId)
-	{
-		this.linkId = linkId;
-	}
-
-	public Double getProbability()
-	{
-		return probability;
-	}
-
-	public void setProbability(Double probability)
-	{
-		this.probability = probability;
-	}
-
-	public Date getPossibleMatchCreated()
-	{
-		return possibleMatchCreated;
-	}
-
-	public void setPossibleMatchCreated(Date possibleMatchCreated)
-	{
-		this.possibleMatchCreated = possibleMatchCreated;
+		if (this == o)
+		{
+			return true;
+		}
+		if (!(o instanceof PossibleMatchDTO that))
+		{
+			return false;
+		}
+		if (!super.equals(o))
+		{
+			return false;
+		}
+		return getMatchingMPIIdentities().equals(that.getMatchingMPIIdentities());
 	}
 
 	@Override
 	public int hashCode()
 	{
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (int) (linkId ^ (linkId >>> 32));
-		result = prime * result + ((matchingMPIIdentities == null) ? 0 : matchingMPIIdentities.hashCode());
-		result = prime * result + ((possibleMatchCreated == null) ? 0 : possibleMatchCreated.hashCode());
-		result = prime * result + ((probability == null) ? 0 : probability.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		PossibleMatchDTO other = (PossibleMatchDTO) obj;
-		if (linkId != other.linkId)
-			return false;
-		if (matchingMPIIdentities == null)
-		{
-			if (other.matchingMPIIdentities != null)
-				return false;
-		}
-		else if (!matchingMPIIdentities.equals(other.matchingMPIIdentities))
-			return false;
-		if (possibleMatchCreated == null)
-		{
-			if (other.possibleMatchCreated != null)
-				return false;
-		}
-		else if (!possibleMatchCreated.equals(other.possibleMatchCreated))
-			return false;
-		if (probability == null)
-		{
-			if (other.probability != null)
-				return false;
-		}
-		else if (!probability.equals(other.probability))
-			return false;
-		return true;
+		return Objects.hash(super.hashCode(), getMatchingMPIIdentities());
 	}
 
 	@Override
 	public String toString()
 	{
-		return "PossibleMatchDTO [matchingMPIIdentities=" + matchingMPIIdentities.stream().map(Object::toString).collect(Collectors.joining(", "))
-				+ ", linkId=" + linkId + ", probability=" + probability + ", possibleMatchCreated=" + possibleMatchCreated + "]";
+		return new StringJoiner(", ", PossibleMatchDTO.class.getSimpleName() + "[", "]")
+				.add("matchingMPIIdentities=" + matchingMPIIdentities.stream().map(Object::toString).collect(Collectors.joining(", ")))
+				.add(toStringBase())
+				.toString();
 	}
 }

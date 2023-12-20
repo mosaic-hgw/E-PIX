@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,28 +39,43 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
+import java.io.Serial;
 import java.util.Date;
 
+import org.apache.logging.log4j.util.Strings;
+import org.emau.icmvc.ttp.epix.common.model.enums.PersonHistoryEvent;
+
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class PersonHistoryDTO extends PersonBaseDTO
 {
-	private static final long serialVersionUID = 5386731307005630372L;
+	@Serial
+	private static final long serialVersionUID = 1545810503639280277L;
 	private long historyId;
 	private Date historyTimestamp;
+	private String comment;
+	private String user;
+	private PersonHistoryEvent event;
 
 	public PersonHistoryDTO()
 	{}
 
-	public PersonHistoryDTO(PersonBaseDTO superDTO, long historyId, Date historyTimestamp)
+	public PersonHistoryDTO(PersonBaseDTO superDTO, long historyId, Date historyTimestamp, PersonHistoryEvent event, String comment, String user)
 	{
 		super(superDTO);
 		this.historyId = historyId;
-		this.historyTimestamp = historyTimestamp;
+		setHistoryTimestamp(historyTimestamp);
+		this.comment = comment;
+		this.user = user;
+		this.event = event;
+	}
+
+	public PersonHistoryDTO(PersonHistoryDTO dto)
+	{
+		this(dto, dto.getHistoryId(), dto.getHistoryTimestamp(), dto.getEvent(), dto.getComment(), dto.getUser());
 	}
 
 	public long getHistoryId()
@@ -80,7 +95,37 @@ public class PersonHistoryDTO extends PersonBaseDTO
 
 	public void setHistoryTimestamp(Date historyTimestamp)
 	{
-		this.historyTimestamp = historyTimestamp;
+		this.historyTimestamp = historyTimestamp != null ? new Date(historyTimestamp.getTime()) : null;
+	}
+
+	public String getComment()
+	{
+		return comment;
+	}
+
+	public void setComment(String comment)
+	{
+		this.comment = comment;
+	}
+
+	public String getUser()
+	{
+		return user;
+	}
+
+	public void setUser(String user)
+	{
+		this.user = user;
+	}
+
+	public PersonHistoryEvent getEvent()
+	{
+		return event;
+	}
+
+	public void setEvent(PersonHistoryEvent event)
+	{
+		this.event = event;
 	}
 
 	@Override
@@ -88,8 +133,10 @@ public class PersonHistoryDTO extends PersonBaseDTO
 	{
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + (int) (historyId ^ (historyId >>> 32));
-		result = prime * result + ((historyTimestamp == null) ? 0 : historyTimestamp.hashCode());
+		result = prime * result + (int) (historyId ^ historyId >>> 32);
+		result = prime * result + ((event == null) ? 0 : event.hashCode());
+		result = prime * result + (historyTimestamp == null ? 0 : historyTimestamp.hashCode());
+		result = prime * result + (comment == null ? 0 : comment.hashCode());
 		return result;
 	}
 
@@ -97,27 +144,59 @@ public class PersonHistoryDTO extends PersonBaseDTO
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (!super.equals(obj))
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		PersonHistoryDTO other = (PersonHistoryDTO) obj;
 		if (historyId != other.historyId)
+		{
 			return false;
+		}
 		if (historyTimestamp == null)
 		{
 			if (other.historyTimestamp != null)
+			{
 				return false;
+			}
 		}
 		else if (!historyTimestamp.equals(other.historyTimestamp))
+		{
 			return false;
+		}
+		if (event != other.event)
+		{
+			return false;
+		}
+		if (comment == null)
+		{
+			if (other.comment != null)
+			{
+				return false;
+			}
+		}
+		else if (!comment.equals(other.comment))
+		{
+			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "PersonHistoryDTO [historyId=" + historyId + "historyTimestamp=" + historyTimestamp + ", including " + super.toString() + "]";
+		return "PersonHistoryDTO [historyId=" + historyId + "historyTimestamp=" + historyTimestamp
+				+ (event != null ? ", event=" + event : "")
+				+ ", including " + super.toString()
+				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+				+ "]";
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,41 +39,48 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-end###
  */
 
-
 import java.net.ConnectException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import org.apache.logging.log4j.Logger;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 import org.emau.icmvc.ttp.epix.persistence.model.Identity;
+import org.emau.icmvc.ttp.epix.persistence.model.Person;
 import org.emau.icmvc.ttp.notification.interfaces.INotificationClient;
 
 @Stateless
 public class NotificationSender
 {
 	private static final Logger logger = LogManager.getLogger(NotificationSender.class);
+	public static final String MSG_NOTIFICATION_CLIENT_NOT_PRESENT = "can't send notification - notification client is not present";
+	public static final String KEY_EPIX_DOMAIN = "EPIX domain";
+	public static final String KEY_MPI_ID = "mpiId";
+	public static final String KEY_PERSON = "Person";
+	public static final String KEY_COMMENT = "comment";
+	public static final String KEY_IDENTIFIER = "Identifier";
+	public static final String KEY_IDENTIFIERS = "Identifiers";
+	public static final String KEY_LOCAL_IDENTIFIER = "Local Identifier";
+	public static final String KEY_LOCAL_IDS = "localIds";
+	public static final String KEY_TARGET_PERSON = "Target Person";
+	public static final String KEY_IDENTITY_ID = "identityId";
+	public static final String KEY_MASTER_PERSON = "Master Person";
+	public static final String KEY_SLAVE_PERSON = "Slave Person";
 	private static volatile INotificationClient notificationClient = null;
-	static
+
+	private static INotificationClient lookupClient() throws NamingException
 	{
-		try
-		{
-			notificationClient = InitialContext.doLookup("java:global/notification-client/notification-client-ejb/notification-client-default");
-		}
-		catch (NamingException e)
-		{
-			logger.warn("can't send notification - notification client is not present", e);
-		}
+		return InitialContext
+				.doLookup("java:global/notification-client/notification-client-ejb/notification-client-default");
 	}
 
 	private static boolean checkSend()
@@ -82,385 +89,198 @@ public class NotificationSender
 		{
 			try
 			{
-				notificationClient = InitialContext
-						.doLookup("java:global/notification-client/notification-client-ejb/notification-client-default");
+				notificationClient = lookupClient();
 			}
 			catch (NamingException e)
 			{
-				logger.warn("can't send notification - notification client is not present", e);
+				logger.warn(MSG_NOTIFICATION_CLIENT_NOT_PRESENT, e);
 			}
 		}
 		return notificationClient != null;
 	}
 
-	public void sendHandleRequestNotification(String notificationClientID, PersonDTO personDTO, String domainName, String comment)
+	public void sendRequestMPINotification(String notificationClientID, PersonDTO personDTO, String domainName, String comment)
 	{
-		logger.debug("sendHandleRequestNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("mpiId", personDTO.getMpiId().getValue());
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				root.put("comment", comment);
-				logger.debug("send handle request notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.RequestMPI", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send handle request notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending handle request notification", shouldNotHappen);
-			}
-			logger.debug("handle request notification sent");
-		}
+		sendNotification(notificationClientID, "RequestMPI", domainName, comment, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_MPI_ID, personDTO.getMpiId().getValue());
+			root.put(KEY_PERSON, person);
+		});
 	}
 
-	public void sendAddIdentifierToPersonNotification(String notificationClientID, String domainName, String mpi, List<IdentifierDTO> localIds)
+	public void sendAddIdentifierToPersonNotification(String notificationClientID, String domainName, String mpi,
+			List<IdentifierDTO> localIds)
 	{
-		logger.debug("sendAddIdentifierToPersonNotification");
-		if (checkSend())
-		{
-			try
-			{
-				List<String> ids = localIds.stream().map(IdentifierDTO::getValue).collect(Collectors.toList());
-
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("mpiId", mpi);
-				person.put("localIds", ids);
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				logger.debug("send add identifier notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.AddIdentifierToPerson", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send add identifier notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending add identifier notification", shouldNotHappen);
-			}
-			logger.debug("add identifier notification sent");
-		}
+		sendNotification(notificationClientID, "AddIdentifierToPerson", domainName, null, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_MPI_ID, mpi);
+			person.put(KEY_LOCAL_IDS, mapToIdentifierValues(localIds));
+			root.put(KEY_PERSON, person);
+		});
 	}
 
-	public void sendAddLocalIdentifierToIdentifierNotification(String notificationClientID, String domainName, IdentifierDTO identifierDTO, List<IdentifierDTO> localIds)
+	public void sendAddLocalIdentifierToIdentifierNotification(String notificationClientID, String domainName,
+			IdentifierDTO identifierDTO, List<IdentifierDTO> localIds)
 	{
-		logger.debug("sendAddLocalIdentifierToIdentifierNotification");
-		if (checkSend())
-		{
-			try
-			{
-				List<String> ids = localIds.stream().map(IdentifierDTO::getValue).collect(Collectors.toList());
-
-				JSONObject root = new JSONObject();
-				JSONObject identifier = new JSONObject();
-				identifier.put("Identifier", identifierDTO.getValue());
-				identifier.put("Identifiers", ids);
-				root.put("Local Identifier", identifier);
-				root.put("EPIX domain", domainName);
-				logger.debug("send add local identifier notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.AddLocalIdentifierToIdentifier", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send add local identifier notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending add local identifier notification", shouldNotHappen);
-			}
-			logger.debug("add local identifier notification sent");
-		}
+		sendNotification(notificationClientID, "AddLocalIdentifierToIdentifier", domainName, null, root -> {
+			JSONObject identifier = new JSONObject();
+			identifier.put(KEY_IDENTIFIER, identifierDTO.getValue());
+			identifier.put(KEY_IDENTIFIERS, mapToIdentifierValues(localIds));
+			root.put(KEY_LOCAL_IDENTIFIER, identifier);
+		});
 	}
 
 	public void sendUpdatePersonNotification(String notificationClientID, PersonDTO personDTO, String domainName, String comment)
 	{
-		logger.debug("sendUpdatePersonNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("mpiId", personDTO.getMpiId().getValue());
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				root.put("comment", comment);
-				logger.debug("send update person notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.UpdatePerson", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send update person notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending update person notification", shouldNotHappen);
-			}
-			logger.debug("update person notification sent");
-		}
+		sendNotification(notificationClientID, "UpdatePerson", domainName, comment, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_MPI_ID, personDTO.getMpiId().getValue());
+			root.put(KEY_PERSON, person);
+		});
 	}
 
 	public void sendAddPersonNotification(String notificationClientID, PersonDTO personDTO, String domainName, String comment)
 	{
-		logger.debug("sendAddPersonNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("mpiId", personDTO.getMpiId().getValue());
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				root.put("comment", comment);
-				logger.debug("send add person notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.AddPerson", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send add person notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending add person notification", shouldNotHappen);
-			}
-			logger.debug("add person notification sent");
-		}
+		sendNotification(notificationClientID, "AddPerson", domainName, comment, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_MPI_ID, personDTO.getMpiId().getValue());
+			root.put(KEY_PERSON, person);
+		});
 	}
 
 	public void sendDeactivatePersonNotification(String notificationClientID, String mpi, String domainName)
 	{
-		logger.debug("sendDeactivatePersonNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("mpiId", mpi);
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				logger.debug("send deactivate person notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.DeactivatePerson", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send deactivate person notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending deactivate person notification", shouldNotHappen);
-			}
-			logger.debug("deactivate person notification sent");
-		}
+		sendNotification(notificationClientID, "DeactivatePerson", domainName, null, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_MPI_ID, mpi);
+			root.put(KEY_PERSON, person);
+		});
 	}
 
 	public void sendDeletePersonNotification(String notificationClientID, String mpi, String domainName)
 	{
-		logger.debug("sendDeletePersonNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("mpiId", mpi);
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				logger.debug("send delete person notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.DeletePerson", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send delete person notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending delete person notification", shouldNotHappen);
-			}
-			logger.debug("delete person notification sent");
-		}
+		sendNotification(notificationClientID, "DeletePerson", domainName, null, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_MPI_ID, mpi);
+			root.put(KEY_PERSON, person);
+		});
 	}
 
-	public void sendSetReferenceIdentityNotification(String notificationClientID, String mpi, long identityId, String domainName, String comment)
+	public void sendSetReferenceIdentityNotification(String notificationClientID, String mpi, long identityId,
+			String domainName, String comment)
 	{
-		logger.debug("sendSetReferenceIdentityNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("mpiId", mpi);
-				person.put("identityId", identityId);
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				root.put("comment", comment);
-				logger.debug("send set reference identity notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.SetReferenceIdentity", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send set reference identity notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending set reference identity notification", shouldNotHappen);
-			}
-			logger.debug("set reference identity notification sent");
-		}
+		sendNotification(notificationClientID, "SetReferenceIdentity", domainName, comment, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_MPI_ID, mpi);
+			person.put(KEY_IDENTITY_ID, identityId);
+			root.put(KEY_PERSON, person);
+		});
 	}
 
 	public void sendDeactivateIdentityNotification(String notificationClientID, long identityId, String domainName)
 	{
-		logger.debug("sendDeactivateIdentityNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("identityId", identityId);
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				logger.debug("send deactivate identity notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.DeactivateIdentity", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send deactivate identity notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending set reference identity notification", shouldNotHappen);
-			}
-			logger.debug("deactivate identity notification sent");
-		}
+		sendNotification(notificationClientID, "DeactivateIdentity", domainName, null, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_IDENTITY_ID, identityId);
+			root.put(KEY_PERSON, person);
+		});
 	}
 
 	public void sendDeleteIdentityNotification(String notificationClientID, long identityId, String domainName)
 	{
-		logger.debug("sendDeleteIdentityNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("identityId", identityId);
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				logger.debug("send delete identity notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.DeleteIdentity", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send delete identity notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending delete identity notification", shouldNotHappen);
-			}
-			logger.debug("delete identity notification sent");
-		}
+		sendNotification(notificationClientID, "DeleteIdentity", domainName, null, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_IDENTITY_ID, identityId);
+			root.put(KEY_PERSON, person);
+		});
 	}
 
 	public void sendAddContactNotification(String notificationClientID, long identityId, String domainName)
 	{
-		logger.debug("sendAddContactNotification");
+		sendNotification(notificationClientID, "AddContact", domainName, null, root -> {
+			JSONObject person = new JSONObject();
+			person.put(KEY_IDENTITY_ID, identityId);
+			root.put(KEY_PERSON, person);
+		});
+	}
+
+	public void sendMoveIdentitiesForIdentifierToPersonNotification(String notificationClientID, String domainName,
+			IdentifierDTO identifier, String mpiId, String comment)
+	{
+		sendNotification(notificationClientID, "MoveIdentitiesForIdentifierToPerson", domainName, comment, root -> {
+			root.put(KEY_IDENTIFIER, identifier.getValue());
+			JSONObject targetPerson = new JSONObject();
+			targetPerson.put(KEY_MPI_ID, mpiId);
+			root.put(KEY_TARGET_PERSON, targetPerson);
+		});
+	}
+
+	public void sendAssignIdentityNotification(String notificationClientID, Identity winningIdentity, Identity identityToMerge,
+			String mpiToMerge, String comment)
+	{
+		final Person person = winningIdentity.getPerson();
+		sendNotification(notificationClientID, "AssignIdentity", person.getDomain().getName(), comment, root -> {
+			JSONObject masterPerson = new JSONObject();
+			masterPerson.put(KEY_MPI_ID, person.getFirstMPI().getValue());
+			masterPerson.put(KEY_IDENTITY_ID, winningIdentity.getId());
+			root.put(KEY_MASTER_PERSON, masterPerson);
+			JSONObject slavePerson = new JSONObject();
+			slavePerson.put(KEY_MPI_ID, mpiToMerge);
+			slavePerson.put(KEY_IDENTITY_ID, identityToMerge.getId());
+			root.put(KEY_SLAVE_PERSON, slavePerson);
+		});
+	}
+
+	public void sendRemoveIdentifierNotification(String notificationClientID, String domainName, List<IdentifierDTO> localIds)
+	{
+		sendNotification(notificationClientID, "RemoveIdentifier", domainName, null, root ->
+			root.put(KEY_LOCAL_IDS, mapToIdentifierValues(localIds))
+		);
+	}
+
+	private void sendNotification(String clientID, String type, String domainName, String comment, JSONConsumer c)
+	{
+		logger.debug("send" + type + "notification");
 		if (checkSend())
 		{
 			try
 			{
 				JSONObject root = new JSONObject();
-				JSONObject person = new JSONObject();
-				person.put("identityId", identityId);
-				root.put("Person", person);
-				root.put("EPIX domain", domainName);
-				logger.debug("send add contact notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.AddContact", root, notificationClientID);
+				if (StringUtils.isNotBlank(domainName))
+				{
+					root.put(KEY_EPIX_DOMAIN, domainName);
+				}
+				if (StringUtils.isNotBlank(comment))
+				{
+					root.put(KEY_COMMENT, comment);
+				}
+				c.accept(root); // let the given consumer customize the JSON
+				logger.debug("send " + type + " notification with clientId " + clientID);
+				notificationClient.sendNotification("EPIX." + type, root, clientID);
+				logger.debug(type + " notification sent");
 			}
 			catch (ConnectException e)
 			{
-				logger.warn("can't send add contact notification", e);
+				logger.warn("can't send " + type + " notification", e);
 			}
 			catch (JSONException shouldNotHappen)
 			{
-				logger.error("unexpected exception while sending add contact notification", shouldNotHappen);
+				logger.error("unexpected exception while sending " + type + " notification", shouldNotHappen);
 			}
-			logger.debug("add contact notification sent");
 		}
 	}
 
-	public void sendMoveIdentitiesForIdentifierToPersonNotification(String notificationClientID, String domainName, IdentifierDTO identifier, String mpiId, String comment)
+	@FunctionalInterface
+	public interface JSONConsumer
 	{
-		logger.debug("sendMoveIdentitiesForIdentifierToPersonNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				root.put("identifier", identifier.getValue());
-				JSONObject targetPerson = new JSONObject();
-				targetPerson.put("mpiId", mpiId);
-				root.put("Target Person", targetPerson);
-				root.put("EPIX domain", domainName);
-				root.put("comment", comment);
-				logger.debug("send move identities for identifier to person notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.MoveIdentitiesForIdentifierToPerson", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send move identities for identifier to person notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending move identities for identifier to person notification", shouldNotHappen);
-			}
-			logger.debug("move identities for identifier to person notification sent");
-		}
+		/**
+		 * Performs some operation on the given JSON object.
+		 */
+		void accept(JSONObject t) throws JSONException;
 	}
 
-	public void sendAssignNotification(String notificationClientID, Identity winningIdentity, Identity identityToMerge, String mpiToMerge,
-			String comment)
+	private static List<String> mapToIdentifierValues(List<IdentifierDTO> identifiers)
 	{
-		logger.debug("sendAssignNotification");
-		if (checkSend())
-		{
-			try
-			{
-				JSONObject root = new JSONObject();
-				JSONObject masterPerson = new JSONObject();
-				masterPerson.put("mpiId", winningIdentity.getPerson().getFirstMPI().getValue());
-				masterPerson.put("identityId", winningIdentity.getId());
-				root.put("Master Person", masterPerson);
-				JSONObject slavePerson = new JSONObject();
-				slavePerson.put("mpiId", mpiToMerge);
-				slavePerson.put("identityId", identityToMerge.getId());
-				root.put("Slave Person", slavePerson);
-				root.put("EPIX domain", winningIdentity.getPerson().getDomain().getName());
-				root.put("comment", comment);
-				logger.debug("send assign notification with clientId " + notificationClientID);
-				notificationClient.sendNotification("EPIX.AssignIdentity", root, notificationClientID);
-			}
-			catch (ConnectException e)
-			{
-				logger.warn("can't send assign notification", e);
-			}
-			catch (JSONException shouldNotHappen)
-			{
-				logger.error("unexpected exception while sending assign notification", shouldNotHappen);
-			}
-			logger.debug("assign notification sent");
-		}
+		return identifiers.stream().map(IdentifierDTO::getValue).collect(Collectors.toList());
 	}
 }

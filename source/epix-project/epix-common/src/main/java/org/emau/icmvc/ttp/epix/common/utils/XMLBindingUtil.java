@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.utils;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,11 +39,11 @@ package org.emau.icmvc.ttp.epix.common.utils;
  * ###license-information-end###
  */
 
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.io.StringWriter;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -222,5 +222,37 @@ public class XMLBindingUtil
 		marshaller.setProperty(Marshaller.JAXB_ENCODING, "ISO-8859-1");
 		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 		marshaller.marshal(jaxbElement, new File(xmlDatei));
+	}
+
+	public String marshal(String xsdName, Object jaxbElement) throws JAXBException
+	{
+		Schema schema = null;
+		try
+		{
+			if (xsdName != null && xsdName.trim().length() > 0)
+			{
+				ClassLoader loader = Thread.currentThread().getContextClassLoader();
+				InputStream xsd_stream = loader.getResourceAsStream(xsdName);
+				SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+				StreamSource source = new StreamSource(xsd_stream);
+				schema = schemaFactory.newSchema(source);
+			}
+			else
+			{
+				throw new IllegalArgumentException("Xml Schema Definition is not available");
+			}
+		}
+		catch (Exception e)
+		{
+			throw new IllegalArgumentException("JAXBContext or Schema Definition invalid", e);
+		}
+		JAXBContext jaxbContext = JAXBContext.newInstance(jaxbElement.getClass().getPackage().getName());
+		Marshaller marshaller = jaxbContext.createMarshaller();
+		marshaller.setSchema(schema);
+		marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		StringWriter sw = new StringWriter();
+		marshaller.marshal(jaxbElement, sw);
+		return sw.toString();
 	}
 }

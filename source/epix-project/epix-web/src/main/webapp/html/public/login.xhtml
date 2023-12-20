@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -36,8 +36,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   ###license-information-end###
   -->
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
-	  xmlns:p="http://primefaces.org/ui" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:components="http://java.sun.com/jsf/composite/components">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:ui="http://java.sun.com/jsf/facelets"
+	  xmlns:component="http://java.sun.com/jsf/composite/components">
 <!-- author: mathiasd -->
 <h:body>
 	<ui:composition template="/resources/templates/epix.xhtml">
@@ -51,7 +53,11 @@
 		</ui:define>
 
 		<ui:define name="content">
-			<components:login />
+			<component:login />
+		</ui:define>
+
+		<ui:define name="project_menu">
+			<component:menu />
 		</ui:define>
 
 	</ui:composition>

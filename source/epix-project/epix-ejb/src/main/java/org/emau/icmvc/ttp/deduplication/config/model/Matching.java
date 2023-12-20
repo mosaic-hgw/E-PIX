@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,6 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +51,7 @@ import org.emau.icmvc.ttp.epix.common.model.config.FieldDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.MatchingDTO;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -76,6 +75,24 @@ public class Matching
 	private int numberOfThreads = Runtime.getRuntime().availableProcessors();
 	@XmlElement(name = "field", required = true)
 	private final List<Field> fields = new ArrayList<>();
+
+	public Matching()
+	{}
+
+	public Matching(MatchingDTO matchingConfig)
+	{
+		thresholdPossibleMatch = matchingConfig.getThresholdPossibleMatch();
+		thresholdAutomaticMatch = matchingConfig.getThresholdAutomaticMatch();
+		useCEMFIM = matchingConfig.isUseCEMFIM();
+		parallelMatchingAfter = matchingConfig.getParallelMatchingAfter();
+		if (matchingConfig.getFields() != null && !matchingConfig.getFields().isEmpty())
+		{
+			for (FieldDTO fieldDTO : matchingConfig.getFields())
+			{
+				fields.add(new Field(fieldDTO));
+			}
+		}
+	}
 
 	public double getThresholdPossibleMatch()
 	{
@@ -155,14 +172,14 @@ public class Matching
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((fields == null) ? 0 : fields.hashCode());
+		result = prime * result + (fields == null ? 0 : fields.hashCode());
 		result = prime * result + numberOfThreads;
 		result = prime * result + parallelMatchingAfter;
 		long temp;
 		temp = Double.doubleToLongBits(thresholdAutomaticMatch);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + (int) (temp ^ temp >>> 32);
 		temp = Double.doubleToLongBits(thresholdPossibleMatch);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + (int) (temp ^ temp >>> 32);
 		result = prime * result + (useCEMFIM ? 1231 : 1237);
 		return result;
 	}
@@ -171,29 +188,49 @@ public class Matching
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		Matching other = (Matching) obj;
 		if (fields == null)
 		{
 			if (other.fields != null)
+			{
 				return false;
+			}
 		}
 		else if (!fields.equals(other.fields))
+		{
 			return false;
+		}
 		if (numberOfThreads != other.numberOfThreads)
+		{
 			return false;
+		}
 		if (parallelMatchingAfter != other.parallelMatchingAfter)
+		{
 			return false;
+		}
 		if (Double.doubleToLongBits(thresholdAutomaticMatch) != Double.doubleToLongBits(other.thresholdAutomaticMatch))
+		{
 			return false;
+		}
 		if (Double.doubleToLongBits(thresholdPossibleMatch) != Double.doubleToLongBits(other.thresholdPossibleMatch))
+		{
 			return false;
+		}
 		if (useCEMFIM != other.useCEMFIM)
+		{
 			return false;
+		}
 		return true;
 	}
 

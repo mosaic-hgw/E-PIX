@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,14 +39,18 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-end###
  */
 
-
 import java.util.List;
+import java.util.Map;
 
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlElement;
 
-import org.emau.icmvc.ttp.epix.common.exception.*;
+import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
+import org.emau.icmvc.ttp.epix.common.exception.IllegalOperationException;
+import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
+import org.emau.icmvc.ttp.epix.common.exception.MPIException;
+import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
@@ -55,6 +59,7 @@ import org.emau.icmvc.ttp.epix.common.model.MPIRequestDTO;
 import org.emau.icmvc.ttp.epix.common.model.MPIResponseDTO;
 import org.emau.icmvc.ttp.epix.common.model.RequestConfig;
 import org.emau.icmvc.ttp.epix.common.model.ResponseEntryDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentifierDeletionResult;
 
 /**
  *
@@ -75,6 +80,7 @@ public interface EPIXServiceWithNotification
 			@XmlElement(required = true) @WebParam(name = "sourceName") String sourceName,
 			@XmlElement(required = false) @WebParam(name = "comment") String comment)
 			throws InvalidParameterException, MPIException, UnknownObjectException;
+
 
 	ResponseEntryDTO requestMPIWithConfig(
 			@XmlElement(required = false) @WebParam(name = "notificationClientID") String notificationClientID,
@@ -131,6 +137,7 @@ public interface EPIXServiceWithNotification
 			@XmlElement(required = true) @WebParam(name = "mpiId") String mpiId)
 			throws IllegalOperationException, InvalidParameterException, MPIException, UnknownObjectException;
 
+
 	// ***********************************
 	// identities
 	// ***********************************
@@ -181,6 +188,22 @@ public interface EPIXServiceWithNotification
 			@XmlElement(required = true) @WebParam(name = "localIds") List<IdentifierDTO> localIds)
 			throws InvalidParameterException, MPIException, UnknownObjectException;
 
+	/**
+	 * Removes identifiers in the given domain from the associated persons' identities and from the DB
+	 * if it is not used in other domains. An identifier cannot be deleted if its identifier domain is the
+	 * MPI domain of the given domain.
+	 * @param notificationClientID an identifier for the client passed along with the notification
+	 * @param domainName the name of the domain to delete the local identifier in
+	 * @param localIds the spec of the local identifiers to delete
+	 * @return a map with the identifiers and their deletion result
+	 * @throws UnknownObjectException if domain does not exist
+	 */
+	Map<IdentifierDTO, IdentifierDeletionResult> removeLocalIdentifier(
+			@XmlElement(required = false) @WebParam(name = "notificationClientID") String notificationClientID,
+			@XmlElement(required = true) @WebParam(name = "domainName") String domainName,
+			@XmlElement(required = true) @WebParam(name = "localIds") List<IdentifierDTO> localIds)
+			throws InvalidParameterException, MPIException, UnknownObjectException;
+
 	// ***********************************
 	// possible matches
 	// ***********************************
@@ -190,7 +213,7 @@ public interface EPIXServiceWithNotification
 			@XmlElement(required = true) @WebParam(name = "possibleMatchId") long possibleMatchId,
 			@XmlElement(required = true) @WebParam(name = "winningIdentityId") long winningIdentityId,
 			@XmlElement(required = false) @WebParam(name = "comment") String comment)
-			throws InvalidParameterException, MPIException;
+			throws InvalidParameterException, MPIException, UnknownObjectException;
 
 	void moveIdentitiesForIdentifierToPerson(
 			@XmlElement(required = false) @WebParam(name = "notificationClientID") String notificationClientID,

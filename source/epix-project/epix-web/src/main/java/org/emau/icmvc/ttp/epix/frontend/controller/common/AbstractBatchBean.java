@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -48,6 +48,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +63,7 @@ import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
+import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 import org.emau.icmvc.ttp.epix.frontend.model.Column;
 import org.emau.icmvc.ttp.epix.frontend.model.Column2;
 import org.primefaces.model.DefaultStreamedContent;
@@ -85,6 +88,7 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 
 	protected List<List<String>> data;
 	protected List<List<String>> exportData;
+	protected final BitSet exportUsedColumns = new BitSet();
 	protected Map<String, Integer> columnIndexMap;
 
 	protected DefaultStreamedContent downloadFile;
@@ -108,6 +112,7 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 		// Init data arrays
 		data = new ArrayList<>();
 		exportData = new ArrayList<>();
+		exportUsedColumns.clear();
 
 		// Init columns
 		columns.clear();
@@ -151,11 +156,29 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 		init();
 	}
 
+	protected void exportPerson(PersonDTO person, boolean onlyMainIdentityIdentifiers)
+	{
+		List<IdentifierDTO> identifiers = new ArrayList<>(person.getReferenceIdentity().getIdentifiers());
+		if (!onlyMainIdentityIdentifiers)
+		{
+			List<IdentityOutDTO> allIdentities = new ArrayList<>();
+			allIdentities.add(person.getReferenceIdentity());
+			allIdentities.addAll(person.getOtherIdentities());
+
+			for (IdentityOutDTO identity : allIdentities)
+			{
+				identifiers.addAll(identity.getIdentifiers());
+			}
+		}
+
+		exportPerson(person.getReferenceIdentity(), person.getMpiId().getValue(), identifiers, "", false);
+	}
+
 	/**
 	 * Store the person objekt as a record in a multidimensional dataarray The
 	 * first entry is MPI The rest must fit the inital column ordering (see:
 	 * org.emau.icmvc.ttp.ttp.model.Column.Type)
-	 *
+	 * <br>
 	 * If an identifier value is given, than that one will be used in the export
 	 * and the identifier of the reference identity.
 	 */
@@ -183,7 +206,7 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 
 		for (IdentifierDomainDTO identifierDomain : identifierDomains)
 		{
-			if (identifierDomain.equals(domainSelector.getSelectedDomain().getMpiDomain()))
+			if (identifierDomain.equals(getDomainSelector().getSelectedDomain().getMpiDomain()))
 			{
 				continue;
 			}
@@ -316,6 +339,72 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 		record.add(String.valueOf(errorCode));
 
 		exportData.add(record);
+		for (int i = 0; i < record.size(); i++)
+		{
+			if (StringUtils.isNotEmpty(record.get(i)))
+			{
+				exportUsedColumns.set(i);
+			}
+		}
+	}
+
+	public List<Column> findEmptyColumns()
+	{
+		if (exportData == null || exportData.isEmpty())
+		{
+			return Collections.emptyList();
+		}
+
+		// now the states will be flipped to mark empty columns with the 'set' state
+		BitSet emptyColumns = new BitSet();
+		emptyColumns.or(exportUsedColumns); // copy
+		emptyColumns.flip(0, originalColumns.size());
+
+		// return a list with the empty columns
+		return emptyColumns.stream().mapToObj(i -> originalColumns.get(i)).toList();
+	}
+
+	public boolean hasEmptyActiveColumns()
+	{
+		for (Column col : findEmptyColumns())
+		{
+			if (col.getActive())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean hasInactiveColumns()
+	{
+		for (Column column : columns)
+		{
+			if (!column.getActive())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void excludeEmptyColumns()
+	{
+		for (Column col : findEmptyColumns())
+		{
+			col.setActive(false);
+		}
+
+		columnIndexMap = new HashMap<>();
+	}
+
+	public void includeAllColumns()
+	{
+		for (Column column : columns)
+		{
+			column.setActive(true);
+		}
+		columnIndexMap = new HashMap<>();
 	}
 
 	String[] splitStreetAndNumber(String streetAndNumber)
@@ -323,7 +412,7 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 		Matcher matcher = splitStreetPattern.matcher(streetAndNumber);
 		if (matcher.find() && matcher.groupCount() >= 2)
 		{
-			return new String[] {matcher.group(1), matcher.group(2)};
+			return new String[] { matcher.group(1), matcher.group(2) };
 		}
 		return new String[0];
 	}
@@ -343,7 +432,7 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		String fileName = "epix_" + filename + "_" + dateFormat.format(new Date()) + ".csv";
 		InputStream stream = new ByteArrayInputStream(output.toString().getBytes(StandardCharsets.UTF_16LE));
-		
+
 		downloadFile = DefaultStreamedContent.builder()
 				.stream(() -> stream)
 				.contentType("text/csv")
@@ -354,9 +443,9 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 
 	protected void uploadFile(BufferedReader rd) throws IOException
 	{
-		String sep = null;
+		String sep;
 		String line;
-		Boolean ready = false;
+		boolean ready = false;
 
 		int columnSize = 0;
 
@@ -472,10 +561,10 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 	protected void loadColumnsForExport()
 	{
 		columns.clear();
-		columns.add(new Column(domainSelector.getSelectedDomain().getMpiDomain().getLabel()));
+		columns.add(new Column(getDomainSelector().getSelectedDomain().getMpiDomain().getLabel()));
 		for (IdentifierDomainDTO identifierDomain : identifierDomains)
 		{
-			if (identifierDomain.equals(domainSelector.getSelectedDomain().getMpiDomain()))
+			if (identifierDomain.equals(getDomainSelector().getSelectedDomain().getMpiDomain()))
 			{
 				continue;
 			}
@@ -585,7 +674,6 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 	}
 
 	/**
-	 *
 	 * @return Progress of Batch Processing in percentage
 	 */
 	public Integer getProgress()
@@ -596,7 +684,7 @@ public class AbstractBatchBean extends AbstractEpixWebBean
 		}
 		else
 		{
-			Integer progress = counter * 100 / sum;
+			int progress = counter * 100 / sum;
 			return progress == 0 ? 1 : progress;
 		}
 	}

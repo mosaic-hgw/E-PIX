@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,17 +39,21 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.apache.commons.lang3.StringUtils;
+import org.emau.icmvc.ttp.epix.common.model.config.PreprocessingFieldDTO;
+
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -59,6 +63,17 @@ public class PreprocessingConfig
 {
 	@XmlElement(name = "preprocessing-field", required = true)
 	private final List<PreprocessingField> preprocessingFields = new ArrayList<>();
+
+	public PreprocessingConfig()
+	{}
+
+	public PreprocessingConfig(List<PreprocessingFieldDTO> preprocessingFieldDTOs)
+	{
+		for (PreprocessingFieldDTO fieldDTO : preprocessingFieldDTOs)
+		{
+			preprocessingFields.add(new PreprocessingField(fieldDTO));
+		}
+	}
 
 	public List<PreprocessingField> getPreprocessingFields()
 	{
@@ -71,12 +86,46 @@ public class PreprocessingConfig
 		this.preprocessingFields.addAll(preprocessingFields);
 	}
 
+	public List<PreprocessingFieldDTO> toDTO()
+	{
+		List<PreprocessingFieldDTO> result = new ArrayList<>();
+		for (PreprocessingField field : preprocessingFields)
+		{
+			Map<String, String> simpleTransformationTypes = new HashMap<>();
+			List<String> complexTransformationClasses = new ArrayList<>();
+			Map<String, Character> simpleFilterTypes = new HashMap<>();
+			if (field.getSimpleTransformationTypes() != null && !field.getSimpleTransformationTypes().isEmpty())
+			{
+				for (SimpleTransformation sTrans : field.getSimpleTransformationTypes())
+				{
+					simpleTransformationTypes.put(sTrans.getInputPattern(), sTrans.getOutputPattern());
+				}
+			}
+			if (field.getComplexTransformationTypes() != null && !field.getComplexTransformationTypes().isEmpty())
+			{
+				for (ComplexTransformation cTrans : field.getComplexTransformationTypes())
+				{
+					complexTransformationClasses.add(cTrans.getQualifiedClassName());
+				}
+			}
+			if (field.getSimpleFilterTypes() != null && !field.getSimpleFilterTypes().isEmpty())
+			{
+				for (SimpleFilter sFilter : field.getSimpleFilterTypes())
+				{
+					simpleFilterTypes.put(sFilter.getPassAlphabet(), StringUtils.isEmpty(sFilter.getReplaceCharacter()) ? null : sFilter.getReplaceCharacter().charAt(0));
+				}
+			}
+			result.add(new PreprocessingFieldDTO(field.getFieldName(), simpleTransformationTypes, complexTransformationClasses, simpleFilterTypes));
+		}
+		return result;
+	}
+
 	@Override
 	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((preprocessingFields == null) ? 0 : preprocessingFields.hashCode());
+		result = prime * result + (preprocessingFields == null ? 0 : preprocessingFields.hashCode());
 		return result;
 	}
 
@@ -84,19 +133,29 @@ public class PreprocessingConfig
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		PreprocessingConfig other = (PreprocessingConfig) obj;
 		if (preprocessingFields == null)
 		{
 			if (other.preprocessingFields != null)
+			{
 				return false;
+			}
 		}
 		else if (!preprocessingFields.equals(other.preprocessingFields))
+		{
 			return false;
+		}
 		return true;
 	}
 

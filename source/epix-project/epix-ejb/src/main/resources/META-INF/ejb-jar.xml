@@ -2,7 +2,7 @@
 <!-- ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -30,8 +30,7 @@
   ###license-information-end### -->
 
 <ejb-jar xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
-	xmlns:ejb="http://java.sun.com/xml/ns/javaee/ejb-jar_3_0.xsd"
-	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd" version="3.1">
+		 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd" version="3.1">
 	<module-name>epix-ejb</module-name>
 	<display-name>epix-ejb</display-name>
 </ejb-jar>

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,19 +39,18 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 
 import org.emau.icmvc.ttp.epix.common.model.enums.MatchStatus;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class ResponseEntryDTO implements Serializable
 {
-	private static final long serialVersionUID = 189199315914411638L;
+	private static final long serialVersionUID = 3821711796527472820L;
 	private PersonDTO person;
 	private MatchStatus matchStatus;
 
@@ -63,8 +62,13 @@ public class ResponseEntryDTO implements Serializable
 	public ResponseEntryDTO(PersonDTO person, MatchStatus matchStatus)
 	{
 		super();
-		this.person = person;
+		setPerson(person);
 		this.matchStatus = matchStatus;
+	}
+
+	public ResponseEntryDTO(ResponseEntryDTO dto)
+	{
+		this(dto.getPerson(), dto.getMatchStatus());
 	}
 
 	public PersonDTO getPerson()
@@ -74,7 +78,7 @@ public class ResponseEntryDTO implements Serializable
 
 	public void setPerson(PersonDTO person)
 	{
-		this.person = person;
+		this.person = person != null ? new PersonDTO(person) : null;
 	}
 
 	public MatchStatus getMatchStatus()
@@ -92,8 +96,8 @@ public class ResponseEntryDTO implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((matchStatus == null) ? 0 : matchStatus.hashCode());
-		result = prime * result + ((person == null) ? 0 : person.hashCode());
+		result = prime * result + (matchStatus == null ? 0 : matchStatus.hashCode());
+		result = prime * result + (person == null ? 0 : person.hashCode());
 		return result;
 	}
 
@@ -101,21 +105,33 @@ public class ResponseEntryDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		ResponseEntryDTO other = (ResponseEntryDTO) obj;
 		if (matchStatus != other.matchStatus)
+		{
 			return false;
+		}
 		if (person == null)
 		{
 			if (other.person != null)
+			{
 				return false;
+			}
 		}
 		else if (!person.equals(other.person))
+		{
 			return false;
+		}
 		return true;
 	}
 

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -56,6 +56,7 @@ import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
+import org.emau.icmvc.ttp.epix.common.model.ContactOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInBaseDTO;
@@ -93,7 +94,7 @@ public class ImportController extends AbstractEpixWebBean
 	@PostConstruct
 	public void init()
 	{
-		webFile = new EpixWebFile(languageBean, domainSelector.getSelectedDomainConfiguration());
+		webFile = new EpixWebFile(languageBean, getDomainSelector().getSelectedDomainConfiguration(), epixHelper.getIdentifierDomainsFiltered());
 		onNewUpload();
 	}
 
@@ -162,31 +163,31 @@ public class ImportController extends AbstractEpixWebBean
 				if (webFile.getColumnTypeIndex().containsKey(WebPersonField.MPI.name()))
 				{
 
-					if (domainSelector.getSelectedDomainConfiguration().isUseNotifications())
+					if (isUseNotifications())
 					{
-						importedPerson = serviceWithNotification.updatePersonWithConfig(NOTIFICATION_CLIENT_ID, domainSelector.getSelectedDomainName(), person.getMpiId(),
-								new IdentityInDTO(person.getIdentity(), person.getContacts()), selectedSource.getName(), forceUpdate, null,
+						importedPerson = serviceWithNotification.updatePersonWithConfig(NOTIFICATION_CLIENT_ID, getDomainSelector().getSelectedDomainName(), person.getMpiId(),
+								new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), forceUpdate, null,
 								saveConfig);
 					}
 					else
 					{
-						importedPerson = service.updatePersonWithConfig(domainSelector.getSelectedDomainName(), person.getMpiId(),
-								new IdentityInDTO(person.getIdentity(), person.getContacts()), selectedSource.getName(), forceUpdate, null,
+						importedPerson = service.updatePersonWithConfig(getDomainSelector().getSelectedDomainName(), person.getMpiId(),
+								new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), forceUpdate, null,
 								saveConfig);
 					}
 				}
 				// New persons (Request MPI)
 				else
 				{
-					if (domainSelector.getSelectedDomainConfiguration().isUseNotifications())
+					if (isUseNotifications())
 					{
-						importedPerson = serviceWithNotification.requestMPIWithConfig(NOTIFICATION_CLIENT_ID, domainSelector.getSelectedDomainName(),
-								new IdentityInDTO(person.getIdentity(), person.getContacts()), selectedSource.getName(), null, saveConfig);
+						importedPerson = serviceWithNotification.requestMPIWithConfig(NOTIFICATION_CLIENT_ID, getDomainSelector().getSelectedDomainName(),
+								new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), null, saveConfig);
 					}
 					else
 					{
-						importedPerson = service.requestMPIWithConfig(domainSelector.getSelectedDomainName(),
-								new IdentityInDTO(person.getIdentity(), person.getContacts()), selectedSource.getName(), null, saveConfig);
+						importedPerson = service.requestMPIWithConfig(getDomainSelector().getSelectedDomainName(),
+								new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), null, saveConfig);
 					}
 				}
 
@@ -233,7 +234,7 @@ public class ImportController extends AbstractEpixWebBean
 
 		if (!successfulImports.isEmpty())
 		{
-			logMessage(successfulImports.size() + " " + getBundle().getString("import.info.imported"), Severity.INFO);
+			logMessage(successfulImports.size() + " " + getBundle().getString(preview ? "import.info.importedPreview" : "import.info.imported"), Severity.INFO);
 		}
 		personsToImport.clear();
 	}
@@ -241,13 +242,6 @@ public class ImportController extends AbstractEpixWebBean
 	public void onDownload()
 	{
 		webFile.onDownload("Download import result");
-	}
-
-	private List<IdentityInDTO> getIdentitiesFromImportPersons(List<WebPerson> list)
-	{
-		return list.stream()
-				.map(e -> new IdentityInDTO(e.getIdentity(), e.getContacts()))
-				.collect(Collectors.toList());
 	}
 
 	public Integer getProgress()
@@ -263,12 +257,17 @@ public class ImportController extends AbstractEpixWebBean
 		}
 	}
 
+	public Integer getSum()
+	{
+		return sum;
+	}
+
 	public List<WebPersonField> getRequiredTypes()
 	{
 		List<WebPersonField> result = new ArrayList<>();
 		for (WebPersonField type : WebPersonField.values())
 		{
-			if (required(type.name()))
+			if (epixHelper.required(type.name()))
 			{
 				result.add(type);
 			}
@@ -294,7 +293,6 @@ public class ImportController extends AbstractEpixWebBean
 		person.setMpiId(getValueForType(personData, WebPersonField.MPI.name()));
 
 		List<IdentifierDTO> identifiers = new ArrayList<>();
-		person.setIdentifiers(identifiers);
 
 		for (IdentifierDomainDTO identifierDomain : getIdentifierDomainsFiltered())
 		{
@@ -304,6 +302,7 @@ public class ImportController extends AbstractEpixWebBean
 				identifiers.add(new IdentifierDTO(idValue, null, null, identifierDomain));
 			}
 		}
+		person.setIdentifiers(identifiers);
 
 		person.setDegree(getValueForType(personData, WebPersonField.degree.name()));
 		person.setLastName(getValueForType(personData, WebPersonField.lastName.name()));
@@ -401,6 +400,8 @@ public class ImportController extends AbstractEpixWebBean
 		contact.setPhone(getValueForType(personData, WebPersonField.phone.name()));
 		contact.setEmail(getValueForType(personData, WebPersonField.email.name()));
 		contact.setExternalDate(parseDateString(getValueForType(personData, WebPersonField.contactExternalDate.name()), WebPersonField.contactExternalDate));
+		contact.setDateOfMoveIn(parseDateString(getValueForType(personData, WebPersonField.dateOfMoveIn.name()), WebPersonField.dateOfMoveIn));
+		contact.setDateOfMoveOut(parseDateString(getValueForType(personData, WebPersonField.dateOfMoveOut.name()), WebPersonField.dateOfMoveOut));
 		if (!(contact.getStreet() == null && contact.getZipCode() == null && contact.getCity() == null && contact.getState() == null && contact.getCountry() == null && contact.getCountryCode() == null
 				&& contact.getDistrict() == null && contact.getMunicipalityKey() == null && contact.getPhone() == null
 				&& contact.getEmail() == null && contact.getExternalDate() == null))
@@ -409,7 +410,7 @@ public class ImportController extends AbstractEpixWebBean
 		}
 		if (!contacts.isEmpty())
 		{
-			person.setContacts(contacts);
+			person.setContacts(contacts.stream().map(c -> new ContactOutDTO(c, 0, 0, 0, false, null, null)).collect(Collectors.toList()));
 		}
 
 		return person;

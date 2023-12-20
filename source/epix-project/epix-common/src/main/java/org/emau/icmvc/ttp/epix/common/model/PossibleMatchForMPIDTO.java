@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,40 +39,48 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
+import java.util.StringJoiner;
+
+import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
-public class PossibleMatchForMPIDTO implements Serializable
+public class PossibleMatchForMPIDTO extends PossibleMatchBaseDTO implements Serializable
 {
-	private static final long serialVersionUID = -4822913251520095663L;
+	private static final long serialVersionUID = -3516760475884765479L;
 	private IdentifierDTO requestedMPI;
 	private IdentityOutDTO assignedIdentity;
 	private MPIIdentityDTO matchingMPIIdentity;
-	private long linkId;
-	private Double probability;
-	private Date possibleMatchCreated;
 
 	public PossibleMatchForMPIDTO()
-	{
-		super();
-	}
+	{}
 
 	public PossibleMatchForMPIDTO(IdentifierDTO requestedMPI, IdentityOutDTO assignedIdentity, MPIIdentityDTO matchingMPIIdentity, long linkId,
-			Double probability, Date possibleMatchCreated)
+			Double probability, Date possibleMatchCreated, PossibleMatchPriority priority)
 	{
-		super();
-		this.requestedMPI = requestedMPI;
-		this.assignedIdentity = assignedIdentity;
-		this.matchingMPIIdentity = matchingMPIIdentity;
-		this.linkId = linkId;
-		this.probability = probability;
-		this.possibleMatchCreated = possibleMatchCreated;
+		super(linkId, probability, possibleMatchCreated, priority);
+		setRequestedMPI(requestedMPI);
+		setAssignedIdentity(assignedIdentity);
+		setMatchingMPIIdentity(matchingMPIIdentity);
+	}
+
+	public PossibleMatchForMPIDTO(PossibleMatchBaseDTO baseDTO, IdentifierDTO requestedMPI, IdentityOutDTO assignedIdentity, MPIIdentityDTO matchingMPIIdentity)
+	{
+		super(baseDTO);
+		setRequestedMPI(requestedMPI);
+		setAssignedIdentity(assignedIdentity);
+		setMatchingMPIIdentity(matchingMPIIdentity);
+	}
+
+	public PossibleMatchForMPIDTO(PossibleMatchForMPIDTO dto)
+	{
+		this(dto, dto.getRequestedMPI(), dto.getAssignedIdentity(), dto.getMatchingMPIIdentity());
 	}
 
 	public IdentifierDTO getRequestedMPI()
@@ -82,7 +90,7 @@ public class PossibleMatchForMPIDTO implements Serializable
 
 	public void setRequestedMPI(IdentifierDTO requestedMPI)
 	{
-		this.requestedMPI = requestedMPI;
+		this.requestedMPI = requestedMPI != null ? new IdentifierDTO(requestedMPI) : null;
 	}
 
 	public IdentityOutDTO getAssignedIdentity()
@@ -92,7 +100,7 @@ public class PossibleMatchForMPIDTO implements Serializable
 
 	public void setAssignedIdentity(IdentityOutDTO assignedIdentity)
 	{
-		this.assignedIdentity = assignedIdentity;
+		this.assignedIdentity = assignedIdentity != null ? new IdentityOutDTO(assignedIdentity) : null;
 	}
 
 	public MPIIdentityDTO getMatchingMPIIdentity()
@@ -102,108 +110,42 @@ public class PossibleMatchForMPIDTO implements Serializable
 
 	public void setMatchingMPIIdentity(MPIIdentityDTO matchingMPIIdentity)
 	{
-		this.matchingMPIIdentity = matchingMPIIdentity;
+		this.matchingMPIIdentity = matchingMPIIdentity != null ? new MPIIdentityDTO(matchingMPIIdentity) : null;
 	}
 
-	public long getLinkId()
+	@Override
+	public boolean equals(Object o)
 	{
-		return linkId;
-	}
-
-	public void setLinkId(long linkId)
-	{
-		this.linkId = linkId;
-	}
-
-	public Double getProbability()
-	{
-		return probability;
-	}
-
-	public void setProbability(Double probability)
-	{
-		this.probability = probability;
-	}
-
-	public Date getPossibleMatchCreated()
-	{
-		return possibleMatchCreated;
-	}
-
-	public void setPossibleMatchCreated(Date possibleMatchCreated)
-	{
-		this.possibleMatchCreated = possibleMatchCreated;
+		if (this == o)
+		{
+			return true;
+		}
+		if (!(o instanceof PossibleMatchForMPIDTO that))
+		{
+			return false;
+		}
+		if (!super.equals(o))
+		{
+			return false;
+		}
+		return Objects.equals(getRequestedMPI(), that.getRequestedMPI()) && Objects.equals(getAssignedIdentity(), that.getAssignedIdentity()) && Objects.equals(
+				getMatchingMPIIdentity(), that.getMatchingMPIIdentity());
 	}
 
 	@Override
 	public int hashCode()
 	{
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((assignedIdentity == null) ? 0 : assignedIdentity.hashCode());
-		result = prime * result + (int) (linkId ^ (linkId >>> 32));
-		result = prime * result + ((matchingMPIIdentity == null) ? 0 : matchingMPIIdentity.hashCode());
-		result = prime * result + ((possibleMatchCreated == null) ? 0 : possibleMatchCreated.hashCode());
-		result = prime * result + ((probability == null) ? 0 : probability.hashCode());
-		result = prime * result + ((requestedMPI == null) ? 0 : requestedMPI.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj)
-	{
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		PossibleMatchForMPIDTO other = (PossibleMatchForMPIDTO) obj;
-		if (assignedIdentity == null)
-		{
-			if (other.assignedIdentity != null)
-				return false;
-		}
-		else if (!assignedIdentity.equals(other.assignedIdentity))
-			return false;
-		if (linkId != other.linkId)
-			return false;
-		if (matchingMPIIdentity == null)
-		{
-			if (other.matchingMPIIdentity != null)
-				return false;
-		}
-		else if (!matchingMPIIdentity.equals(other.matchingMPIIdentity))
-			return false;
-		if (possibleMatchCreated == null)
-		{
-			if (other.possibleMatchCreated != null)
-				return false;
-		}
-		else if (!possibleMatchCreated.equals(other.possibleMatchCreated))
-			return false;
-		if (probability == null)
-		{
-			if (other.probability != null)
-				return false;
-		}
-		else if (!probability.equals(other.probability))
-			return false;
-		if (requestedMPI == null)
-		{
-			if (other.requestedMPI != null)
-				return false;
-		}
-		else if (!requestedMPI.equals(other.requestedMPI))
-			return false;
-		return true;
+		return Objects.hash(super.hashCode(), getRequestedMPI(), getAssignedIdentity(), getMatchingMPIIdentity());
 	}
 
 	@Override
 	public String toString()
 	{
-		return "PossibleMatchForMPIDTO [requestedMPI=" + requestedMPI + ", assignedIdentity=" + assignedIdentity + ", matchingMPIIdentity="
-				+ matchingMPIIdentity + ", linkId=" + linkId + ", probability=" + probability + ", possibleMatchCreated=" + possibleMatchCreated
-				+ "]";
+		return new StringJoiner(", ", PossibleMatchForMPIDTO.class.getSimpleName() + "[", "]")
+				.add("requestedMPI=" + requestedMPI)
+				.add("assignedIdentity=" + assignedIdentity)
+				.add("matchingMPIIdentity=" + matchingMPIIdentity)
+				.add(toStringBase())
+				.toString();
 	}
 }

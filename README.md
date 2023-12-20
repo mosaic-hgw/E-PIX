@@ -1,9 +1,10 @@
 ![context](https://user-images.githubusercontent.com/12081369/49164561-a4481500-f32f-11e8-9f0d-fa7a730f4b9d.png)
 
-Current Version: 2.13.1 (Mai 2022)
+Current Docker-Version of E-PIX: 2023.1.2 (Okt. 2023)       <br/>
+Current Docker-Version of TTP-FHIR-Gateway: 2023.1.2 (October 2023), Details from [ReleaseNotes](https://www.ths-greifswald.de/ttpfhirgw/releasenotes/2023-1-2)
 
 # About #
-The Record Linkage and ID Management solution E-PIX (Enterprise Identifier Cross-Referencing) applies the propabilistic Fellegi-Sunter-algorithm and the Levenshtein distance to avoid duplicate participant entries. The independent software module facilitates participant management and multisite-aggregation of medical research data. Additionally, the correction of potential synonym errors is supported (i.e. false-negative record linkage).
+The Record Linkage and ID Management solution E-PIX (Enterprise Identifier Cross Referencing) applies the propabilistic Fellegi-Sunter-algorithm and the Levenshtein distance to avoid duplicate participant entries. The independent software module facilitates participant management and multisite-aggregation of medical research data. Additionally, the correction of potential synonym errors is supported (i.e. false-negative record linkage).
 
 # Download #
 
@@ -24,56 +25,61 @@ or visit https://ths-greifswald.de/epix for more information.
 ## SOAP
 
 All functionalities of the E-PIX are provided for external use via SOAP-interfaces.
+The [JavaDoc specs for the Services](https://www.ths-greifswald.de/epix/doc "")
+are available online (see package `org.emau.icmvc.ttp.epix.service`).
 
-Record Linkage and ID administration: ``http://<YOUR IPADDRESS>:8080/epix/epixService?wsdl``
+Use SOAP-UI to create sample requests based on the WSDL files.
 
-Configuration and domain management: ``http://<YOUR IPADDRESS>:8080/epix/epixManagementService?wsdl``
+### Service-Interface for Record Linkage and ID Administration
 
-[Java Documentation of the interfaces](https://www.ths-greifswald.de/epix/doc)
+The WSDL URL is [http://&lt;YOUR IPADDRESS&gt;:8080/epix/epixService?wsdl](https://demo.ths-greifswald.de/epix/epixService?wsdl)
 
-Use SOAP-UI to create sample requests.
+### Service-Interface for Record Linkage and ID Administration with Notifications
+
+The WSDL URL is [http://&lt;YOUR IPADDRESS&gt;:8080/epix/epixServiceWithNotification?wsdl](https://demo.ths-greifswald.de/epix/epixServiceWithNotification?wsdl)
+
+### Service-Interface for Configuration and Domain Management
+
+The WSDL URL is [http://&lt;YOUR IPADDRESS&gt;:8080/epix/epixManagementService?wsdl](https://demo.ths-greifswald.de/epix/epixManagementService?wsdl)
+
+## FHIR
+
+More details from https://www.ths-greifswald.de/e-pix/fhir
 
 # IT-Security Recommendations #
-For the operation of E-PIX at least following IT-security measures are recommended:
 
-* use **integrated authentication and authorization mechanism (gRAS)** or **keycloak-support** to secure access and grant privileges to E-PIX-Web (see supplementary documentation for details)
-* operation in a separate network-zone
-* use of firewalls and IP-filters
-* access restriction to the E-PIX-Servers with basic authentication (e.g. with nginx or apache)
+Access to relevant application and database servers of the Trusted Third Party tools should only be possible for authorised personnel and via authorised end devices. We therefore recommend additionally implementing the following IT security measures:
+
+* Operation of the relevant servers in separate network zones (separate from the research and supply network).
+* Use of firewalls and IP filters
+* Access restriction at URL level with Basic Authentication (e.g. with NGINX or Apache)
+* use of Keycloak to restrict access to Web-Frontends and technical interfaces
 
 # Additional Information #
-
-The E-PIX was developed by the University Medicine Greifswald  and published in 2014 as part of the [MOSAIC-Project](https://ths-greifswald.de/mosaic "")  (funded by the DFG HO 1937/2-1).
-
 Selected functionalities of E-PIX were developed as part of the following research projects:
 - MIRACUM (funded by the German Federal Ministry of Education and Research 01ZZ1801M)
 - NUM-CODEX (funded by the German Federal Ministry of Education and Research 01KX2021)
 
 ## Credits ##
-Concept and implementation: L. Geidel
-
-Web-Client: A. Blumentritt, F.M. Moser
-
-Docker: R. Schuldt
-
-Bloom-Filter: C. Hampf
+**Concept and implementation:** L. Geidel <br/>
+**Web-Client:** A. Blumentritt, F.M. Moser <br/>
+**Keycloak:** Peter Penndorf, R. Schuldt, F.M. Moser <br/>
+**Docker:** R. Schuldt <br/>
+**Bloom-Filter:** C. Hampf <br/>
+**TTP-FHIR Gateway for E-PIX:** M. Bialke, F.M. Moser, S. Lang <br/>
 
 ## License ##
-License: AGPLv3, https://www.gnu.org/licenses/agpl-3.0.en.html
-
-Copyright: 2009 - 2022 University Medicine Greifswald
-
-Contact: https://www.ths-greifswald.de/kontakt/
+**License:** AGPLv3, https://www.gnu.org/licenses/agpl-3.0.en.html <br/>
+**Copyright:** 2009 - 2023 University Medicine Greifswald <br/>
+**Contact:** https://www.ths-greifswald.de/kontakt/
 
 ## Publications ##
+- Hampf et al. 2020 "Assessment of scalability and performance of the record linkage tool E‑PIX® in managing multi‑million patients in research projects at a large university hospital in Germany", https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+- Gött et al. 2022 "3LGM2IHE: Requirements for data-protection-compliant research infrastructures. A systematic comparison of theory and practice-oriented implementation", http://dx.doi.org/10.1055/a-1950-2791
+- http://dx.doi.org/10.3414/ME14-01-0133
+- http://dx.doi.org/10.1186/s12967-015-0545-6
 
-Hampf et al. 2020 "Assessment of scalability and performance of the record linkage tool E‑PIX® in managing multi‑million patients in research projects at a large university hospital in Germany", https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
-
-https://dx.doi.org/10.3414/ME14-01-0133
-
-https://dx.doi.org/10.1186/s12967-015-0545-6
-
-# Supported languages #
+## Supported languages ##
 German, English
 
 # Screenshots #

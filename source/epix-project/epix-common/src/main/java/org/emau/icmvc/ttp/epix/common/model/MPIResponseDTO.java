@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,15 +39,15 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 public class MPIResponseDTO implements Serializable
 {
-	private static final long serialVersionUID = -4955852741732521492L;
+	private static final long serialVersionUID = 1342990392865296694L;
 	private final Map<IdentityInBaseDTO, ResponseEntryDTO> responseEntries = new HashMap<>();
 
 	public MPIResponseDTO()
@@ -56,7 +56,12 @@ public class MPIResponseDTO implements Serializable
 	public MPIResponseDTO(Map<IdentityInBaseDTO, ResponseEntryDTO> responseEntries)
 	{
 		super();
-		this.responseEntries.putAll(responseEntries);
+		setResponseEntries(responseEntries);
+	}
+
+	public MPIResponseDTO(MPIResponseDTO dto)
+	{
+		this(dto.getResponseEntries());
 	}
 
 	public Map<IdentityInBaseDTO, ResponseEntryDTO> getResponseEntries()
@@ -66,10 +71,13 @@ public class MPIResponseDTO implements Serializable
 
 	public void setResponseEntries(Map<IdentityInBaseDTO, ResponseEntryDTO> responseEntries)
 	{
-		if (!this.responseEntries.equals(responseEntries))
+		this.responseEntries.clear();
+		if (responseEntries != null)
 		{
-			this.responseEntries.clear();
-			this.responseEntries.putAll(responseEntries);
+			for (Entry<IdentityInBaseDTO, ResponseEntryDTO> entry : responseEntries.entrySet())
+			{
+				this.responseEntries.put(new IdentityInBaseDTO(entry.getKey()), new ResponseEntryDTO(entry.getValue()));
+			}
 		}
 	}
 
@@ -78,7 +86,7 @@ public class MPIResponseDTO implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((responseEntries == null) ? 0 : responseEntries.hashCode());
+		result = prime * result + (responseEntries == null ? 0 : responseEntries.hashCode());
 		return result;
 	}
 
@@ -86,19 +94,29 @@ public class MPIResponseDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		MPIResponseDTO other = (MPIResponseDTO) obj;
 		if (responseEntries == null)
 		{
 			if (other.responseEntries != null)
+			{
 				return false;
+			}
 		}
 		else if (!responseEntries.equals(other.responseEntries))
+		{
 			return false;
+		}
 		return true;
 	}
 

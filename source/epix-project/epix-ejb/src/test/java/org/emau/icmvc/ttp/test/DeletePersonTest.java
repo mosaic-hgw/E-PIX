@@ -4,21 +4,21 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
- *
+ * 
  * 							concept and implementation
  * 							l.geidel,c.schack, d.langner, g.koetzschke
- *
+ * 
  * 							web client
  * 							a.blumentritt, f.m. moser
- *
+ * 
  * 							docker
  * 							r.schuldt
- *
+ * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
- *
+ * 
  * 							please cite our publications
  * 							http://dx.doi.org/10.3414/ME14-01-0133
  * 							http://dx.doi.org/10.1186/s12967-015-0545-6
@@ -28,24 +28,21 @@ package org.emau.icmvc.ttp.test;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ###license-information-end###
  */
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -61,7 +58,10 @@ import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.ObjectInUseException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
+import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.DomainDTO;
+import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
+import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchForMPIDTO;
@@ -75,6 +75,55 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/*-
+ * loeschskript
+delete from identity_history_identifier where identity_history_id in
+(select id from identity_history where identity_id in
+(select id from identity where person_id in
+(select id from person where domain_name = 'test-remove-patients')));
+
+delete from identity_history where identity_id in
+(select id from identity where person_id in
+(select id from person where domain_name = 'test-remove-patients'));
+
+delete from identitylink_history where src_person in
+(select id from person where domain_name = 'test-remove-patients')
+or dest_person in
+(select id from person where domain_name = 'test-remove-patients');
+
+delete from identity_identifier where identity_id in
+(select id from identity where person_id in
+(select id from person where domain_name = 'test-remove-patients'));
+
+delete from identity_preprocessed where identity_id in
+(select id from identity where person_id in
+(select id from person where domain_name = 'test-remove-patients'));
+
+delete from contact where identity_id in
+(select id from identity where person_id in
+(select id from person where domain_name = 'test-remove-patients'));
+
+delete from contact_history where identity_id in
+(select id from identity where person_id in
+(select id from person where domain_name = 'test-remove-patients'));
+
+delete from identity where person_id in
+(select id from person where domain_name = 'test-remove-patients');
+
+delete from person_history where person_id in
+(select id from person where domain_name = 'test-remove-patients');
+
+delete from person where domain_name = 'test-remove-patients';
+
+delete from domain where name = 'test-remove-patients';
+
+delete from identifier where value like '9876%';
+ */
 @EnabledIf("isEpixManagementServiceAvailable")
 public class DeletePersonTest
 {
@@ -158,7 +207,7 @@ public class DeletePersonTest
 		}
 		catch (InvalidParameterException | MPIException | UnknownObjectException e)
 		{
-			e.printStackTrace();
+			logger.error("exception while registering person", e);
 			throw e;
 		}
 
@@ -246,11 +295,54 @@ public class DeletePersonTest
 
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi);
 			});
 		}
 
 		logger.info("--- testRemoveOnePatient end ---");
+	}
+
+	@Test
+	public void testRemoveOnePersonWithMultipleIdentitesAndContacts() throws Exception
+	{
+		logger.info("--- testRemoveOnePersonWithMultipleIdentitesAndContacts start ---");
+
+		logger.info("register person");
+		String mpi = registerPerson("Horst", "Schlemmer", getDate(15, 11, 1980), Gender.M);
+		PersonDTO person = epixService.getPersonByFirstMPI(DOMAIN, mpi);
+		List<ContactInDTO> contacts = new ArrayList<>();
+		ContactInDTO contact = new ContactInDTO("street", "zip", "city", "state", "country", "email", "phone", "countrCode", "district", "whatever", new Date(), new Date(), new Date());
+		contacts.add(contact);
+		contact = new ContactInDTO(contact);
+		contact.setStreet("another street");
+		contacts.add(contact);
+		IdentityInDTO in = new IdentityInDTO(person.getReferenceIdentity(), contacts);
+		in.setFirstName("Horsti");
+		IdentifierDomainDTO idDomain = new IdentifierDomainDTO("MPI", "", "", null, null, "");
+		in.getIdentifiers().add(new IdentifierDTO("9876000000000", "dummy description", new Date(), idDomain));
+		epixService.updatePerson(DOMAIN, mpi, in, SOURCE, false, "test update");
+		epixService.updatePerson(DOMAIN, mpi, in, SOURCE, false, "test update");
+		person = epixService.getPersonByFirstMPI(DOMAIN, mpi);
+
+		if (!skipAnyDeactivationAndDeletionOfPersonsOrIdentities())
+		{
+			logger.info("delete one contact");
+			epixService.deactivateContact(person.getReferenceIdentity().getContacts().get(0).getContactId());
+			epixService.deleteContact(person.getReferenceIdentity().getContacts().get(0).getContactId());
+
+			logger.info("deactivate person");
+			epixService.deactivatePerson(DOMAIN, mpi);
+
+			logger.info("remove person");
+			epixService.deletePerson(DOMAIN, mpi);
+
+			assertThrows(UnknownObjectException.class, () ->
+			{
+				epixService.getPersonByFirstMPI(DOMAIN, mpi);
+			});
+		}
+
+		logger.info("--- testRemoveOnePersonWithMultipleIdentitesAndContacts end ---");
 	}
 
 	@Test
@@ -274,7 +366,7 @@ public class DeletePersonTest
 
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi);
 			});
 		}
 
@@ -308,19 +400,19 @@ public class DeletePersonTest
 
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi1);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi1);
 			});
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi2);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi2);
 			});
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi3);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi3);
 			});
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi4);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi4);
 			});
 		}
 
@@ -344,7 +436,7 @@ public class DeletePersonTest
 
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi1);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi1);
 			});
 		}
 
@@ -359,8 +451,8 @@ public class DeletePersonTest
 		String mpi1 = registerPerson("Anna", "Schulz", getDate(1, 1, 2000), Gender.F);
 		String mpi2 = registerPerson("Anne", "Schulz", getDate(1, 1, 2000), Gender.F);
 
-		PersonDTO p1 = epixService.getPersonByMPI(DOMAIN, mpi1);
-		epixService.getPersonByMPI(DOMAIN, mpi2);
+		PersonDTO p1 = epixService.getPersonByFirstMPI(DOMAIN, mpi1);
+		epixService.getPersonByFirstMPI(DOMAIN, mpi2);
 
 		List<PossibleMatchForMPIDTO> pms = epixService.getPossibleMatchesForPerson(DOMAIN, mpi1);
 
@@ -375,11 +467,11 @@ public class DeletePersonTest
 
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi1);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi1);
 			});
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi2);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi2);
 			});
 		}
 
@@ -394,18 +486,18 @@ public class DeletePersonTest
 		String mpi1 = registerPerson("Anna", "Schulz", getDate(1, 1, 2000), Gender.F);
 		String mpi2 = registerPerson("Anne", "Schulz", getDate(1, 1, 2000), Gender.F);
 
-		PersonDTO p1 = epixService.getPersonByMPI(DOMAIN, mpi1);
+		PersonDTO p1 = epixService.getPersonByFirstMPI(DOMAIN, mpi1);
 		List<PossibleMatchForMPIDTO> pms = epixService.getPossibleMatchesForPerson(DOMAIN, mpi1);
 
 		epixService.assignIdentity(pms.get(0).getLinkId(), p1.getReferenceIdentity().getIdentityId(), "");
 
 		// relation p1 - mpi1 - id1 is untouched
-		PersonDTO p1New = epixService.getPersonByMPI(DOMAIN, mpi1);
+		PersonDTO p1New = epixService.getActivePersonByMPI(DOMAIN, mpi1);
 		assertEquals(p1.getPersonId(), p1New.getPersonId());
 		assertEquals(p1.getReferenceIdentity().getIdentityId(), p1New.getReferenceIdentity().getIdentityId());
 
 		// from outside the epixService now there is no longer any evidence of p2 ...
-		PersonDTO p2New = epixService.getPersonByMPI(DOMAIN, mpi2);
+		PersonDTO p2New = epixService.getActivePersonByMPI(DOMAIN, mpi2);
 		assertEquals(p1.getPersonId(), p2New.getPersonId());
 		assertEquals(p1.getReferenceIdentity().getIdentityId(), p2New.getReferenceIdentity().getIdentityId());
 
@@ -416,7 +508,7 @@ public class DeletePersonTest
 			// ... as well as no way to assert that there IS NO p2 in DB after deletion (or tell me please)
 
 			// as said, from outside the epixService there is no longer any evidence of p2 but however mpi2 is yet connected to p1
-			p2New = epixService.getPersonByMPI(DOMAIN, mpi2);
+			p2New = epixService.getActivePersonByMPI(DOMAIN, mpi2);
 			assertEquals(p1.getPersonId(), p2New.getPersonId());
 			assertEquals(p1.getReferenceIdentity().getIdentityId(), p2New.getReferenceIdentity().getIdentityId());
 
@@ -427,11 +519,11 @@ public class DeletePersonTest
 			// now neither mpi1 nor mpi2 corresponds to any person
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi1);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi1);
 			});
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi2);
+				epixService.getPersonByFirstMPI(DOMAIN, mpi2);
 			});
 
 			// How to assert that the identifier table really does not contain any orphan MPIs?
@@ -448,47 +540,51 @@ public class DeletePersonTest
 		String mpi1 = registerPerson("Anna", "Schulz", getDate(1, 1, 2000), Gender.F);
 		String mpi2 = registerPerson("Anne", "Schulz", getDate(1, 1, 2000), Gender.F);
 
-		PersonDTO p1 = epixService.getPersonByMPI(DOMAIN, mpi1);
-		PersonDTO p2 = epixService.getPersonByMPI(DOMAIN, mpi2);
+		PersonDTO p1 = epixService.getPersonByFirstMPI(DOMAIN, mpi1);
+		PersonDTO p2 = epixService.getPersonByFirstMPI(DOMAIN, mpi2);
 		List<PossibleMatchForMPIDTO> pms = epixService.getPossibleMatchesForPerson(DOMAIN, mpi1);
 
 		epixService.assignIdentity(pms.get(0).getLinkId(), p1.getReferenceIdentity().getIdentityId(), "");
 
 		// relation p1 - mpi1 - id1 is untouched
-		PersonDTO p1New = epixService.getPersonByMPI(DOMAIN, mpi1);
+		PersonDTO p1New = epixService.getPersonByFirstMPI(DOMAIN, mpi1);
 		assertEquals(p1.getPersonId(), p1New.getPersonId());
 		assertEquals(p1.getReferenceIdentity().getIdentityId(), p1New.getReferenceIdentity().getIdentityId());
 
 		// from outside the epixService now there is no longer any evidence of p2 ...
-		PersonDTO p2New = epixService.getPersonByMPI(DOMAIN, mpi2);
+		PersonDTO p2New = epixService.getActivePersonByMPI(DOMAIN, mpi2);
 		assertEquals(p1.getPersonId(), p2New.getPersonId());
 		assertEquals(p1.getReferenceIdentity().getIdentityId(), p2New.getReferenceIdentity().getIdentityId());
 
 		if (!skipAnyDeactivationAndDeletionOfPersonsOrIdentities())
 		{
 			epixService.deactivateIdentity(p1.getReferenceIdentity().getIdentityId());
-			p1New = epixService.getPersonByMPI(DOMAIN, mpi1);
+			p1New = epixService.getPersonByFirstMPI(DOMAIN, mpi1);
 			assertEquals(p1.getPersonId(), p1New.getPersonId());
 			// now the identity origin from p2 should be the reference identity of p1
 			assertEquals(p1New.getReferenceIdentity().getIdentityId(), p2.getReferenceIdentity().getIdentityId());
 			epixService.deleteIdentity(p1.getReferenceIdentity().getIdentityId());
 
 			// person should still be accessible via both mpis
-			epixService.getPersonByMPI(DOMAIN, mpi1);
-			epixService.getPersonByMPI(DOMAIN, mpi2);
+			epixService.getActivePersonByMPI(DOMAIN, mpi1);
+			epixService.getActivePersonByMPI(DOMAIN, mpi2);
 
 			epixService.deactivateIdentity(p2.getReferenceIdentity().getIdentityId());
 			epixService.deleteIdentity(p2.getReferenceIdentity().getIdentityId());
 
-			// now neither mpi1 nor mpi2 corresponds to any person
+			// now neither mpi1 nor mpi2 corresponds to any active person
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi1);
+				epixService.getActivePersonByMPI(DOMAIN, mpi1);
 			});
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi2);
+				epixService.getActivePersonByMPI(DOMAIN, mpi2);
 			});
+
+			// ... but still to deactivated persons
+			assertTrue(epixService.getPersonByFirstMPI(DOMAIN, mpi1).isDeactivated());
+			assertTrue(epixService.getPersonByFirstMPI(DOMAIN, mpi2).isDeactivated());
 
 			assertThrows(ObjectInUseException.class, () ->
 			{
@@ -511,19 +607,19 @@ public class DeletePersonTest
 		String mpi1 = registerPerson("Anna", "Schulz", getDate(1, 1, 2000), Gender.F);
 		String mpi2 = registerPerson("Anne", "Schulz", getDate(1, 1, 2000), Gender.F);
 
-		PersonDTO p1 = epixService.getPersonByMPI(DOMAIN, mpi1);
-		PersonDTO p2 = epixService.getPersonByMPI(DOMAIN, mpi2);
+		PersonDTO p1 = epixService.getPersonByFirstMPI(DOMAIN, mpi1);
+		PersonDTO p2 = epixService.getPersonByFirstMPI(DOMAIN, mpi2);
 		List<PossibleMatchForMPIDTO> pms = epixService.getPossibleMatchesForPerson(DOMAIN, mpi1);
 
 		epixService.assignIdentity(pms.get(0).getLinkId(), p1.getReferenceIdentity().getIdentityId(), "");
 
 		// relation p1 - mpi1 - id1 is untouched
-		PersonDTO p1New = epixService.getPersonByMPI(DOMAIN, mpi1);
+		PersonDTO p1New = epixService.getActivePersonByMPI(DOMAIN, mpi1);
 		assertEquals(p1.getPersonId(), p1New.getPersonId());
 		assertEquals(p1.getReferenceIdentity().getIdentityId(), p1New.getReferenceIdentity().getIdentityId());
 
 		// from outside the epixService now there is no longer any evidence of p2 ...
-		PersonDTO p2New = epixService.getPersonByMPI(DOMAIN, mpi2);
+		PersonDTO p2New = epixService.getActivePersonByMPI(DOMAIN, mpi2);
 		assertEquals(p1.getPersonId(), p2New.getPersonId());
 		assertEquals(p1.getReferenceIdentity().getIdentityId(), p2New.getReferenceIdentity().getIdentityId());
 
@@ -533,24 +629,28 @@ public class DeletePersonTest
 			epixService.deleteIdentity(p2.getReferenceIdentity().getIdentityId());
 
 			// person should now only be accessible via mpi1
-			epixService.getPersonByMPI(DOMAIN, mpi1);
+			epixService.getActivePersonByMPI(DOMAIN, mpi1);
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi2);
+				epixService.getActivePersonByMPI(DOMAIN, mpi2);
 			});
 
 			epixService.deactivateIdentity(p1.getReferenceIdentity().getIdentityId());
 			epixService.deleteIdentity(p1.getReferenceIdentity().getIdentityId());
 
-			// now neither mpi1 nor mpi2 corresponds to any person
+			// now neither mpi1 nor mpi2 corresponds to any active person
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi1);
+				epixService.getActivePersonByMPI(DOMAIN, mpi1);
 			});
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi2);
+				epixService.getActivePersonByMPI(DOMAIN, mpi2);
 			});
+
+			// ... but still to deactivated persons
+			assertTrue(epixService.getPersonByFirstMPI(DOMAIN, mpi1).isDeactivated());
+			assertTrue(epixService.getPersonByFirstMPI(DOMAIN, mpi2).isDeactivated());
 
 			assertThrows(ObjectInUseException.class, () ->
 			{
@@ -573,19 +673,19 @@ public class DeletePersonTest
 		String mpi1 = registerPerson("Anna", "Schulz", getDate(1, 1, 2000), Gender.F);
 		String mpi2 = registerPerson("Anne", "Schulz", getDate(1, 1, 2000), Gender.F);
 
-		PersonDTO p1 = epixService.getPersonByMPI(DOMAIN, mpi1);
-		PersonDTO p2 = epixService.getPersonByMPI(DOMAIN, mpi2);
+		PersonDTO p1 = epixService.getPersonByFirstMPI(DOMAIN, mpi1);
+		PersonDTO p2 = epixService.getPersonByFirstMPI(DOMAIN, mpi2);
 		List<PossibleMatchForMPIDTO> pms = epixService.getPossibleMatchesForPerson(DOMAIN, mpi1);
 
 		epixService.assignIdentity(pms.get(0).getLinkId(), p1.getReferenceIdentity().getIdentityId(), "");
 
 		// relation p1 - mpi1 - id1 is untouched
-		PersonDTO p1New = epixService.getPersonByMPI(DOMAIN, mpi1);
+		PersonDTO p1New = epixService.getActivePersonByMPI(DOMAIN, mpi1);
 		assertEquals(p1.getPersonId(), p1New.getPersonId());
 		assertEquals(p1.getReferenceIdentity().getIdentityId(), p1New.getReferenceIdentity().getIdentityId());
 
 		// from outside the epixService now there is no longer any evidence of p2 ...
-		PersonDTO p2New = epixService.getPersonByMPI(DOMAIN, mpi2);
+		PersonDTO p2New = epixService.getActivePersonByMPI(DOMAIN, mpi2);
 		assertEquals(p1.getPersonId(), p2New.getPersonId());
 		assertEquals(p1.getReferenceIdentity().getIdentityId(), p2New.getReferenceIdentity().getIdentityId());
 
@@ -594,31 +694,42 @@ public class DeletePersonTest
 			epixService.deletePerson(DOMAIN, mpi2);
 
 			// person should still be accessible via both mpis
-			epixService.getPersonByMPI(DOMAIN, mpi1);
-			epixService.getPersonByMPI(DOMAIN, mpi2);
+			epixService.getActivePersonByMPI(DOMAIN, mpi1);
+			epixService.getActivePersonByMPI(DOMAIN, mpi2);
 
 			epixService.deactivateIdentity(p2.getReferenceIdentity().getIdentityId());
 			epixService.deleteIdentity(p2.getReferenceIdentity().getIdentityId());
 
 			// person should now only be accessible via mpi1
-			epixService.getPersonByMPI(DOMAIN, mpi1);
+			epixService.getActivePersonByMPI(DOMAIN, mpi1);
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi2);
+				epixService.getActivePersonByMPI(DOMAIN, mpi2);
+			});
+			assertThrows(UnknownObjectException.class, () ->
+			{
+				epixService.getPersonByFirstMPI(DOMAIN, mpi2);
 			});
 
 			epixService.deactivateIdentity(p1.getReferenceIdentity().getIdentityId());
 			epixService.deleteIdentity(p1.getReferenceIdentity().getIdentityId());
 
-			// now neither mpi1 nor mpi2 corresponds to any person
+			// now neither mpi1 nor mpi2 corresponds to any active person
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi1);
+				epixService.getActivePersonByMPI(DOMAIN, mpi1);
 			});
 			assertThrows(UnknownObjectException.class, () ->
 			{
-				epixService.getPersonByMPI(DOMAIN, mpi2);
+				epixService.getActivePersonByMPI(DOMAIN, mpi2);
 			});
+			// mpi2 not even to a deactivated person
+			assertThrows(UnknownObjectException.class, () ->
+			{
+				epixService.getPersonByFirstMPI(DOMAIN, mpi2);
+			});
+			// ... but mpi1 still to one deactivated person
+			assertTrue(epixService.getPersonByFirstMPI(DOMAIN, mpi1).isDeactivated());
 
 			assertThrows(ObjectInUseException.class, () ->
 			{

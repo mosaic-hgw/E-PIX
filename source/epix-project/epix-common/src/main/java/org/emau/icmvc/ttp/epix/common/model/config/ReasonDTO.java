@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -43,93 +43,100 @@ import java.io.Serializable;
 
 public class ReasonDTO implements Serializable
 {
-    private static final long serialVersionUID = 6105126253528537304L;
+	private static final long serialVersionUID = -4868738783297025585L;
+	private String name;
+	private String description;
 
-    private String name;
-    private String description;
+	public ReasonDTO()
+	{
+		name = "";
+		description = "";
+	}
 
-    public ReasonDTO()
-    {
-        name = "";
-        description = "";
-    }
+	public ReasonDTO(String name, String description)
+	{
+		this.name = name;
+		this.description = description;
+	}
 
-    public ReasonDTO(String name, String description)
-    {
-        super();
+	public ReasonDTO(ReasonDTO dto)
+	{
+		this(dto.getName(), dto.getDescription());
+	}
 
-        this.name = name;
-        this.description = description;
-    }
+	public String getName()
+	{
+		return name;
+	}
 
-    public String getName()
-    {
-        return name;
-    }
+	public void setName(String name)
+	{
+		this.name = name;
+	}
 
-    public void setName(String name)
-    {
-        this.name = name;
-    }
+	public String getDescription()
+	{
+		return description;
+	}
 
-    public String getDescription()
-    {
-        return description;
-    }
+	public void setDescription(String description)
+	{
+		this.description = description;
+	}
 
-    public void setDescription(String description)
-    {
-        this.description = description;
-    }
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (this == obj)
+		{
+			return true;
+		}
+		if (obj == null)
+		{
+			return false;
+		}
+		if (getClass() != obj.getClass())
+		{
+			return false;
+		}
+		ReasonDTO other = (ReasonDTO) obj;
+		if (name == null)
+		{
+			if (other.name != null)
+			{
+				return false;
+			}
+		}
+		else if (!name.equals(other.name))
+		{
+			return false;
+		}
+		if (description == null)
+		{
+			return other.description == null;
+		}
+		else
+		{
+			return description.equals(other.description);
+		}
+	}
 
-    @Override public boolean equals(Object obj)
-    {
-        if (this == obj)
-        {
-            return true;
-        }
-        if (obj == null)
-        {
-            return false;
-        }
-        if (getClass() != obj.getClass())
-        {
-            return false;
-        }
-        ReasonDTO other = (ReasonDTO) obj;
-        if (name == null)
-        {
-            if (other.name != null)
-            {
-                return false;
-            }
-        }
-        else if (!name.equals(other.name))
-        {
-            return false;
-        }
-        if (description == null)
-        {
-            return other.description == null;
-        }
-        else
-            return description.equals(other.description);
-    }
+	@Override
+	public int hashCode()
+	{
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (name == null ? 0 : name.hashCode());
+		result = prime * result + (description == null ? 0 : description.hashCode());
+		return result;
+	}
 
-    @Override public int hashCode()
-    {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (name == null ? 0 : name.hashCode());
-        result = prime * result + (description == null ? 0 : description.hashCode());
-        return result;
-    }
-
-    @Override public String toString()
-    {
-        return "ReasonDTO [" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ']';
-    }
+	@Override
+	public String toString()
+	{
+		return "ReasonDTO [" +
+				"name='" + name + '\'' +
+				", description='" + description + '\'' +
+				']';
+	}
 }

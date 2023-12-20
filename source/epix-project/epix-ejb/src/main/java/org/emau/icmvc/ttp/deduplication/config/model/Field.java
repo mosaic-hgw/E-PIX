@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,6 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -50,7 +49,7 @@ import org.emau.icmvc.ttp.epix.common.model.enums.BlockingMode;
 import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -72,6 +71,23 @@ public class Field
 	private String algorithm;
 	@XmlElement(name = "multiple-values", required = false)
 	private MultipleValues multipleValues;
+
+	public Field()
+	{}
+
+	public Field(FieldDTO fieldDTO)
+	{
+		name = fieldDTO.getName();
+		blockingThreshold = fieldDTO.getBlockingThreshold();
+		blockingMode = fieldDTO.getBlockingMode();
+		matchingThreshold = fieldDTO.getMatchingThreshold();
+		weight = fieldDTO.getWeight();
+		algorithm = fieldDTO.getAlgorithm();
+		if (fieldDTO.getMultipleValuesSeparator() != Character.MIN_VALUE)
+		{
+			multipleValues = new MultipleValues(fieldDTO.getMultipleValuesSeparator(), fieldDTO.getPenaltyNotAPerfectMatch(), fieldDTO.getPenaltyOneShort(), fieldDTO.getPenaltyBothShort());
+		}
+	}
 
 	public FieldName getName()
 	{
@@ -173,17 +189,17 @@ public class Field
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((algorithm == null) ? 0 : algorithm.hashCode());
-		result = prime * result + ((blockingMode == null) ? 0 : blockingMode.hashCode());
+		result = prime * result + (algorithm == null ? 0 : algorithm.hashCode());
+		result = prime * result + (blockingMode == null ? 0 : blockingMode.hashCode());
 		long temp;
 		temp = Double.doubleToLongBits(blockingThreshold);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + (int) (temp ^ temp >>> 32);
 		temp = Double.doubleToLongBits(matchingThreshold);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((multipleValues == null) ? 0 : multipleValues.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + (int) (temp ^ temp >>> 32);
+		result = prime * result + (multipleValues == null ? 0 : multipleValues.hashCode());
+		result = prime * result + (name == null ? 0 : name.hashCode());
 		temp = Double.doubleToLongBits(weight);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + (int) (temp ^ temp >>> 32);
 		return result;
 	}
 
@@ -191,36 +207,60 @@ public class Field
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		Field other = (Field) obj;
 		if (algorithm == null)
 		{
 			if (other.algorithm != null)
+			{
 				return false;
+			}
 		}
 		else if (!algorithm.equals(other.algorithm))
+		{
 			return false;
+		}
 		if (blockingMode != other.blockingMode)
+		{
 			return false;
+		}
 		if (Double.doubleToLongBits(blockingThreshold) != Double.doubleToLongBits(other.blockingThreshold))
+		{
 			return false;
+		}
 		if (Double.doubleToLongBits(matchingThreshold) != Double.doubleToLongBits(other.matchingThreshold))
+		{
 			return false;
+		}
 		if (multipleValues == null)
 		{
 			if (other.multipleValues != null)
+			{
 				return false;
+			}
 		}
 		else if (!multipleValues.equals(other.multipleValues))
+		{
 			return false;
+		}
 		if (name != other.name)
+		{
 			return false;
+		}
 		if (Double.doubleToLongBits(weight) != Double.doubleToLongBits(other.weight))
+		{
 			return false;
+		}
 		return true;
 	}
 

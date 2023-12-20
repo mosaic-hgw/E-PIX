@@ -1,0 +1,7 @@
+deployments/**
+jboss/**
+Dockerfile
+LICENSE.txt
+ABOUT_E-PIX.md
+ReleaseNotes_E-PIX.md
+README_E-PIX.md

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,6 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * ###license-information-end###
  */
 
-
 import java.text.MessageFormat;
 import java.util.List;
 
@@ -52,25 +51,29 @@ import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.model.SourceDTO;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.ICRUDObject;
+import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
 import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
+import org.icmvc.ttp.web.controller.Text;
 
 public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDTO>
 {
 	private SourceDTO selected;
 
 	@Override
-	public void init(EPIXManagementService managementService)
+	public void init(EPIXManagementService managementService, EpixHelper epixHelper, Text text)
 	{
 		this.managementService = managementService;
+		this.text = text;
+		pageMode = PageMode.READ;
 		reload();
 	}
 
 	@Override
 	public void reload()
-	{
-	}
+	{}
 
-	@Override public void onShowDetails(SourceDTO object)
+	@Override
+	public void onShowDetails(SourceDTO object)
 	{
 		selected = object;
 		pageMode = PageMode.READ;
@@ -121,9 +124,13 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 		{
 			try
 			{
-				selected.setName(StringUtils.isEmpty(selected.getName()) ? selected.getLabel().replace(" ", "_") : selected.getName());
-				managementService.addSource(selected);
+				// operate on a copy for the case that we stay on the dialog after a warning
+				SourceDTO tmp = new SourceDTO(selected);
+				tmp.setName(StringUtils.isEmpty(tmp.getName()) ? tmp.getLabel().replace(" ", "_") : tmp.getName());
+				managementService.addSource(tmp);
 				logMessage(new MessageFormat(getBundle().getString("domain.message.source.add.success")).format(args), Severity.INFO);
+				// on success write back changes on selected (currently unused)
+				selected = new SourceDTO(tmp);
 			}
 			catch (DuplicateEntryException e)
 			{
@@ -140,7 +147,6 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 		}
 
 		reload();
-		selected = null;
 	}
 
 	@Override
@@ -149,7 +155,8 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 		selected = null;
 	}
 
-	@Override public boolean isEditable(SourceDTO object)
+	@Override
+	public boolean isEditable(SourceDTO object)
 	{
 		return true;
 	}
@@ -196,6 +203,11 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 			return true;
 		}
 
+		if (pageMode == PageMode.NEW)
+		{
+			return true;
+		}
+
 		for (SourceDTO sourceDTO : getAll())
 		{
 			if (sourceDTO.getName().equals(selected.getName()))
@@ -206,12 +218,14 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 		return true;
 	}
 
-	@Override public SourceDTO getSelected()
+	@Override
+	public SourceDTO getSelected()
 	{
 		return selected;
 	}
 
-	@Override public void setSelected(SourceDTO selected)
+	@Override
+	public void setSelected(SourceDTO selected)
 	{
 		this.selected = selected != null ? selected : this.selected;
 	}

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,6 +40,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  */
 
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -47,6 +48,8 @@ import java.util.Date;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -58,8 +61,10 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
+import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.PersonBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonHistoryDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.PersonHistoryEvent;
 
 /**
  * 
@@ -73,7 +78,8 @@ import org.emau.icmvc.ttp.epix.common.model.PersonHistoryDTO;
 @NamedQueries({ @NamedQuery(name = "PersonHistory.findByPerson", query = "SELECT ph FROM PersonHistory ph WHERE ph.person = :person"), })
 public class PersonHistory implements Serializable
 {
-	private static final long serialVersionUID = -7270856057170232328L;
+	@Serial
+	private static final long serialVersionUID = -2732749371894104311L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "person_history_index")
 	private long id;
@@ -90,13 +96,18 @@ public class PersonHistory implements Serializable
 	@JoinColumns({ @JoinColumn(name = "first_mpi_identifier_domain_name", referencedColumnName = "identifier_domain_name"),
 			@JoinColumn(name = "first_mpi_value", referencedColumnName = "value") })
 	private Identifier firstMpi;
+	private String user;
+	@Column(columnDefinition = "char(20)")
+	@Enumerated(EnumType.STRING)
+	private PersonHistoryEvent event;
+
 
 	public PersonHistory()
 	{
 		historyTimestamp = new Timestamp(System.currentTimeMillis());
 	}
 
-	public PersonHistory(Person person, String comment, Timestamp timestamp)
+	public PersonHistory(Person person, PersonHistoryEvent event, String comment, Timestamp timestamp, String user)
 	{
 		this.person = person;
 		deactivated = person.isDeactivated();
@@ -104,6 +115,8 @@ public class PersonHistory implements Serializable
 		historyTimestamp = timestamp;
 		domainName = person.getDomain().getName();
 		this.comment = comment;
+		this.user = user;
+		this.event = event;
 	}
 
 	public long getId()
@@ -176,11 +189,31 @@ public class PersonHistory implements Serializable
 		this.comment = comment;
 	}
 
+	public String getUser()
+	{
+		return user;
+	}
+
+	public void setUser(String user)
+	{
+		this.user = user;
+	}
+
+	public PersonHistoryEvent getEvent()
+	{
+		return event;
+	}
+
+	public void setEvent(PersonHistoryEvent event)
+	{
+		this.event = event;
+	}
+
 	public PersonHistoryDTO toDTO()
 	{
 		PersonBaseDTO personBase = new PersonBaseDTO(person.getId(), deactivated, new Date(person.getCreateTimestamp().getTime()),
-				new Date(person.getTimestamp().getTime()), firstMpi.toDTO());
-		return new PersonHistoryDTO(personBase, id, new Date(historyTimestamp.getTime()));
+				new Date(person.getTimestamp().getTime()), firstMpi.toDTO(), domainName);
+		return new PersonHistoryDTO(personBase, id, new Date(historyTimestamp.getTime()), event, comment, user);
 	}
 
 	@Override
@@ -210,7 +243,14 @@ public class PersonHistory implements Serializable
 	@Override
 	public String toString()
 	{
-		return "PersonHistory [id=" + id + ", deactivated=" + deactivated + ", historyTimestamp=" + historyTimestamp + ", domainName=" + domainName
-				+ ", comment=" + comment + ", person=" + person + ", firstMpi=" + firstMpi + "]";
+		return "PersonHistory [id=" + id + ", historyTimestamp=" + historyTimestamp
+				+ (event != null ? ", event=" + event : "")
+				+ ", domainName=" + domainName
+				+ ", deactivated=" + deactivated
+				+ ", firstMpi=" + firstMpi
+				+ ", person=" + person
+				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+				+ "]";
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -48,6 +48,8 @@ import javax.ejb.Stateless;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
 import org.emau.icmvc.ttp.epix.common.exception.IllegalOperationException;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
@@ -66,13 +68,13 @@ import org.emau.icmvc.ttp.epix.common.model.PossibleMatchDTO;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchForMPIDTO;
 import org.emau.icmvc.ttp.epix.common.model.RequestConfig;
 import org.emau.icmvc.ttp.epix.common.model.ResponseEntryDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentifierDeletionResult;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityField;
 import org.emau.icmvc.ttp.epix.common.model.enums.PersonField;
+import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
+import org.emau.icmvc.ttp.epix.common.utils.PaginationConfig;
 import org.emau.icmvc.ttp.epix.pdqquery.model.SearchMask;
 import org.jboss.ejb3.annotation.TransactionTimeout;
-
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 
 /**
  *
@@ -95,21 +97,21 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	public ResponseEntryDTO requestMPI(String domainName, IdentityInDTO identity, String sourceName, String comment)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("requestMPI without config - use default");
-		return requestMPIInternal(null, domainName, identity, sourceName, comment, DEFAULT_REQUEST_CONFIG);
+		return requestMPIInternal(null, domainName, identity, sourceName, comment, null);
 	}
 
 	@Override
 	public ResponseEntryDTO requestMPIWithConfig(String domainName, IdentityInDTO identity, String sourceName, String comment,
-			RequestConfig requestConfig) throws InvalidParameterException, MPIException, UnknownObjectException
+			RequestConfig requestConfig)
+			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("requestMPIWithConfig");
 		return requestMPIInternal(null, domainName, identity, sourceName, comment, requestConfig);
 	}
 
 	@TransactionTimeout(3600)
 	@Override
-	public MPIResponseDTO requestMPIBatch(MPIRequestDTO mpiRequest) throws InvalidParameterException, MPIException, UnknownObjectException
+	public MPIResponseDTO requestMPIBatch(MPIRequestDTO mpiRequest)
+			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		return requestMPIBatchInternal(null, mpiRequest);
 	}
@@ -117,16 +119,23 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	@Override
 	public List<PersonDTO> getPersonsForDomain(String domainName) throws InvalidParameterException, UnknownObjectException
 	{
+		return getActivePersonsForDomain(domainName);
+	}
+
+	@Override
+	public List<PersonDTO> getActivePersonsForDomain(String domainName) throws InvalidParameterException, UnknownObjectException
+	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("getPersonsForDomain " + domainName);
+			logger.debug("getActivePersonsForDomain " + domainName);
 		}
 		else
 		{
-			logger.info("getPersonsForDomain");
+			logger.info("getActivePersonsForDomain");
 		}
 		checkParameter(domainName, "domainName");
-		List<PersonDTO> result = dao.getPersons(domainName, null, false);
+		checkAllowedDomain(domainName);
+		List<PersonDTO> result = dao.getActivePersons(domainName, null, false);
 		logger.info("found " + result.size() + " persons");
 		return result;
 	}
@@ -135,18 +144,26 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	public List<PersonDTO> getPersonsForDomainFiltered(String domainName, Map<PersonField, String> filter, boolean filterIsCaseSensitive)
 			throws InvalidParameterException, UnknownObjectException
 	{
+		return getActivePersonsForDomainFiltered(domainName, filter, filterIsCaseSensitive);
+	}
+
+	@Override
+	public List<PersonDTO> getActivePersonsForDomainFiltered(String domainName, Map<PersonField, String> filter, boolean filterIsCaseSensitive)
+			throws InvalidParameterException, UnknownObjectException
+	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("getPersonsForDomainFiltered, domain=" + domainName
+			logger.debug("getActivePersonsForDomainFiltered, domain=" + domainName
 					+ (filter != null && !filter.isEmpty() ? filter.size() + " filter values" : " no filter values")
 					+ " and the filter is case sensitive=" + filterIsCaseSensitive);
 		}
 		else
 		{
-			logger.info("getPersonsForDomainFiltered");
+			logger.info("getActivePersonsForDomainFiltered");
 		}
 		checkParameter(domainName, "domainName");
-		List<PersonDTO> result = dao.getPersons(domainName, filter, filterIsCaseSensitive);
+		checkAllowedDomain(domainName);
+		List<PersonDTO> result = dao.getActivePersons(domainName, filter, filterIsCaseSensitive);
 		logger.info("found " + result.size() + " persons");
 		return result;
 	}
@@ -156,19 +173,91 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			boolean sortIsAscending, Map<PersonField, String> filter, boolean filterIsCaseSensitive)
 			throws InvalidParameterException, UnknownObjectException
 	{
+		return getActivePersonsForDomainPaginated(domainName, firstEntry, pageSize, sortField, sortIsAscending, filter, filterIsCaseSensitive);
+	}
+
+	@Override
+	public List<PersonDTO> getActivePersonsForDomainPaginated(String domainName, int firstEntry, int pageSize, PersonField sortField,
+			boolean sortIsAscending, Map<PersonField, String> filter, boolean filterIsCaseSensitive)
+			throws InvalidParameterException, UnknownObjectException
+	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("getPersonsForDomainPaginated, domain=" + domainName + ", firstEntry=" + firstEntry + ", pageSize=" + pageSize
+			logger.debug("getActivePersonsForDomainPaginated, domain=" + domainName + ", firstEntry=" + firstEntry + ", pageSize=" + pageSize
 					+ ", sortField=" + sortField + ", sortIsAscending=" + sortIsAscending
 					+ (filter != null && !filter.isEmpty() ? filter.size() + " filter values" : " no filter values")
 					+ " and the filter is case sensitive=" + filterIsCaseSensitive);
 		}
 		else
 		{
-			logger.info("getPersonsForDomainPaginated");
+			logger.info("getActivePersonsForDomainPaginated");
 		}
 		checkParameter(domainName, "domainName");
-		List<PersonDTO> result = dao.getPersonsPaginated(domainName, firstEntry, pageSize, sortField, sortIsAscending, filter, filterIsCaseSensitive);
+		checkAllowedDomain(domainName);
+		List<PersonDTO> result = dao.getActivePersonsPaginated(domainName, firstEntry, pageSize, sortField, sortIsAscending, filter, filterIsCaseSensitive);
+		logger.info("found " + result.size() + " persons");
+		return result;
+	}
+
+	@Override
+	public long countPersonsForDomainFiltered(String domainName, Map<PersonField, String> filter, boolean filterIsCaseSensitive)
+			throws InvalidParameterException, UnknownObjectException
+	{
+		return countActivePersonsForDomainFiltered(domainName, filter, filterIsCaseSensitive);
+	}
+
+	@Override
+	public long countActivePersonsForDomainFiltered(String domainName, Map<PersonField, String> filter, boolean filterIsCaseSensitive)
+			throws InvalidParameterException, UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("countActivePersonsForDomainFiltered, domain=" + domainName + (filter != null && !filter.isEmpty() ? filter.size() + " filter values" : " no filter values")
+					+ " and the filter is case sensitive=" + filterIsCaseSensitive);
+		}
+		else
+		{
+			logger.info("countActivePersonsForDomainFiltered");
+		}
+		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
+		return dao.countActivePersonsFiltered(domainName, filter, filterIsCaseSensitive);
+	}
+
+	@Override
+	public PersonDTO getPersonByFirstMPI(String domainName, String mpiId) throws InvalidParameterException, UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("getPersonByFirstMPI for domain " + domainName + " and mpiId " + mpiId);
+		}
+		else
+		{
+			logger.info("getPersonByFirstMPI");
+		}
+		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
+		checkParameter(mpiId, "mpiId");
+		PersonDTO result = dao.getPersonByFirstMPI(domainName, mpiId);
+		logger.info("person found");
+		return result;
+	}
+
+	@Override
+	public List<PersonDTO> getPersonsByFirstMPIBatch(String domainName, List<String> mpiIds) throws InvalidParameterException, UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("getPersonsByFirstMPIBatch for domain " + domainName + " and " + mpiIds.size() + " mpiIds");
+		}
+		else
+		{
+			logger.info("getPersonsByFirstMPIBatch");
+		}
+		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
+		checkParameter(mpiIds, "mpiIds");
+		List<PersonDTO> result = dao.getPersonsByFirstMPIBatch(domainName, mpiIds);
 		logger.info("found " + result.size() + " persons");
 		return result;
 	}
@@ -176,18 +265,50 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	@Override
 	public PersonDTO getPersonByMPI(String domainName, String mpiId) throws InvalidParameterException, UnknownObjectException
 	{
+		return getActivePersonByMPI(domainName, mpiId);
+	}
+
+	@Override
+	public PersonDTO getActivePersonByMPI(String domainName, String mpiId) throws InvalidParameterException, UnknownObjectException
+	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("getPersonByMpi for domain " + domainName + " and mpiId " + mpiId);
+			logger.debug("getActivePersonByMpi for domain " + domainName + " and mpiId " + mpiId);
 		}
 		else
 		{
-			logger.info("getPersonByMpi");
+			logger.info("getActivePersonByMpi");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
-		PersonDTO result = dao.getPersonByMPI(domainName, mpiId);
+		PersonDTO result = dao.getActivePersonByMPI(domainName, mpiId);
 		logger.info("person found");
+		return result;
+	}
+
+	@Override
+	public List<PersonDTO> getPersonsByMPIBatch(String domainName, List<String> mpiIds) throws InvalidParameterException, UnknownObjectException
+	{
+		return getActivePersonsByMPIBatch(domainName, mpiIds);
+	}
+
+	@Override
+	public List<PersonDTO> getActivePersonsByMPIBatch(String domainName, List<String> mpiIds) throws InvalidParameterException, UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("getActivePersonByMPIBatch for domain " + domainName + " and " + mpiIds.size() + " mpiIds");
+		}
+		else
+		{
+			logger.info("getActivePersonByMPIBatch");
+		}
+		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
+		checkParameter(mpiIds, "mpiIds");
+		List<PersonDTO> result = dao.getActivePersonsByMPIBatch(domainName, mpiIds);
+		logger.info("found " + result.size() + " persons");
 		return result;
 	}
 
@@ -195,18 +316,26 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	public PersonDTO getPersonByLocalIdentifier(String domainName, IdentifierDTO identifier)
 			throws InvalidParameterException, UnknownObjectException
 	{
+		return getActivePersonByLocalIdentifier(domainName, identifier);
+	}
+
+	@Override
+	public PersonDTO getActivePersonByLocalIdentifier(String domainName, IdentifierDTO identifier)
+			throws InvalidParameterException, UnknownObjectException
+	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("queryPersonByLocalIdentfier for domain " + domainName + " and " + identifier);
+			logger.debug("getActivePersonByLocalIdentifier for domain " + domainName + " and " + identifier);
 		}
 		else
 		{
-			logger.info("queryPersonByLocalIdentfier");
+			logger.info("getActivePersonByLocalIdentifier");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(identifier, "identifier");
 		checkParameter(identifier.getIdentifierDomain(), "identifier.getIdentifierDomain()");
-		PersonDTO result = dao.getPersonByLocalIdentifier(domainName, identifier);
+		PersonDTO result = dao.getActivePersonByLocalIdentifier(domainName, identifier);
 		logger.info("person found");
 		return result;
 	}
@@ -215,21 +344,29 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	public PersonDTO getPersonByMultipleLocalIdentifier(String domainName, List<IdentifierDTO> identifier, boolean allIdentifierRequired)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
+		return getActivePersonByMultipleLocalIdentifier(domainName, identifier, allIdentifierRequired);
+	}
+
+	@Override
+	public PersonDTO getActivePersonByMultipleLocalIdentifier(String domainName, List<IdentifierDTO> identifier, boolean allIdentifierRequired)
+			throws InvalidParameterException, MPIException, UnknownObjectException
+	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("queryPersonByLocalIdentfier for domain " + domainName + " and " + identifier);
+			logger.debug("getActivePersonByMultipleLocalIdentifier for domain " + domainName + " and " + identifier);
 		}
 		else
 		{
-			logger.info("queryPersonByLocalIdentfier");
+			logger.info("getActivePersonByMultipleLocalIdentifier");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(identifier, "identifier");
 		for (IdentifierDTO ident : identifier)
 		{
 			checkParameter(ident.getIdentifierDomain(), "identifier.getIdentifierDomain()");
 		}
-		PersonDTO result = dao.getPersonByMultipleLocalIdentifier(domainName, identifier, allIdentifierRequired);
+		PersonDTO result = dao.getActivePersonByMultipleLocalIdentifier(domainName, identifier, allIdentifierRequired);
 		logger.info("person found");
 		return result;
 	}
@@ -238,15 +375,14 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	public ResponseEntryDTO updatePerson(String domainName, String mpiId, IdentityInDTO identity, String sourceName, boolean force, String comment)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("updatePerson without config - use default");
-		return updatePersonInternal(null, domainName, mpiId, identity, sourceName, force, comment, DEFAULT_REQUEST_CONFIG);
+		return updatePersonInternal(null, domainName, mpiId, identity, sourceName, force, comment, null);
 	}
 
 	@Override
 	public ResponseEntryDTO updatePersonWithConfig(String domainName, String mpiId, IdentityInDTO identity, String sourceName, boolean force,
-			String comment, RequestConfig requestConfig) throws InvalidParameterException, MPIException, UnknownObjectException
+			String comment, RequestConfig requestConfig)
+			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("updatePersonWithConfig");
 		return updatePersonInternal(null, domainName, mpiId, identity, sourceName, force, comment, requestConfig);
 	}
 
@@ -269,6 +405,7 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("getIdentitiesForDomain");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<IdentityOutDTO> result = dao.getIdentitiesByDomain(domainName, null, false);
 		logger.info("found " + result.size() + " identities");
 		return result;
@@ -289,6 +426,7 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("getIdentitiesForDomainFiltered");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<IdentityOutDTO> result = dao.getIdentitiesByDomain(domainName, filter, filterIsCaseSensitive);
 		logger.info("found " + result.size() + " persons");
 		return result;
@@ -311,10 +449,29 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("getIdentitiesForDomainPaginated");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<IdentityOutDTO> result = dao.getIdentitiesByDomainPaginated(domainName, firstEntry, pageSize, sortField, sortIsAscending, filter,
 				filterIsCaseSensitive);
 		logger.info("found " + result.size() + " persons");
 		return result;
+	}
+
+	@Override
+	public long countIdentitiesForDomainFiltered(String domainName, Map<IdentityField, String> filter, boolean filterIsCaseSensitive)
+			throws InvalidParameterException, UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("countIdentitiesForDomainFiltered, domain=" + domainName + (filter != null && !filter.isEmpty() ? filter.size() + " filter values" : "no filter values")
+					+ " and the filter is case sensitive=" + filterIsCaseSensitive);
+		}
+		else
+		{
+			logger.info("countIdentitiesForDomainFiltered");
+		}
+		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
+		return dao.countIdentitiesByDomainFiltered(domainName, filter, filterIsCaseSensitive);
 	}
 
 	/*
@@ -330,6 +487,7 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	 * {
 	 * logger.info("getReferenceIdentitiesForDomain");
 	 * }
+	 * checkAllowedDomain(domainName, true);
 	 * checkParameter(domainName, "domainName");
 	 * // TODO optimieren - nur ref-ids laden - kompliziertes sql ...
 	 * List<PersonDTO> persons = getPersonsForDomain(domainName);
@@ -351,39 +509,39 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	}
 
 	@Override
-	public void deactivateIdentity(long identityId) throws MPIException, UnknownObjectException
+	public void deactivateIdentity(long identityId)
+			throws MPIException, UnknownObjectException
 	{
 		deactivateIdentityInternal(null, identityId);
 	}
 
 	@Override
-	public void deactivatePerson(String domainName, String mpiId) throws InvalidParameterException, MPIException, UnknownObjectException
+	public void deactivatePerson(String domainName, String mpiId)
+			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		deactivatePersonInternal(null, domainName, mpiId);
 	}
 
 	@Override
-	public void deleteIdentity(long identityId) throws IllegalOperationException, MPIException, UnknownObjectException
+	public void deleteIdentity(long identityId)
+			throws IllegalOperationException, MPIException, UnknownObjectException
 	{
 		deleteIdentityInternal(null, identityId);
 	}
 
 	@Override
-	public void deletePerson(String domainName, String mpiId) throws IllegalOperationException, InvalidParameterException, MPIException, UnknownObjectException
+	public void deletePerson(String domainName, String mpiId)
+			throws IllegalOperationException, InvalidParameterException, MPIException, UnknownObjectException
 	{
 		deletePersonInternal(null, domainName, mpiId);
 	}
 
 	@TransactionTimeout(value = Long.MAX_VALUE)
 	@Override
-	public void updatePrivacy(String domainName, List<String> mpiIds, boolean onlyReferenceIdentity) throws InvalidParameterException, MPIException, UnknownObjectException
+	public void updatePrivacy(String domainName, List<String> mpiIds, boolean onlyReferenceIdentity)
+			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		logger.info("updatePrivacy for " + ((mpiIds == null || mpiIds.isEmpty()) ? "all" : mpiIds.size()) + " mpi ids (" + (onlyReferenceIdentity ? "only primary" : "all") + " identities) within domain " + domainName);
-		checkParameter(domainName, "domainName");
-
-		dao.updatePrivacy(domainName, mpiIds, onlyReferenceIdentity);
-
-		logger.info("privacy updated");
+		updatePrivacyInternal(domainName, mpiIds, onlyReferenceIdentity);
 	}
 
 	@Override
@@ -391,6 +549,29 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			throws DuplicateEntryException, InvalidParameterException, MPIException, UnknownObjectException
 	{
 		return addContactInternal(null, identityId, contactDTO);
+	}
+
+	@Override
+	public void deactivateContact(long contactId)
+			throws UnknownObjectException
+	{
+		deactivateContactInternal(contactId);
+	}
+
+	@Override
+	public void deleteContact(long contactId) throws IllegalOperationException, UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("deleteContact with id " + contactId);
+		}
+		else
+		{
+			logger.info("deleteContact");
+		}
+		checkAllowedContactId(contactId);
+		dao.deleteContact(contactId, null, getAuthUser());
+		logger.info("contact deleted");
 	}
 
 	@Override
@@ -405,6 +586,7 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("searchPersonByPDQCache");
 		}
 		checkParameter(searchMask.getDomainName(), "searchMask.getDomainName()");
+		checkAllowedDomain(searchMask.getDomainName());
 		checkParameter(searchMask.getIdentity(), "searchMask.getIdentity()");
 		LongList personIds = new LongArrayList();
 		List<PersonDTO> result = new ArrayList<>();
@@ -420,8 +602,8 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			{
 				try
 				{
-					PersonDTO personForLocalId = dao.getPersonByLocalIdentifier(searchMask.getDomainName(), identifier);
-					if (!personIds.contains(personForLocalId.getPersonId()))
+					PersonDTO personForLocalId = dao.getActivePersonByLocalIdentifier(searchMask.getDomainName(), identifier);
+					if (!personIds.contains(personForLocalId.getPersonId()) && !personForLocalId.isDeactivated())
 					{
 						personIds.add(personForLocalId.getPersonId());
 					}
@@ -456,19 +638,27 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 
 	@Override
 	public List<String> getAllMPIFromPersonByMPI(String domainName, String mpiId)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, UnknownObjectException
+	{
+		return getAllMPIFromActivePersonByMPI(domainName, mpiId);
+	}
+
+	@Override
+	public List<String> getAllMPIFromActivePersonByMPI(String domainName, String mpiId)
+			throws InvalidParameterException, UnknownObjectException
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("getAllMPIFromPersonByMPI for domain " + domainName + " and mpiId " + mpiId);
+			logger.debug("getAllMPIFromActivePersonByMPI for domain " + domainName + " and mpiId " + mpiId);
 		}
 		else
 		{
-			logger.info("getAllMPIFromPersonByMPI");
+			logger.info("getAllMPIFromActivePersonByMPI");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
-		PersonDTO person = getPersonByMPI(domainName, mpiId);
+		PersonDTO person = getActivePersonByMPI(domainName, mpiId);
 		List<String> result = new ArrayList<>();
 		result.add(person.getMpiId().getValue());
 		for (IdentifierDTO identifier : person.getReferenceIdentity().getIdentifiers())
@@ -504,28 +694,37 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("getMPIForIdentifier");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(identifier, "identifier");
 		checkParameter(identifier.getIdentifierDomain(), "identifier.getIdentifierDomain()");
-		PersonDTO person = dao.getPersonByLocalIdentifier(domainName, identifier);
+		PersonDTO person = dao.getActivePersonByLocalIdentifier(domainName, identifier);
 		logger.info("mpi found");
 		return person.getMpiId().getValue();
 	}
 
 	@Override
 	public List<IdentifierDTO> getAllIdentifierForMPI(String domainName, String mpiId)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, UnknownObjectException
+	{
+		return getAllIdentifierForAcivePersonWithMPI(domainName, mpiId);
+	}
+
+	@Override
+	public List<IdentifierDTO> getAllIdentifierForAcivePersonWithMPI(String domainName, String mpiId)
+			throws InvalidParameterException, UnknownObjectException
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("getAllIdentifierForMPI for domain " + domainName + " and mpiId " + mpiId);
+			logger.debug("getAllIdentifierForAcivePersonWithMPI for domain " + domainName + " and mpiId " + mpiId);
 		}
 		else
 		{
-			logger.info("getAllIdentifierForMPI");
+			logger.info("getAllIdentifierForAcivePersonWithMPI");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
-		PersonDTO person = getPersonByMPI(domainName, mpiId);
+		PersonDTO person = getActivePersonByMPI(domainName, mpiId);
 		List<IdentifierDTO> result = getAllIdentifierForPerson(person);
 		logger.info("found " + result.size() + " identifier");
 		return result;
@@ -557,9 +756,10 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("getAllIdentifierForIdentifier");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(identifierDTO, "identifier");
 		checkParameter(identifierDTO.getIdentifierDomain(), "identifier.getIdentifierDomain()");
-		PersonDTO person = dao.getPersonByLocalIdentifier(domainName, identifierDTO);
+		PersonDTO person = dao.getActivePersonByLocalIdentifier(domainName, identifierDTO);
 		List<IdentifierDTO> result = new ArrayList<>(getAllIdentifierForPerson(person));
 		logger.info("found " + result.size() + " identifier");
 		return result;
@@ -569,7 +769,14 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	public void addLocalIdentifierToMPI(String domainName, String mpiId, List<IdentifierDTO> localIds)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
-		addLocalIdentifierToMPIInternal(null, domainName, mpiId, localIds);
+		addLocalIdentifierToActivePersonWithMPIInternal(null, domainName, mpiId, localIds);
+	}
+
+	@Override
+	public void addLocalIdentifierToActivePersonWithMPI(String domainName, String mpiId, List<IdentifierDTO> localIds)
+			throws InvalidParameterException, MPIException, UnknownObjectException
+	{
+		addLocalIdentifierToActivePersonWithMPIInternal(null, domainName, mpiId, localIds);
 	}
 
 	@Override
@@ -580,7 +787,25 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	}
 
 	@Override
-	public List<PossibleMatchDTO> getPossibleMatchesForDomain(String domainName) throws InvalidParameterException, UnknownObjectException
+	public Map<IdentifierDTO, IdentifierDeletionResult> removeLocalIdentifier(String domainName, List<IdentifierDTO> localIds)
+			throws InvalidParameterException, MPIException, UnknownObjectException
+	{
+		return removeLocalIdentifierInternal(null, domainName, localIds);
+	}
+
+	// ***********************************
+	// possible matches
+	// ***********************************
+
+	/**
+	 * Returns all possible matches for the given domain.
+	 *
+	 * @param domainName
+	 *            the name of the domain
+	 */
+	@Override
+	public List<PossibleMatchDTO> getPossibleMatchesForDomain(String domainName)
+			throws InvalidParameterException, UnknownObjectException
 	{
 		if (logger.isDebugEnabled())
 		{
@@ -591,101 +816,103 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("getPossibleMatchesForDomain");
 		}
 		checkParameter(domainName, "domainName");
-		List<PossibleMatchDTO> result = dao.getPossibleMatchesByDomain(domainName);
-		logger.info("found " + result.size() + " possible matches for domain " + domainName);
+		checkAllowedDomain(domainName);
+		List<PossibleMatchDTO> result = dao.getPossibleMatchesForDomain(domainName);
+		logger.info("found " + result.size() + " possible matches for domainName " + domainName);
 		return result;
 	}
 
+	/**
+	 * Counts matching {@link PossibleMatchDTO} entries.
+	 * If {@link IdentityField#NONE} is the only key in the filter map, then search for the corresponding
+	 * pattern in all required fields (as defined in the configuration container) linked by OR (disjunction),
+	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
+	 *
+	 * @param domainName
+	 *            the name of the domain
+	 * @return number of matching {@link PossibleMatchDTO} entries.
+	 * @throws UnknownObjectException
+	 *             for a wrong domainName name
+	 */
 	@Override
-	public List<PossibleMatchDTO> getPossibleMatchesForDomainFiltered(String domainName,
-			IdentityField sortField, boolean sortIsAscending, Map<IdentityField, String> filter, boolean filterIsCaseSensitive)
+	public long countPossibleMatchesForDomain(String domainName)
 			throws InvalidParameterException, UnknownObjectException
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("getPossibleMatchesForDomainFiltered " + domainName);
+			logger.debug("countPossibleMatchesForDomain " + domainName);
+		}
+		else
+		{
+			logger.info("countPossibleMatchesForDomain");
+		}
+		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
+		return dao.countPossibleMatchesForDomain(domainName);
+	}
+
+	/**
+	 * Returns matching {@link PossibleMatchDTO} entries.
+	 * If {@link IdentityField#NONE} is the only key in the filter map, then search for the corresponding
+	 * pattern in all required fields (as defined in the configuration container) linked by OR (disjunction),
+	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
+	 *
+	 * @param domainName
+	 *            the name of the domain
+	 * @param pc
+	 *            the pagination configuration
+	 * @return matching {@link PossibleMatchDTO} entries
+	 * @throws UnknownObjectException
+	 *             for a wrong domainName name
+	 */
+	@Override
+	public List<PossibleMatchDTO> getPossibleMatchesForDomainFiltered(String domainName, PaginationConfig pc)
+			throws InvalidParameterException, UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("getPossibleMatchesForDomainFiltered " + domainName + " with " + pc);
 		}
 		else
 		{
 			logger.info("getPossibleMatchesForDomainFiltered");
 		}
 		checkParameter(domainName, "domainName");
-		List<PossibleMatchDTO> result = dao.getPossibleMatchesByDomainFiltered(domainName,
-				sortField, sortIsAscending, filter, filterIsCaseSensitive);
-		logger.info("found " + result.size() + " possible matches for domain " + domainName);
+		checkAllowedDomain(domainName);
+		List<PossibleMatchDTO> result = dao.getPossibleMatchesForDomainFiltered(domainName, pc);
+		logger.info("found " + result.size() + " possible matches for domainName " + domainName);
 		return result;
 	}
 
+	/**
+	 * Counts matching {@link PossibleMatchDTO} entries.
+	 * If {@link IdentityField#NONE} is the only key in the filter map, then search for the corresponding
+	 * pattern in all required fields (as defined in the configuration container) linked by OR (disjunction),
+	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
+	 *
+	 * @param domainName
+	 *            the name of the domain
+	 * @param pc
+	 *            the pagination configuration
+	 * @return number of matching {@link PossibleMatchDTO} entries.
+	 * @throws UnknownObjectException
+	 *             for a wrong domainName name
+	 */
 	@Override
-	public long countPossibleMatchesForDomainFiltered(String domainName, Map<IdentityField, String> filter, boolean filterIsCaseSensitive)
+	public long countPossibleMatchesForDomainFiltered(String domainName, PaginationConfig pc)
 			throws InvalidParameterException, UnknownObjectException
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("countPossibleMatchesForDomainFiltered " + domainName);
+			logger.debug("countPossibleMatchesForDomainFiltered for domain " + domainName + " with " + pc);
 		}
 		else
 		{
 			logger.info("countPossibleMatchesForDomainFiltered");
 		}
 		checkParameter(domainName, "domainName");
-		return dao.countPossibleMatchesForDomainFiltered(domainName, filter, filterIsCaseSensitive);
-	}
-
-	@Override
-	public List<PossibleMatchDTO> getPossibleMatchesForDomainFilteredAndPaginated(String domainName, int firstEntry, int pageSize,
-			IdentityField sortField, boolean sortIsAscending, Map<IdentityField, String> filter, boolean filterIsCaseSensitive)
-			throws InvalidParameterException, UnknownObjectException
-	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getPossibleMatchesForDomainFilteredAndPaginated " + domainName);
-		}
-		else
-		{
-			logger.info("getPossibleMatchesForDomainFilteredAndPaginated");
-		}
-		checkParameter(domainName, "domainName");
-		List<PossibleMatchDTO> result = dao.getPossibleMatchesByDomainFilteredAndPaginated(domainName, firstEntry, pageSize,
-				sortField, sortIsAscending, filter, filterIsCaseSensitive);
-		logger.info("found " + result.size() + " possible matches for domain " + domainName);
-		return result;
-	}
-
-	@Override
-	public long countPossibleMatchesForDomainFilteredByDefault(String domainName, String filter, boolean filterIsCaseSensitive, String birthDateFormat, String creationTimeFormat)
-			throws InvalidParameterException, UnknownObjectException
-	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("countPossibleMatchesForDomainFilteredByDefault " + domainName);
-		}
-		else
-		{
-			logger.info("countPossibleMatchesForDomainFilteredByDefault");
-		}
-		checkParameter(domainName, "domainName");
-		return dao.countPossibleMatchesForDomainFilteredByDefault(domainName, filter, filterIsCaseSensitive, birthDateFormat, creationTimeFormat);
-	}
-
-	@Override
-	public List<PossibleMatchDTO> getPossibleMatchesForDomainFilteredByDefaultAndPaginated(String domainName, int firstEntry, int pageSize,
-			String filter, boolean filterIsCaseSensitive, String birthDateFormat, String creationTimeFormat)
-			throws InvalidParameterException, UnknownObjectException
-	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getPossibleMatchesByDomainFilteredByDefaultAndPaginated " + domainName);
-		}
-		else
-		{
-			logger.info("getPossibleMatchesByDomainFilteredByDefaultAndPaginated");
-		}
-		checkParameter(domainName, "domainName");
-		List<PossibleMatchDTO> result = dao.getPossibleMatchesByDomainFilteredByDefaultAndPaginated(domainName, firstEntry, pageSize,
-				filter, filterIsCaseSensitive, birthDateFormat, creationTimeFormat);
-		logger.info("found " + result.size() + " possible matches for domain " + domainName);
-		return result;
+		checkAllowedDomain(domainName);
+		return dao.countPossibleMatchesForDomainFiltered(domainName, pc);
 	}
 
 	@Override
@@ -701,6 +928,7 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("getPossibleMatchesForPerson");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
 		List<PossibleMatchForMPIDTO> result = dao.getPossibleMatchesByPerson(domainName, mpiId);
 		logger.info("found " + result.size() + " possible matches for mpi " + mpiId);
@@ -708,50 +936,39 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 	}
 
 	@Override
-	public void removePossibleMatches(List<Long> possibleMatchIds, String comment) throws InvalidParameterException, MPIException
+	public void removePossibleMatches(List<Long> possibleMatchIds, String comment)
+			throws InvalidParameterException, MPIException
 	{
-		if (logger.isDebugEnabled())
-		{
-			StringBuilder sb = new StringBuilder("removePossibleMatches with id ");
-			for (Long id : possibleMatchIds)
-			{
-				sb.append(id);
-				sb.append(' ');
-			}
-			sb.append(" and comment ");
-			sb.append(comment);
-			logger.debug(sb.toString());
-		}
-		else
-		{
-			logger.info("removePossibleMatches");
-		}
-		checkParameter(possibleMatchIds, "possibleMatchIds");
-		for (Long possibleMatchId : possibleMatchIds)
-		{
-			dao.removePossibleMatch(possibleMatchId, comment);
-		}
-		logger.info(possibleMatchIds.size() + " possible matches deleted");
+		removePossibleMatchesInternal(possibleMatchIds, comment);
 	}
 
 	@Override
-	public void removePossibleMatch(long possibleMatchId, String comment) throws InvalidParameterException, MPIException
+	public void removePossibleMatch(long possibleMatchId, String comment)
+			throws InvalidParameterException, MPIException
+	{
+		removePossibleMatchInternal(possibleMatchId, comment);
+	}
+
+	@Override
+	public boolean prioritizePossibleMatch(long linkId, PossibleMatchPriority priority) throws InvalidParameterException, MPIException
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("removePossibleMatch with id " + possibleMatchId + " with comment " + comment);
+			logger.debug("prioritizePossibleMatch with id " + linkId + " as " + priority);
 		}
 		else
 		{
-			logger.info("removePossibleMatch");
+			logger.info("prioritizePossibleMatch");
 		}
-		dao.removePossibleMatch(possibleMatchId, comment);
-		logger.info("possible match deleted");
+		checkAllowedPossibleMatchId(linkId);
+		boolean result = dao.prioritizePossibleMatch(linkId, priority);
+		logger.info("possible match prioritized");
+		return result;
 	}
 
 	@Override
 	public void assignIdentity(long possibleMatchId, long winningIdentityId, String comment)
-			throws InvalidParameterException, MPIException
+			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		assignIdentityInternal(null, possibleMatchId, winningIdentityId, comment);
 	}
@@ -776,6 +993,7 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("externalPossibleMatchForPerson");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
 		checkParameter(aliasMpiId, "aliasMpiId");
 		PossibleMatchDTO result = dao.externalPossibleMatchForPerson(domainName, mpiId, aliasMpiId);
@@ -796,8 +1014,10 @@ public class EPIXServiceImpl extends EpixServiceBase implements EPIXService
 			logger.info("externalPossibleMatchForIdentity");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		PossibleMatchDTO result = dao.externalPossibleMatchForIdentity(domainName, identityId, aliasIdentityId);
 		logger.info("possible match created or found");
 		return result;
 	}
+
 }

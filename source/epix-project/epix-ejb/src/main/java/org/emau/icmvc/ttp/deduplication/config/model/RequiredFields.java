@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,6 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,6 +56,14 @@ public class RequiredFields
 	@XmlElement(name = "name", required = true)
 	private final List<FieldName> names = new ArrayList<>();
 
+	public RequiredFields()
+	{}
+
+	public RequiredFields(List<FieldName> fieldNames)
+	{
+		setNames(fieldNames);
+	}
+
 	public List<FieldName> getNames()
 	{
 		return names;
@@ -65,7 +72,10 @@ public class RequiredFields
 	public void setNames(List<FieldName> names)
 	{
 		this.names.clear();
-		this.names.addAll(names);
+		if (names != null)
+		{
+			this.names.addAll(names);
+		}
 	}
 
 	@Override
@@ -73,7 +83,7 @@ public class RequiredFields
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((names == null) ? 0 : names.hashCode());
+		result = prime * result + (names == null ? 0 : names.hashCode());
 		return result;
 	}
 
@@ -81,19 +91,29 @@ public class RequiredFields
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		RequiredFields other = (RequiredFields) obj;
 		if (names == null)
 		{
 			if (other.names != null)
+			{
 				return false;
+			}
 		}
 		else if (!names.equals(other.names))
+		{
 			return false;
+		}
 		return true;
 	}
 

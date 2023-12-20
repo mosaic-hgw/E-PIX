@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -48,9 +48,9 @@ import java.util.Date;
  */
 public class IdentityOutBaseDTO extends IdentityInBaseDTO
 {
-	private static final long serialVersionUID = 5379737596793202278L;
+	private static final long serialVersionUID = 6830423433709278336L;
 	private long identityId;
-	private Integer identityVersion;
+	private int identityVersion;
 	private long personId;
 	private SourceDTO source;
 	private boolean deactivated;
@@ -62,17 +62,17 @@ public class IdentityOutBaseDTO extends IdentityInBaseDTO
 		super();
 	}
 
-	public IdentityOutBaseDTO(IdentityInBaseDTO superDTO, long identityId, Integer identityVersion, long personId, SourceDTO source,
+	public IdentityOutBaseDTO(IdentityInBaseDTO superDTO, long identityId, int identityVersion, long personId, SourceDTO source,
 			boolean deactivated, Date identityCreated, Date identityLastEdited)
 	{
 		super(superDTO);
 		this.identityId = identityId;
 		this.identityVersion = identityVersion;
 		this.personId = personId;
-		this.source = source;
+		setSource(source);
 		this.deactivated = deactivated;
-		this.identityCreated = identityCreated;
-		this.identityLastEdited = identityLastEdited;
+		setIdentityCreated(identityCreated);
+		setIdentityLastEdited(identityLastEdited);
 	}
 
 	public IdentityOutBaseDTO(IdentityOutBaseDTO dto)
@@ -91,12 +91,12 @@ public class IdentityOutBaseDTO extends IdentityInBaseDTO
 		this.identityId = identityId;
 	}
 
-	public Integer getIdentityVersion()
+	public int getIdentityVersion()
 	{
 		return identityVersion;
 	}
 
-	public void setIdentityVersion(Integer identityVersion)
+	public void setIdentityVersion(int identityVersion)
 	{
 		this.identityVersion = identityVersion;
 	}
@@ -118,7 +118,7 @@ public class IdentityOutBaseDTO extends IdentityInBaseDTO
 
 	public void setSource(SourceDTO source)
 	{
-		this.source = source;
+		this.source = source != null ? new SourceDTO(source) : null;
 	}
 
 	public boolean isDeactivated()
@@ -138,7 +138,7 @@ public class IdentityOutBaseDTO extends IdentityInBaseDTO
 
 	public void setIdentityCreated(Date identityCreated)
 	{
-		this.identityCreated = identityCreated;
+		this.identityCreated = identityCreated != null ? new Date(identityCreated.getTime()) : null;
 	}
 
 	public Date getIdentityLastEdited()
@@ -148,7 +148,7 @@ public class IdentityOutBaseDTO extends IdentityInBaseDTO
 
 	public void setIdentityLastEdited(Date identityLastEdited)
 	{
-		this.identityLastEdited = identityLastEdited;
+		this.identityLastEdited = identityLastEdited != null ? new Date(identityLastEdited.getTime()) : null;
 	}
 
 	@Override
@@ -157,7 +157,7 @@ public class IdentityOutBaseDTO extends IdentityInBaseDTO
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + (int) (identityId ^ identityId >>> 32);
-		result = prime * result + (identityVersion == null ? 0 : identityVersion.hashCode());
+		result = prime * result + identityVersion;
 		return result;
 	}
 
@@ -181,14 +181,7 @@ public class IdentityOutBaseDTO extends IdentityInBaseDTO
 		{
 			return false;
 		}
-		if (identityVersion == null)
-		{
-			if (other.identityVersion != null)
-			{
-				return false;
-			}
-		}
-		else if (!identityVersion.equals(other.identityVersion))
+		if (identityVersion != other.identityVersion)
 		{
 			return false;
 		}

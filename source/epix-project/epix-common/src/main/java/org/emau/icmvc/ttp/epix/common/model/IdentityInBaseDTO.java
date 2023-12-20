@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,6 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,15 +46,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class IdentityInBaseDTO implements Serializable
 {
-	private static final long serialVersionUID = 1361751816485689578L;
+	private static final long serialVersionUID = 6365057305217601229L;
 	private String firstName;
 	private String middleName;
 	private String lastName;
@@ -63,7 +63,7 @@ public class IdentityInBaseDTO implements Serializable
 	private String suffix;
 	private Gender gender;
 	private Date birthDate;
-	private List<IdentifierDTO> identifiers = new ArrayList<>();
+	private final List<IdentifierDTO> identifiers = new ArrayList<>();
 	private String birthPlace;
 	private String race;
 	private String religion;
@@ -83,29 +83,37 @@ public class IdentityInBaseDTO implements Serializable
 	private String value8;
 	private String value9;
 	private String value10;
+	private VitalStatus vitalStatus;
+	private Date dateOfDeath;
 
 	public IdentityInBaseDTO()
-	{
-		super();
-	}
+	{}
 
 	public IdentityInBaseDTO(String firstName, String middleName, String lastName, String prefix, String suffix, Gender gender, Date birthDate,
 			List<IdentifierDTO> identifiers, String birthPlace, String race, String religion, String mothersMaidenName, String degree,
 			String motherTongue, String nationality, String civilStatus, Date externalDate, String value1, String value2, String value3,
 			String value4, String value5, String value6, String value7, String value8, String value9, String value10)
 	{
-		super();
+		this(firstName, middleName, lastName, prefix, suffix, gender, birthDate,
+				identifiers, birthPlace, race, religion, mothersMaidenName, degree,
+				motherTongue, nationality, civilStatus, externalDate, value1, value2,
+				value3, value4, value5, value6, value7, value8, value9, value10, null, null);
+
+	}
+
+	public IdentityInBaseDTO(String firstName, String middleName, String lastName, String prefix, String suffix, Gender gender, Date birthDate,
+			List<IdentifierDTO> identifiers, String birthPlace, String race, String religion, String mothersMaidenName, String degree,
+			String motherTongue, String nationality, String civilStatus, Date externalDate, String value1, String value2, String value3, String value4,
+			String value5, String value6, String value7, String value8, String value9, String value10, VitalStatus vitalStatus, Date dateOfDeath)
+	{
 		this.firstName = firstName;
 		this.middleName = middleName;
 		this.lastName = lastName;
 		this.prefix = prefix;
 		this.suffix = suffix;
 		this.gender = gender;
-		this.birthDate = birthDate;
-		if (identifiers != null)
-		{
-			this.identifiers = identifiers;
-		}
+		setBirthDate(birthDate);
+		setIdentifiers(identifiers);
 		this.birthPlace = birthPlace;
 		this.race = race;
 		this.religion = religion;
@@ -114,7 +122,7 @@ public class IdentityInBaseDTO implements Serializable
 		this.motherTongue = motherTongue;
 		this.nationality = nationality;
 		this.civilStatus = civilStatus;
-		this.externalDate = externalDate;
+		setExternalDate(externalDate);
 		this.value1 = value1;
 		this.value2 = value2;
 		this.value3 = value3;
@@ -125,6 +133,8 @@ public class IdentityInBaseDTO implements Serializable
 		this.value8 = value8;
 		this.value9 = value9;
 		this.value10 = value10;
+		this.vitalStatus = vitalStatus;
+		setDateOfDeath(dateOfDeath);
 	}
 
 	public IdentityInBaseDTO(IdentityInBaseDTO dto)
@@ -133,7 +143,7 @@ public class IdentityInBaseDTO implements Serializable
 				dto.getIdentifiers(), dto.getBirthPlace(), dto.getRace(), dto.getReligion(), dto.getMothersMaidenName(), dto.getDegree(),
 				dto.getMotherTongue(), dto.getNationality(), dto.getCivilStatus(), dto.getExternalDate(), dto.getValue1(), dto.getValue2(),
 				dto.getValue3(), dto.getValue4(), dto.getValue5(), dto.getValue6(), dto.getValue7(), dto.getValue8(), dto.getValue9(),
-				dto.getValue10());
+				dto.getValue10(), dto.getVitalStatus(), dto.getDateOfDeath());
 	}
 
 	public String getFirstName()
@@ -203,7 +213,7 @@ public class IdentityInBaseDTO implements Serializable
 
 	public void setBirthDate(Date birthDate)
 	{
-		this.birthDate = birthDate;
+		this.birthDate = birthDate != null ? new Date(birthDate.getTime()) : null;
 	}
 
 	public String getBirthPlace()
@@ -293,7 +303,7 @@ public class IdentityInBaseDTO implements Serializable
 
 	public void setExternalDate(Date externalDate)
 	{
-		this.externalDate = externalDate;
+		this.externalDate = externalDate != null ? new Date(externalDate.getTime()) : null;
 	}
 
 	public String getValue1()
@@ -396,6 +406,31 @@ public class IdentityInBaseDTO implements Serializable
 		this.value10 = value10;
 	}
 
+	public VitalStatus getVitalStatus()
+	{
+		return vitalStatus;
+	}
+
+	public void setVitalStatus(VitalStatus vitalStatus)
+	{
+		this.vitalStatus = vitalStatus;
+	}
+
+	public Date getDateOfDeath()
+	{
+		return dateOfDeath;
+	}
+
+	public void setDateOfDeath(Date dateOfDeath)
+	{
+		this.dateOfDeath = dateOfDeath != null ? new Date(dateOfDeath.getTime()) : null;
+	}
+
+	public VitalStatus.Descriptor getVitalStatusDescriptor()
+	{
+		return new VitalStatus.Descriptor(getVitalStatus(), getDateOfDeath());
+	}
+
 	public List<IdentifierDTO> getIdentifiers()
 	{
 		return identifiers;
@@ -403,13 +438,13 @@ public class IdentityInBaseDTO implements Serializable
 
 	public void setIdentifiers(List<IdentifierDTO> identifiers)
 	{
+		this.identifiers.clear();
 		if (identifiers != null)
 		{
-			this.identifiers = identifiers;
-		}
-		else
-		{
-			this.identifiers.clear();
+			for (IdentifierDTO iDTO : identifiers)
+			{
+				this.identifiers.add(new IdentifierDTO(iDTO));
+			}
 		}
 	}
 
@@ -418,33 +453,35 @@ public class IdentityInBaseDTO implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((birthDate == null) ? 0 : birthDate.hashCode());
-		result = prime * result + ((birthPlace == null) ? 0 : birthPlace.hashCode());
-		result = prime * result + ((civilStatus == null) ? 0 : civilStatus.hashCode());
-		result = prime * result + ((degree == null) ? 0 : degree.hashCode());
-		result = prime * result + ((firstName == null) ? 0 : firstName.hashCode());
-		result = prime * result + ((gender == null) ? 0 : gender.hashCode());
-		result = prime * result + ((identifiers == null) ? 0 : identifiers.hashCode());
-		result = prime * result + ((lastName == null) ? 0 : lastName.hashCode());
-		result = prime * result + ((middleName == null) ? 0 : middleName.hashCode());
-		result = prime * result + ((motherTongue == null) ? 0 : motherTongue.hashCode());
-		result = prime * result + ((mothersMaidenName == null) ? 0 : mothersMaidenName.hashCode());
-		result = prime * result + ((nationality == null) ? 0 : nationality.hashCode());
-		result = prime * result + ((externalDate == null) ? 0 : externalDate.hashCode());
-		result = prime * result + ((prefix == null) ? 0 : prefix.hashCode());
-		result = prime * result + ((race == null) ? 0 : race.hashCode());
-		result = prime * result + ((religion == null) ? 0 : religion.hashCode());
-		result = prime * result + ((suffix == null) ? 0 : suffix.hashCode());
-		result = prime * result + ((value1 == null) ? 0 : value1.hashCode());
-		result = prime * result + ((value10 == null) ? 0 : value10.hashCode());
-		result = prime * result + ((value2 == null) ? 0 : value2.hashCode());
-		result = prime * result + ((value3 == null) ? 0 : value3.hashCode());
-		result = prime * result + ((value4 == null) ? 0 : value4.hashCode());
-		result = prime * result + ((value5 == null) ? 0 : value5.hashCode());
-		result = prime * result + ((value6 == null) ? 0 : value6.hashCode());
-		result = prime * result + ((value7 == null) ? 0 : value7.hashCode());
-		result = prime * result + ((value8 == null) ? 0 : value8.hashCode());
-		result = prime * result + ((value9 == null) ? 0 : value9.hashCode());
+		result = prime * result + (birthDate == null ? 0 : birthDate.hashCode());
+		result = prime * result + (birthPlace == null ? 0 : birthPlace.hashCode());
+		result = prime * result + (civilStatus == null ? 0 : civilStatus.hashCode());
+		result = prime * result + (degree == null ? 0 : degree.hashCode());
+		result = prime * result + (firstName == null ? 0 : firstName.hashCode());
+		result = prime * result + (gender == null ? 0 : gender.hashCode());
+		result = prime * result + (identifiers == null ? 0 : identifiers.hashCode());
+		result = prime * result + (lastName == null ? 0 : lastName.hashCode());
+		result = prime * result + (middleName == null ? 0 : middleName.hashCode());
+		result = prime * result + (motherTongue == null ? 0 : motherTongue.hashCode());
+		result = prime * result + (mothersMaidenName == null ? 0 : mothersMaidenName.hashCode());
+		result = prime * result + (nationality == null ? 0 : nationality.hashCode());
+		result = prime * result + (externalDate == null ? 0 : externalDate.hashCode());
+		result = prime * result + (prefix == null ? 0 : prefix.hashCode());
+		result = prime * result + (race == null ? 0 : race.hashCode());
+		result = prime * result + (religion == null ? 0 : religion.hashCode());
+		result = prime * result + (suffix == null ? 0 : suffix.hashCode());
+		result = prime * result + (value1 == null ? 0 : value1.hashCode());
+		result = prime * result + (value10 == null ? 0 : value10.hashCode());
+		result = prime * result + (value2 == null ? 0 : value2.hashCode());
+		result = prime * result + (value3 == null ? 0 : value3.hashCode());
+		result = prime * result + (value4 == null ? 0 : value4.hashCode());
+		result = prime * result + (value5 == null ? 0 : value5.hashCode());
+		result = prime * result + (value6 == null ? 0 : value6.hashCode());
+		result = prime * result + (value7 == null ? 0 : value7.hashCode());
+		result = prime * result + (value8 == null ? 0 : value8.hashCode());
+		result = prime * result + (value9 == null ? 0 : value9.hashCode());
+		result = prime * result + (vitalStatus == null ? 0 : vitalStatus.hashCode());
+		result = prime * result + (dateOfDeath == null ? 0 : dateOfDeath.hashCode());
 		return result;
 	}
 
@@ -452,196 +489,330 @@ public class IdentityInBaseDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		IdentityInBaseDTO other = (IdentityInBaseDTO) obj;
 		if (birthDate == null)
 		{
 			if (other.birthDate != null)
+			{
 				return false;
+			}
 		}
 		else if (!birthDate.equals(other.birthDate))
+		{
 			return false;
+		}
 		if (birthPlace == null)
 		{
 			if (other.birthPlace != null)
+			{
 				return false;
+			}
 		}
 		else if (!birthPlace.equals(other.birthPlace))
+		{
 			return false;
+		}
 		if (civilStatus == null)
 		{
 			if (other.civilStatus != null)
+			{
 				return false;
+			}
 		}
 		else if (!civilStatus.equals(other.civilStatus))
+		{
 			return false;
+		}
 		if (degree == null)
 		{
 			if (other.degree != null)
+			{
 				return false;
+			}
 		}
 		else if (!degree.equals(other.degree))
+		{
 			return false;
+		}
 		if (firstName == null)
 		{
 			if (other.firstName != null)
+			{
 				return false;
+			}
 		}
 		else if (!firstName.equals(other.firstName))
+		{
 			return false;
+		}
 		if (gender != other.gender)
+		{
 			return false;
+		}
 		if (identifiers == null)
 		{
 			if (other.identifiers != null)
+			{
 				return false;
+			}
 		}
 		else if (!identifiers.equals(other.identifiers))
+		{
 			return false;
+		}
 		if (lastName == null)
 		{
 			if (other.lastName != null)
+			{
 				return false;
+			}
 		}
 		else if (!lastName.equals(other.lastName))
+		{
 			return false;
+		}
 		if (middleName == null)
 		{
 			if (other.middleName != null)
+			{
 				return false;
+			}
 		}
 		else if (!middleName.equals(other.middleName))
+		{
 			return false;
+		}
 		if (motherTongue == null)
 		{
 			if (other.motherTongue != null)
+			{
 				return false;
+			}
 		}
 		else if (!motherTongue.equals(other.motherTongue))
+		{
 			return false;
+		}
 		if (mothersMaidenName == null)
 		{
 			if (other.mothersMaidenName != null)
+			{
 				return false;
+			}
 		}
 		else if (!mothersMaidenName.equals(other.mothersMaidenName))
+		{
 			return false;
+		}
 		if (nationality == null)
 		{
 			if (other.nationality != null)
+			{
 				return false;
+			}
 		}
 		else if (!nationality.equals(other.nationality))
+		{
 			return false;
+		}
 		if (externalDate == null)
 		{
 			if (other.externalDate != null)
+			{
 				return false;
+			}
 		}
 		else if (!externalDate.equals(other.externalDate))
+		{
 			return false;
+		}
 		if (prefix == null)
 		{
 			if (other.prefix != null)
+			{
 				return false;
+			}
 		}
 		else if (!prefix.equals(other.prefix))
+		{
 			return false;
+		}
 		if (race == null)
 		{
 			if (other.race != null)
+			{
 				return false;
+			}
 		}
 		else if (!race.equals(other.race))
+		{
 			return false;
+		}
 		if (religion == null)
 		{
 			if (other.religion != null)
+			{
 				return false;
+			}
 		}
 		else if (!religion.equals(other.religion))
+		{
 			return false;
+		}
 		if (suffix == null)
 		{
 			if (other.suffix != null)
+			{
 				return false;
+			}
 		}
 		else if (!suffix.equals(other.suffix))
+		{
 			return false;
+		}
 		if (value1 == null)
 		{
 			if (other.value1 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value1.equals(other.value1))
+		{
 			return false;
+		}
 		if (value10 == null)
 		{
 			if (other.value10 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value10.equals(other.value10))
+		{
 			return false;
+		}
 		if (value2 == null)
 		{
 			if (other.value2 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value2.equals(other.value2))
+		{
 			return false;
+		}
 		if (value3 == null)
 		{
 			if (other.value3 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value3.equals(other.value3))
+		{
 			return false;
+		}
 		if (value4 == null)
 		{
 			if (other.value4 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value4.equals(other.value4))
+		{
 			return false;
+		}
 		if (value5 == null)
 		{
 			if (other.value5 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value5.equals(other.value5))
+		{
 			return false;
+		}
 		if (value6 == null)
 		{
 			if (other.value6 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value6.equals(other.value6))
+		{
 			return false;
+		}
 		if (value7 == null)
 		{
 			if (other.value7 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value7.equals(other.value7))
+		{
 			return false;
+		}
 		if (value8 == null)
 		{
 			if (other.value8 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value8.equals(other.value8))
+		{
 			return false;
+		}
 		if (value9 == null)
 		{
 			if (other.value9 != null)
+			{
 				return false;
+			}
 		}
 		else if (!value9.equals(other.value9))
+		{
 			return false;
+		}
+		if (vitalStatus == null)
+		{
+			if (other.vitalStatus != null)
+			{
+				return false;
+			}
+		}
+		else if (!vitalStatus.equals(other.vitalStatus))
+		{
+			return false;
+		}
+		if (dateOfDeath == null)
+		{
+			if (other.dateOfDeath != null)
+			{
+				return false;
+			}
+		}
+		else if (!dateOfDeath.equals(other.dateOfDeath))
+		{
+			return false;
+		}
 		return true;
 	}
 
@@ -660,6 +831,9 @@ public class IdentityInBaseDTO implements Serializable
 				+ ", religion=" + religion + ", mothersMaidenName=" + mothersMaidenName + ", degree=" + degree + ", motherTongue=" + motherTongue
 				+ ", nationality=" + nationality + ", civilStatus=" + civilStatus + ", externalDate=" + externalDate + ", value1=" + value1
 				+ ", value2=" + value2 + ", value3=" + value3 + ", value4=" + value4 + ", value5=" + value5 + ", value6=" + value6 + ", value7="
-				+ value7 + ", value8=" + value8 + ", value9=" + value9 + ", value10=" + value10 + "]";
+				+ value7 + ", value8=" + value8 + ", value9=" + value9 + ", value10=" + value10
+				+ (vitalStatus != null ? ", vitalStatus=" + vitalStatus : "")
+				+ (dateOfDeath != null ? ", dateOfDeath=" + dateOfDeath : "")
+				+ "]";
 	}
 }

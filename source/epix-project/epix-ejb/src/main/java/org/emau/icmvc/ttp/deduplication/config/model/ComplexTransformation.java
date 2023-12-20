@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,14 +39,13 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -56,6 +55,14 @@ public class ComplexTransformation
 {
 	@XmlElement(name = "qualified-class-name", required = true)
 	private String qualifiedClassName;
+
+	public ComplexTransformation()
+	{}
+
+	public ComplexTransformation(String qualifiedClassName)
+	{
+		this.qualifiedClassName = qualifiedClassName;
+	}
 
 	public String getQualifiedClassName()
 	{
@@ -72,7 +79,7 @@ public class ComplexTransformation
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((qualifiedClassName == null) ? 0 : qualifiedClassName.hashCode());
+		result = prime * result + (qualifiedClassName == null ? 0 : qualifiedClassName.hashCode());
 		return result;
 	}
 
@@ -80,19 +87,29 @@ public class ComplexTransformation
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		ComplexTransformation other = (ComplexTransformation) obj;
 		if (qualifiedClassName == null)
 		{
 			if (other.qualifiedClassName != null)
+			{
 				return false;
+			}
 		}
 		else if (!qualifiedClassName.equals(other.qualifiedClassName))
+		{
 			return false;
+		}
 		return true;
 	}
 

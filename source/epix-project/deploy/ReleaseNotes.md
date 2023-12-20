@@ -1,8 +1,111 @@
-![context](https://user-images.githubusercontent.com/12081369/49164561-a4481500-f32f-11e8-9f0d-fa7a730f4b9d.png)
+${ttp.epix.readme.header}
 
-Current Docker-Version of E-PIX: 2.13.1, May 2022
+# E-PIX 2023.1.2
 
-# E-PIX 2.13.1
+## Bug Fixes
+*  Quellfeld-Seed wird nicht in Bloomfilterkonfigurationen gespeichert
+*  Löschen von Personen mit Identifiern nicht möglich
+*  Mögliche NullPointerException bei Benutzung des SOAP-Interfaces ohne Authentifizierung
+
+# E-PIX 2023.1.1
+
+## Improvements
+*  Dateibasierten Domain Import und Export wieder ermöglichen
+
+## Bug Fixes
+*  DomainConfig nicht speicherbar je nach Konfiguration
+*  Aktualisierung von slf4j-log4j12 in ths-notification-client aufgrund von Vulnerabilities in log4j 1.2.16
+*  Sprung-URL zum gPAS fehlerhaft
+*  CSV Exception bei mehreren Anführungszeichen im Import
+*  Filtern im Protokoll zeigt leeres Ergebnis bei schnellem Tippen
+
+# E-PIX 2023.1.0
+
+## New Features
+* Vollständige Domänen-Konfiguration in der Weboberfläche
+* Verknüpfung zu möglicher Dublette, wenn eine neue Person diese erzeugt
+* Bearbeitung von Kontakten
+* Historie über die Löschung von Identitäten
+* Historie über die Löschung von Kontakten und Identifiern
+* Historie über das Hinzufügen von Identifiern
+* [Rechte und Rollen: Domänenspezifische Vergabe von Berechtigungen per OIDC](https://www.ths-greifswald.de/ttp-tools/domain-auth)
+
+## Improvements
+*  Hinweis, wenn keine Lokaler-Identifier Domäne zur Verfügung steht
+*  Erkennung der Identifier-Domäne beim Import
+*  Fortschrittsbalken bei Verwendung einer Identifier-Liste für den Export
+*  Umbenennung von Funktionen welche ausschließlich aktive Personen zurückgeben
+*  Umbenennung lokaler Identifier zu externen Identifiern (Weboberfläche)
+*  DTOs für PreprocessingConfig
+*  Anzeige des lesbaren Benutzernamens bei Login via OIDC (Keycloak)
+
+## Bug Fixes
+*  Fehler bei Suche nach Geburtsdatum, wenn Identitäten ohne Geburtsdatum gespeichert sind
+*  Doppelte Anzeige externer Identifier, wenn sie mit mehreren Identitäten der gleichen Person verknüpft sind
+*  Funktion setReferenceIdentity gibt NULL zurück
+*  [Stored XSS Vulnerability in der Weboberfläche](https://github.com/mosaic-hgw/gICS/issues/2)
+*  Anzeige des lesbaren Benutzernamens bei Login via OIDC (Keycloak)
+
+## Docker
+*  Fail-Fast-Strategie für Docker-CLI-Skripte
+
+
+# E-PIX 3.0.1
+
+## Improvements
+* Löschen von lokalen Identifiern
+* Dependency-Updates
+* Anpassung LogLevel NotificationService TRACE -> INFO
+
+# E-PIX 3.0.0
+
+## New Features
+*  Vitalstatus und Sterbedatum bei Personen
+*  Auflistung aller Identitäten in Personenansicht
+*  Notificationunterstützung für weitere Methoden
+*  Warteliste zur späteren Bearbeitung möglicher Dubletten
+*  Export möglicher Dubletten
+*  Historie über Bearbeitungen, Dublettenaktionen, Kontakte und Identifier in Personenansicht
+*  Löschen von Adressen, Identitäten und Personen
+*  Keycloak-basierte Absicherung der SOAP-Requests
+*  ComplexTransformator zur Umwandlung von Zeichen in ASCII
+*  Batchfunktion für getPersonByMPI
+*  Auflistung aller Kontakte in Personenansicht
+*  Öffnen einer Person über GET Parameter
+*  Anzeige möglicher Matches in Personenansicht
+*  Funktion zum Ermitteln einer aktivierten oder deaktivierten Person anhand der firstMPI
+
+## Improvements
+*  Auflistung aller Identitäten in Personenansicht
+*  Unterstützung von Anführungszeichen in CSV Imports
+*  Festlegung der Referenzidentität in Personenansicht
+*  Dashboard Statistiken für Summe aller Domänen
+*  Einzugs- und Auszugsdatum bei Adressen
+*  Filterung nach MPI bei Dublettenauflösung
+*  Upgrade auf Java 17
+*  Strukturierte Eingabemaske zum Anlegen neuer Personen
+*  Nutzbarkeit aller IDAT Felder bei der Suche nach einer Person
+
+## Bug Fixes
+*  PropertyNotFoundException beim Erstellen einer neuen Identifier-Domäne
+*  Null Pointer Exception im Frontend nach Anlage einer Domäne via SOAP
+*  Frontend akzeptiert ungültige Datumsangaben und rechnet sie automatisch um
+*  Fehlerhafte Zuordnung von Daten im Zuwachsdiagramm
+*  Identifier-Domäne wird beim Löschen einer Domäne zurückgesetzt
+
+## Docker
+*  Docker Upgrade auf Wildfly 26
+*  Erhöhung von MAX_ALLOWED_PACKETSIZE für MySQL8 in Docker auf 10MB
+*  Vereinfachung Zusammenführung der separaten Docker-Compose-Pakete der einzelnen Tools
+*  OIDC-Compliance: Unterstützung KeyCloak 19 für ALLE Schnittstellen
+*  Vereinheitlichung der Konfiguration der Keycloak-basierten Authentifizierung für alle Schnittstellen
+*  Unterstützung Client-basierter Rollen in KeyCloak
+
+## FHIR
+
+* FHIR-Endpoint zum Anlegen, Aktualisieren und Suchen von Personen. Details im [Implementation Guide](https://www.ths-greifswald.de/e-pix/fhir) sowie im [Handbuch](https://www.ths-greifswald.de/e-pix/handbuch/3-0-0)
+
+# E-PIX 2.13.2
 
 ## Improvements
 *  Anzeige lokaler Identifier von Nebenidentitäten
@@ -88,28 +191,4 @@ Current Docker-Version of E-PIX: 2.13.1, May 2022
 * RequestMPI mit null Gender auch möglich, wenn dies ein Pflichtfeld ist
 * Exception bei RequestMPI mit null Gender
 
-# Additional Information
-Selected functionalities of E-PIX were developed as part of the following research projects:
-- MIRACUM (funded by the German Federal Ministry of Education and Research 01ZZ1801M)
-- NUM-CODEX (funded by the German Federal Ministry of Education and Research 01KX2021)
-
-## Credits ####
-Concept and implementation: L. Geidel
-
-Web-Client: A. Blumentritt, F.M. Moser
-
-Docker: R. Schuldt
-
-Bloom-Filter: C. Hampf
-
-## License ####
-**License:** AGPLv3, https://www.gnu.org/licenses/agpl-3.0.en.html
-
-**Copyright:** 2009 - 2022 University Medicine Greifswald
-
-**Contact:** https://www.ths-greifswald.de/kontakt/
-
-## Publications ####
-- Hampf et al. 2020 "Assessment of scalability and performance of the record linkage tool E‑PIX® in managing multi‑million patients in research projects at a large university hospital in Germany", https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
-- http://dx.doi.org/10.3414/ME14-01-0133
-- http://dx.doi.org/10.1186/s12967-015-0545-6
+${ttp.epix.readme.footer}

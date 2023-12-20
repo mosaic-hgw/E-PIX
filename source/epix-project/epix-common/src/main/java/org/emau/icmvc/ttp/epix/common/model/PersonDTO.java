@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,21 +39,26 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.SetValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatusType;
+
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class PersonDTO extends PersonBaseDTO
 {
-	private static final long serialVersionUID = 7976560337541641293L;
+	private static final long serialVersionUID = -7994810876955918912L;
 	private IdentityOutDTO referenceIdentity;
-	private List<IdentityOutDTO> otherIdentities = new ArrayList<>();
+	private final List<IdentityOutDTO> otherIdentities = new ArrayList<>();
 
 	public PersonDTO()
 	{}
@@ -61,11 +66,8 @@ public class PersonDTO extends PersonBaseDTO
 	public PersonDTO(PersonBaseDTO superDTO, IdentityOutDTO referenceIdentity, List<IdentityOutDTO> otherIdentities)
 	{
 		super(superDTO);
-		this.referenceIdentity = referenceIdentity;
-		if (otherIdentities != null)
-		{
-			this.otherIdentities = otherIdentities;
-		}
+		setReferenceIdentity(referenceIdentity);
+		setOtherIdentities(otherIdentities);
 	}
 
 	public PersonDTO(PersonDTO dto)
@@ -80,7 +82,7 @@ public class PersonDTO extends PersonBaseDTO
 
 	public void setReferenceIdentity(IdentityOutDTO referenceIdentity)
 	{
-		this.referenceIdentity = referenceIdentity;
+		this.referenceIdentity = referenceIdentity != null ? new IdentityOutDTO(referenceIdentity) : null;
 	}
 
 	public List<IdentityOutDTO> getOtherIdentities()
@@ -90,14 +92,77 @@ public class PersonDTO extends PersonBaseDTO
 
 	public void setOtherIdentities(List<IdentityOutDTO> otherIdentities)
 	{
+		this.otherIdentities.clear();
 		if (otherIdentities != null)
 		{
-			this.otherIdentities = otherIdentities;
+			for (IdentityOutDTO iDTO : otherIdentities)
+			{
+				this.otherIdentities.add(new IdentityOutDTO(iDTO));
+			}
 		}
-		else
+	}
+
+	/**
+	 * Returns the vital status type of the person which is derived from the reference identity and the other identities as follows:
+	 * If the reference identity or any of the other identities is DEAD, then the person's vital status type is DEAD,
+	 * otherwise if the reference identity or any of the other identities is ALIVE, then the person's vital status type is ALIVE,
+	 * otherwise the vital status type of the person is UNKNOWN.
+	 *
+	 * @return the vital status type of the person
+	 */
+	public VitalStatusType getVitalStatusType()
+	{
+		VitalStatusType result = VitalStatusType.getType(referenceIdentity.getVitalStatus());
+		if (result.isDead())
 		{
-			this.otherIdentities.clear();
+			return result;
 		}
+		for (IdentityOutDTO i : otherIdentities)
+		{
+			if (VitalStatusType.getType(i.getVitalStatus()).isDead())
+			{
+				return VitalStatusType.DEAD;
+			}
+			else if (VitalStatusType.getType(i.getVitalStatus()).isAlive())
+			{
+				result = VitalStatusType.ALIVE;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Returns a map with (distinct) conflicting vital status descriptors of other identities as keys and sets of corresponding identities as values.
+	 * Conflicting vital statuses are those statuses of other identities having a different vital status than the reference identity (including date of death if dead).
+	 *
+	 * @param includeUnknown
+	 *            true to include identities with unknown vital status type
+	 * @return a map with conflicting vital status descriptors as keys and the corresponding identities as values.
+	 */
+	public SetValuedMap<VitalStatus.Descriptor, IdentityOutDTO> getIdentitiesWithConflictingVitalStatus(boolean includeUnknown)
+	{
+		if (otherIdentities == null || otherIdentities.isEmpty())
+		{
+			return new HashSetValuedHashMap<>();
+		}
+
+		VitalStatus.Descriptor d = referenceIdentity.getVitalStatusDescriptor();
+
+		return otherIdentities.stream().filter(id -> d.conflictsWith(id.getVitalStatusDescriptor()) && (includeUnknown || !id.getVitalStatusDescriptor().getVitalStatus().isUnknown())).collect(
+				HashSetValuedHashMap::new, (multimap, id) -> multimap.put(id.getVitalStatusDescriptor(), id), MultiValuedMap::putAll);
+	}
+
+	/**
+	 * Returns a sorted list with distinct vital status descriptors of other identities than the reference identity having a different vital status than the reference identity.
+	 * The order guarantees to list DEAD statuses with a non-null date of death first, then the DEAD status without a date of death, followed by ALIVE and then UNKNOWN (if present).
+	 *
+	 * @param includeUnknown
+	 *            true to include identities with unknown vital status type
+	 * @return a sorted list with distinct conflicting vital status descriptors of other identities
+	 */
+	public List<VitalStatus.Descriptor> getConflictingVitalStatuses(boolean includeUnknown)
+	{
+		return getIdentitiesWithConflictingVitalStatus(includeUnknown).keys().stream().sorted().collect(Collectors.toList());
 	}
 
 	@Override
@@ -105,8 +170,8 @@ public class PersonDTO extends PersonBaseDTO
 	{
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((referenceIdentity == null) ? 0 : referenceIdentity.hashCode());
-		result = prime * result + ((otherIdentities == null) ? 0 : otherIdentities.hashCode());
+		result = prime * result + (referenceIdentity == null ? 0 : referenceIdentity.hashCode());
+		result = prime * result + (otherIdentities == null ? 0 : otherIdentities.hashCode());
 		return result;
 	}
 
@@ -114,26 +179,40 @@ public class PersonDTO extends PersonBaseDTO
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (!super.equals(obj))
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		PersonDTO other = (PersonDTO) obj;
 		if (referenceIdentity == null)
 		{
 			if (other.referenceIdentity != null)
+			{
 				return false;
+			}
 		}
 		else if (!referenceIdentity.equals(other.referenceIdentity))
+		{
 			return false;
+		}
 		if (otherIdentities == null)
 		{
 			if (other.otherIdentities != null)
+			{
 				return false;
+			}
 		}
 		else if (!otherIdentities.equals(other.otherIdentities))
+		{
 			return false;
+		}
 		return true;
 	}
 

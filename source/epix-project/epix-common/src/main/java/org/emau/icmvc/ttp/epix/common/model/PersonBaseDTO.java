@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,40 +39,40 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class PersonBaseDTO implements Serializable
 {
-	private static final long serialVersionUID = -5314139256271067551L;
+	private static final long serialVersionUID = -5583294444292811905L;
 	private long personId;
 	private boolean deactivated;
 	private Date personCreated;
 	private Date personLastEdited;
 	private IdentifierDTO mpiId;
+	private String domainName;
 
 	public PersonBaseDTO()
 	{}
 
-	public PersonBaseDTO(long personId, boolean deactivated, Date personCreated, Date personLastEdited, IdentifierDTO mpiId)
+	public PersonBaseDTO(long personId, boolean deactivated, Date personCreated, Date personLastEdited, IdentifierDTO mpiId, String domainName)
 	{
-		super();
 		this.personId = personId;
 		this.deactivated = deactivated;
-		this.personCreated = personCreated;
-		this.personLastEdited = personLastEdited;
-		this.mpiId = mpiId;
+		setPersonCreated(personCreated);
+		setPersonLastEdited(personLastEdited);
+		setMpiId(mpiId);
+		this.domainName = domainName;
 	}
 
 	public PersonBaseDTO(PersonBaseDTO dto)
 	{
-		this(dto.getPersonId(), dto.isDeactivated(), dto.getPersonCreated(), dto.getPersonLastEdited(), dto.getMpiId());
+		this(dto.getPersonId(), dto.isDeactivated(), dto.getPersonCreated(), dto.getPersonLastEdited(), dto.getMpiId(), dto.getDomainName());
 	}
 
 	public long getPersonId()
@@ -102,7 +102,7 @@ public class PersonBaseDTO implements Serializable
 
 	public void setPersonCreated(Date personCreated)
 	{
-		this.personCreated = personCreated;
+		this.personCreated = personCreated != null ? new Date(personCreated.getTime()) : null;
 	}
 
 	public Date getPersonLastEdited()
@@ -112,7 +112,7 @@ public class PersonBaseDTO implements Serializable
 
 	public void setPersonLastEdited(Date personLastEdited)
 	{
-		this.personLastEdited = personLastEdited;
+		this.personLastEdited = personLastEdited != null ? new Date(personLastEdited.getTime()) : null;
 	}
 
 	public IdentifierDTO getMpiId()
@@ -122,7 +122,17 @@ public class PersonBaseDTO implements Serializable
 
 	public void setMpiId(IdentifierDTO mpiId)
 	{
-		this.mpiId = mpiId;
+		this.mpiId = mpiId != null ? new IdentifierDTO(mpiId) : null;
+	}
+
+	public String getDomainName()
+	{
+		return domainName;
+	}
+
+	public void setDomainName(String domainName)
+	{
+		this.domainName = domainName;
 	}
 
 	@Override
@@ -131,10 +141,11 @@ public class PersonBaseDTO implements Serializable
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (deactivated ? 1231 : 1237);
-		result = prime * result + ((mpiId == null) ? 0 : mpiId.hashCode());
-		result = prime * result + ((personCreated == null) ? 0 : personCreated.hashCode());
-		result = prime * result + (int) (personId ^ (personId >>> 32));
-		result = prime * result + ((personLastEdited == null) ? 0 : personLastEdited.hashCode());
+		result = prime * result + (domainName == null ? 0 : domainName.hashCode());
+		result = prime * result + (mpiId == null ? 0 : mpiId.hashCode());
+		result = prime * result + (personCreated == null ? 0 : personCreated.hashCode());
+		result = prime * result + (int) (personId ^ personId >>> 32);
+		result = prime * result + (personLastEdited == null ? 0 : personLastEdited.hashCode());
 		return result;
 	}
 
@@ -142,44 +153,77 @@ public class PersonBaseDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		PersonBaseDTO other = (PersonBaseDTO) obj;
 		if (deactivated != other.deactivated)
+		{
 			return false;
+		}
+		if (domainName == null)
+		{
+			if (other.domainName != null)
+			{
+				return false;
+			}
+		}
+		else if (!domainName.equals(other.domainName))
+		{
+			return false;
+		}
 		if (mpiId == null)
 		{
 			if (other.mpiId != null)
+			{
 				return false;
+			}
 		}
 		else if (!mpiId.equals(other.mpiId))
+		{
 			return false;
+		}
 		if (personCreated == null)
 		{
 			if (other.personCreated != null)
+			{
 				return false;
+			}
 		}
 		else if (!personCreated.equals(other.personCreated))
+		{
 			return false;
+		}
 		if (personId != other.personId)
+		{
 			return false;
+		}
 		if (personLastEdited == null)
 		{
 			if (other.personLastEdited != null)
+			{
 				return false;
+			}
 		}
 		else if (!personLastEdited.equals(other.personLastEdited))
+		{
 			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "PersonBaseDTO [personId=" + personId + ", deactivated=" + deactivated + ", personCreated=" + personCreated + ", personLastEdited="
-				+ personLastEdited + ", mpiId=" + mpiId + "]";
+		return "PersonBaseDTO [" + (domainName != null ? "domainName=" + domainName + ", " : "") + "personId=" + personId + ", deactivated=" + deactivated + ", personCreated=" + personCreated
+				+ ", personLastEdited=" + personLastEdited + ", mpiId=" + mpiId + "]";
 	}
 }

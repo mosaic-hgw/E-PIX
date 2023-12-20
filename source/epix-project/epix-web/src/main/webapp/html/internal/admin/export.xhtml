@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -37,9 +37,13 @@
   ###license-information-end###
   -->
 
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
-	  xmlns:p="http://primefaces.org/ui" xmlns:ui="http://java.sun.com/jsf/facelets"
->
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:components="http://java.sun.com/jsf/composite/components"
+	  xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:file="http://java.sun.com/jsf/composite/components/file"
+	  xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:p="http://primefaces.org/ui"
+	  xmlns:ui="http://java.sun.com/jsf/facelets">
 
 <!-- author: Arne Blumentritt -->
 
@@ -99,44 +103,113 @@
 
 				<!-- Choose mode -->
 				<!-- =========== -->
-				<p:panel id="choose_panel" style="margin-bottom: 15px;">
-					<h4>#{msg['export.label.chooseMode']}</h4>
-					<p:commandButton icon="mdi mdi-magnify" update="main" value="#{msg['export.label.exportAllPersons']}"
-									 actionListener="#{exportController.chooseExportAllPersons}"
-									 style="margin-right:15px;"
-									 styleClass="#{exportController.mode == 'start' || exportController.mode == 'exportAllPersons' ? '' : 'secondary'}">
-					</p:commandButton>
-					<p:commandButton disabled="#{empty exportController.identifierDomainsFiltered}"
-									 icon="mdi mdi-folder-search-outline" update="main"
-									 value="#{msg['export.label.exportByIdentifierDomain']}"
-									 actionListener="#{exportController.chooseExportByIdentifierDomain}" style="margin-right:15px;"
-									 styleClass="#{exportController.mode == 'start' || exportController.mode == 'exportByIdentifierDomain' ? '' : 'secondary'}">
-					</p:commandButton>
-					<p:commandButton disabled="#{empty exportController.identifierDomainsFiltered}"
-									 icon="mdi mdi-text-search" update="main" value="#{msg['export.label.exportByIdentifiers']}"
-									 actionListener="#{exportController.chooseExportByIdentifiers}"
-									 styleClass="#{exportController.mode == 'start' || exportController.mode == 'exportByIdentifiers' ? '' : 'secondary'}">
-					</p:commandButton>
-				</p:panel>
+				<h:panelGroup class="grid" rendered="#{exportController.mode == 'start'}">
+					<div class="col-12 md:col-6 xl:col-4">
+						<p:panel styleClass="h-full">
+							<div class="h-full flex flex-column justify-content-between align-items-start">
+								<div>
+									<h4>
+										<h:outputText value="#{msg['page.export.mode.exportAllPersons.title']}" />
+									</h4>
+									<h:outputText value="#{msg['page.export.mode.exportAllPersons.hint']}" />
+								</div>
+								<p:commandButton actionListener="#{exportController.chooseExportAllPersons}"
+												 icon="mdi mdi-magnify"
+												 update="main"
+												 styleClass="mt-2"
+												 value="#{msg['page.export.mode.exportAllPersons.button']}">
+								</p:commandButton>
+							</div>
+						</p:panel>
+					</div>
+					<div class="col-12 md:col-6 xl:col-4">
+						<p:panel styleClass="h-full">
+							<div class="h-full flex flex-column justify-content-between align-items-start">
+								<div>
+									<h4>
+										<h:outputText value="#{msg['page.export.mode.exportByIDAT.title']}" />
+									</h4>
+									<h:outputText value="#{msg['page.export.mode.exportByIDAT.hint']}" />
+								</div>
+								<p:commandButton actionListener="#{exportController.chooseExportByIDAT}"
+												 icon="mdi mdi-account-search"
+												 update="main"
+												 styleClass="mt-2"
+												 value="#{msg['page.export.mode.exportByIDAT.button']}">
+								</p:commandButton>
+							</div>
+						</p:panel>
+					</div>
+					<div class="col-12 md:col-6 xl:col-4">
+						<p:panel styleClass="h-full">
+							<div class="h-full flex flex-column justify-content-between align-items-start">
+								<div>
+									<h4>
+										<h:outputText value="#{msg['page.export.mode.exportByIdentifierDomain.title']}" />
+									</h4>
+									<h:outputText value="#{msg['page.export.mode.exportByIdentifierDomain.hint']}" />
+								</div>
+								<p:commandButton actionListener="#{exportController.chooseExportByIdentifierDomain}"
+												 disabled="#{empty exportController.identifierDomainsFiltered}"
+												 icon="mdi mdi-folder-search-outline"
+												 update="main"
+												 styleClass="mt-2"
+												 value="#{msg['page.export.mode.exportByIdentifierDomain.button']}">
+								</p:commandButton>
+							</div>
+						</p:panel>
+					</div>
+					<div class="col-12 md:col-6 xl:col-4">
+						<p:panel styleClass="h-full">
+							<div class="h-full flex flex-column justify-content-between align-items-start">
+								<div>
+									<h4>
+										<h:outputText value="#{msg['page.export.mode.exportByIdentifiers.title']}" />
+									</h4>
+									<h:outputText value="#{msg['page.export.mode.exportByIdentifiers.hint']}" />
+								</div>
+								<p:commandButton actionListener="#{exportController.chooseExportByIdentifiers}"
+												 disabled="#{empty exportController.identifierDomainsFiltered}"
+												 icon="mdi mdi-text-search"
+												 update="main"
+												 styleClass="mt-2"
+												 value="#{msg['page.export.mode.exportByIdentifiers.button']}">
+								</p:commandButton>
+							</div>
+						</p:panel>
+					</div>
+				</h:panelGroup>
 
-				<!-- Export all -->
-				<!-- ========== -->
-				<ui:fragment rendered="#{exportController.mode == 'exportAllPersons'}">
+				<!-- Export all or by IDAT -->
+				<!-- ===================== -->
+				<ui:fragment rendered="#{exportController.mode == 'exportAllPersons' or exportController.mode == 'exportByIDAT'}">
 					<p:panel id="exportAllPersons_panel">
-						<h4>#{msg['export.label.options']}</h4>
+						<h4>#{msg['page.export.mode.'.concat(exportController.mode).concat('.button')]}</h4>
 						<p:selectBooleanCheckbox value="#{exportController.onlyMainIdentityIdentifiers}">
 							<p:ajax process="@this" ignoreAutoUpdate="true" />
 						</p:selectBooleanCheckbox>
 						<p:outputLabel value=" #{msg['export.label.onlyMainIdentityIdentifiers']}" />
 						<br />
 						<p:commandButton id="exportAllPersons" update="msg, main" value="#{msg['export.label.findPersons']}"
+										 icon="mdi mdi-magnify"
 										 actionListener="#{exportController.exportAllPersons}" onclick="PF('loading').show();"
-										 oncomplete="PF('loading').hide();">
+										 oncomplete="PF('loading').hide();"
+										 rendered="#{exportController.mode == 'exportAllPersons'}">
 						</p:commandButton>
-						<br />
-						<br />
-						<h:outputText value="#{msg['export.label.found']}: #{exportController.exportData.size()}"
-									  rendered="#{exportController.searched}" />
+
+						<ui:fragment rendered="#{exportController.mode == 'exportByIDAT'}">
+							<components:search id="idat_form" sf="#{exportController.searchForm}" />
+							<h:outputText value="#{msg['search.label.searchMode']}" styleClass="mt-5 inline-block" />
+							<br />
+							<p:selectOneButton value="#{exportController.searchForm.andMode}" styleClass="mb-3">
+								<f:selectItem itemLabel="#{msg['search.label.searchMode.and']}" itemValue="true" />
+								<f:selectItem itemLabel="#{msg['search.label.searchMode.or']}" itemValue="false" />
+							</p:selectOneButton>
+							<br />
+							<p:commandButton actionListener="#{exportController.exportByIDAT()}"
+											 onclick="PF('loading').show();" oncomplete="PF('loading').hide();"
+											 update="msg, main" value="#{msg['common.button.search']}" />
+						</ui:fragment>
 					</p:panel>
 				</ui:fragment>
 
@@ -144,7 +217,7 @@
 				<!-- ================ -->
 				<ui:fragment rendered="#{exportController.mode == 'exportByIdentifierDomain'}">
 					<p:panel id="exportByIdentifierDomain_panel">
-						<h4>#{msg['export.label.options']}</h4>
+						<h4>#{msg['page.export.mode.'.concat(exportController.mode).concat('.button')]}</h4>
 						<p:panelGrid columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
 							<h:outputLabel value="#{msg['export.identifier.domain']}" />
 							<p:selectOneMenu value="#{exportController.selectedIndentifierDomain}"
@@ -164,7 +237,9 @@
 											   itemValue="#{_identityType}" />
 							</p:selectOneMenu>
 						</p:panelGrid>
+
 						<p:commandButton id="exportByIdentifierDomain" update="msg, main" value="#{msg['export.label.findPersons']}"
+										 icon="mdi mdi-folder-search-outline"
 										 actionListener="#{exportController.exportByIdentifierDomain}" onclick="PF('loading').show();"
 										 oncomplete="PF('loading').hide();">
 						</p:commandButton>
@@ -179,7 +254,7 @@
 				<!-- ========================= -->
 				<ui:fragment rendered="#{exportController.mode == 'exportByIdentifiers'}">
 					<p:panel id="exportByIdentifierList_panel">
-						<h4>#{msg['export.label.options']}</h4>
+						<h4>#{msg['page.export.mode.'.concat(exportController.mode).concat('.button')]}</h4>
 						<p:panelGrid columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
 							<h:outputLabel value="#{msg['export.identifier.domain']}" />
 							<p:selectOneMenu value="#{exportController.selectedIndentifierDomain}"
@@ -210,11 +285,11 @@
 											  cancelLabel="#{cmsg['ui.file.cancel']}"
 											  mode="advanced" allowTypes="/(\.|\/)(csv|txt|CSV|TXT)$/" auto="true" multiple="false"
 											  fileLimit="1"
-											  listener="#{exportController.handleUploadIdentifiers}" update="exportByIdentifierList_panel"
+											  listener="#{exportController.handleUploadIdentifiers}" update="exportByIdentifierList_panel, :progress:size"
 											  rendered="#{empty exportController.uploadFile}">
 								</p:fileUpload>
 								<ui:fragment rendered="#{not empty exportController.uploadFile}">
-									<h:outputFormat value="#{msg['export.identifier.listUploaded']}" escape="false"
+									<h:outputFormat value="#{msg['export.identifier.listUploaded']}"
 													style="padding: 3px 0 7px; display: block;">
 										<f:param value="#{exportController.data.size()}" />
 									</h:outputFormat>
@@ -224,11 +299,13 @@
 													 update="@form" styleClass="secondary" process="@this" />
 								</ui:fragment>
 							</ui:fragment>
-
 						</p:panelGrid>
+
 						<p:commandButton id="exportByIdentifierList" update="msg, main" value="#{msg['export.label.findPersons']}"
-										 actionListener="#{exportController.exportByIdentitifers}" onclick="PF('loading').show();"
-										 oncomplete="PF('loading').hide();"
+										 actionListener="#{exportController.exportByIdentitifers}"
+										 onclick="PF('progressDialog').show();PF('progressBar').start();"
+										 icon="mdi mdi-text-search"
+										 oncomplete="PF('progressDialog').hide();PF('progressBar').cancel();"
 										 disabled="#{empty exportController.selectedIndentifierDomain
 										 or empty exportController.exportIdentity or empty exportController.data}">
 						</p:commandButton>
@@ -239,11 +316,10 @@
 					</p:panel>
 				</ui:fragment>
 
-
 				<!-- Arrange Columns -->
 				<!-- =============== -->
 				<ui:fragment rendered="#{exportController.mode != 'start' and !empty exportController.exportData}">
-					<p:panel id="dateOutput_panel" style="margin-top: 15px;">
+					<p:panel style="margin-top: 15px;">
 						<h4>#{msg['export.label.arrangeColumns']}</h4>
 						<div class="combine">
 							<p:dataTable id="persons_table" value="#{exportController.exportData}" var="_person" draggableColumns="true"
@@ -251,23 +327,39 @@
 										 styleClass="table-content" paginator="true" paginatorPosition="bottom"
 										 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
 										 currentPageReportTemplate="{startRecord}-{endRecord} #{cmsg['ui.table.of']} {totalRecords}"
-										 rows="10" pageLinks="3"
+										 rows="10" pageLinks="5"
 										 emptyMessage="#{cmsg['ui.table.empty']}">
 								<p:columns value="#{exportController.columns}" var="_column" columnIndexVar="i">
 									<f:facet name="header">
 										<h:outputText value="#{exportController.getColumnText(_column.name)}"
 													  styleClass="#{!_column.active ? 'grey' : ''}" />
-										<p:commandButton update="main:persons_table" process="main:persons_table" icon="fa fa-fw fa-close"
+										<p:commandButton update="main:persons_table main:columnButtons"
+														 process="main:persons_table" icon="mdi mdi-18 mdi-close"
 														 actionListener="#{exportController.toggle(_column)}" immediate="true"
+														 ignoreAutoUpdate="true"
 														 rendered="#{_column.active}" />
-										<p:commandButton update="main:persons_table" process="main:persons_table" icon="fa fa-fw fa-plus"
+										<p:commandButton update="main:persons_table main:columnButtons"
+														 process="main:persons_table" icon="mdi mdi-18 mdi-plus"
 														 actionListener="#{exportController.toggle(_column)}" immediate="true"
+														 ignoreAutoUpdate="true"
 														 rendered="#{!_column.active}" />
 									</f:facet>
 									<h:outputText value="#{webUtil.cut(exportController.getColumnText(_person[i]), 50, ' [...]')}" styleClass="#{!_column.active ? 'grey' : ''}" />
 								</p:columns>
 							</p:dataTable>
 						</div>
+						<h:panelGroup id="columnButtons">
+						<p:commandButton actionListener="#{exportController.excludeEmptyColumns}"
+										 icon="mdi mdi-table-column-remove" ignoreAutoUpdate="true"
+										 disabled="#{!exportController.hasEmptyActiveColumns()}"
+										 update="persons_table, columnButtons"
+										 value="#{msg['page.export.columns.excludeEmpty']}" />
+						<p:commandButton actionListener="#{exportController.includeAllColumns}"
+										 icon="mdi mdi-table-column-plus-after" ignoreAutoUpdate="true"
+										 disabled="#{!exportController.hasInactiveColumns()}"
+										 update="persons_table, columnButtons"
+										 value="#{msg['page.export.columns.includeAll']}" />
+						</h:panelGroup>
 					</p:panel>
 				</ui:fragment>
 
@@ -284,6 +376,8 @@
 					</p:panel>
 				</ui:fragment>
 			</h:form>
+
+			<file:progress id="progress" message="#{msg['export.label.processingEntriesExact']}" progress="#{exportController.progress}" size="#{exportController.sum}" />
 		</ui:define>
 
 	</ui:composition>

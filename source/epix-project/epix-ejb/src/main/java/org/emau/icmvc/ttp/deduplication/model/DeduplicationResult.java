@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -43,10 +43,9 @@ package org.emau.icmvc.ttp.deduplication.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.emau.icmvc.ttp.epix.internal.PreprocessedCacheObject;
-
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import org.emau.icmvc.ttp.epix.internal.PreprocessedCacheObject;
 
 public class DeduplicationResult
 {

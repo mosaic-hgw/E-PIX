@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -44,6 +44,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +61,7 @@ import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractBatchBean;
+import org.emau.icmvc.ttp.epix.frontend.controller.component.SearchForm;
 import org.emau.icmvc.ttp.epix.frontend.model.Column;
 import org.primefaces.component.api.UIColumn;
 import org.primefaces.component.datatable.DataTable;
@@ -74,12 +76,14 @@ public class ExportController extends AbstractBatchBean
 	private ExportController.IdentityType exportIdentityType;
 	private boolean onlyMainIdentityIdentifiers = true;
 	private boolean searched = false;
+	private SearchForm searchForm;
 
 	@PostConstruct
 	public void construct()
 	{
 		init();
 		mode = Mode.start;
+		searchForm = new SearchForm(this);
 	}
 
 	@Override
@@ -111,6 +115,13 @@ public class ExportController extends AbstractBatchBean
 		mode = Mode.exportByIdentifiers;
 	}
 
+	public void chooseExportByIDAT()
+	{
+		init();
+		uploadFile = null;
+		mode = Mode.exportByIDAT;
+	}
+
 	public void exportAllPersons()
 	{
 		init();
@@ -118,7 +129,7 @@ public class ExportController extends AbstractBatchBean
 		List<PersonDTO> persons = new ArrayList<>();
 		try
 		{
-			persons = service.getPersonsForDomain(domainSelector.getSelectedDomainName());
+			persons = service.getActivePersonsForDomain(getDomainSelector().getSelectedDomainName());
 		}
 		catch (InvalidParameterException | UnknownObjectException e)
 		{
@@ -127,22 +138,10 @@ public class ExportController extends AbstractBatchBean
 
 		for (PersonDTO person : persons)
 		{
-			List<IdentifierDTO> identifiers = new ArrayList<>();
-			identifiers.addAll(person.getReferenceIdentity().getIdentifiers());
-			if (!onlyMainIdentityIdentifiers)
-			{
-				List<IdentityOutDTO> allIdentities = new ArrayList<>();
-				allIdentities.add(person.getReferenceIdentity());
-				allIdentities.addAll(person.getOtherIdentities());
-
-				for (IdentityOutDTO identity : allIdentities)
-				{
-					identifiers.addAll(identity.getIdentifiers());
-				}
-			}
-
-			exportPerson(person.getReferenceIdentity(), person.getMpiId().getValue(), identifiers, "", false);
+			exportPerson(person, onlyMainIdentityIdentifiers);
 		}
+		Object[] args = { exportData.size() };
+		logMessage(new MessageFormat(getBundle().getString("page.export.message.info.found")).format(args), Severity.INFO, false);
 	}
 
 	public void exportByIdentifierDomain()
@@ -159,7 +158,7 @@ public class ExportController extends AbstractBatchBean
 		List<IdentityOutDTO> identities;
 		try
 		{
-			identities = service.getIdentitiesForDomain(domainSelector.getSelectedDomainName());
+			identities = service.getIdentitiesForDomain(getDomainSelector().getSelectedDomainName());
 
 			for (IdentityOutDTO identity : identities)
 			{
@@ -169,12 +168,12 @@ public class ExportController extends AbstractBatchBean
 					{
 						if (exportIdentityType.equals(IdentityType.original))
 						{
-							String mpi = service.getMPIForIdentifier(domainSelector.getSelectedDomainName(), identifier);
+							String mpi = service.getMPIForIdentifier(getDomainSelector().getSelectedDomainName(), identifier);
 							exportPerson(identity, mpi, identity.getIdentifiers(), "", false);
 						}
 						else if (exportIdentityType.equals(IdentityType.reference))
 						{
-							PersonDTO person = service.getPersonByLocalIdentifier(domainSelector.getSelectedDomainName(), identifier);
+							PersonDTO person = service.getActivePersonByLocalIdentifier(getDomainSelector().getSelectedDomainName(), identifier);
 							exportPerson(person.getReferenceIdentity(), person.getMpiId().getValue(), identity.getIdentifiers(), "", false);
 						}
 					}
@@ -184,6 +183,18 @@ public class ExportController extends AbstractBatchBean
 		catch (InvalidParameterException | UnknownObjectException e)
 		{
 			this.logMessage(e);
+		}
+	}
+
+	public void exportByIDAT()
+	{
+		init();
+		searched = true;
+		searchForm.onSearchAllPersons(false);
+
+		for (PersonDTO person : searchForm.getPersonDTOs())
+		{
+			exportPerson(person, onlyMainIdentityIdentifiers);
 		}
 	}
 
@@ -202,6 +213,7 @@ public class ExportController extends AbstractBatchBean
 		try (BufferedReader rd = new BufferedReader(new StringReader(new String(uploadFile.getContent(), StandardCharsets.UTF_8))))
 		{
 			uploadFile(rd);
+			sum = data.size();
 
 			if (data.isEmpty())
 			{
@@ -223,6 +235,7 @@ public class ExportController extends AbstractBatchBean
 	public void exportByIdentitifers()
 	{
 		searched = true;
+		counter = 0;
 
 		// Iterate over all imported local ids
 		for (List<String> record : data)
@@ -233,7 +246,7 @@ public class ExportController extends AbstractBatchBean
 
 			try
 			{
-				PersonDTO person = service.getPersonByLocalIdentifier(domainSelector.getSelectedDomainName(), identifier);
+				PersonDTO person = service.getActivePersonByLocalIdentifier(getDomainSelector().getSelectedDomainName(), identifier);
 				List<IdentityOutDTO> identities = new ArrayList<>();
 				identities.add(person.getReferenceIdentity());
 				identities.addAll(person.getOtherIdentities());
@@ -258,7 +271,7 @@ public class ExportController extends AbstractBatchBean
 				}
 				else if (exportIdentityType.equals(IdentityType.original))
 				{
-					String mpi = service.getMPIForIdentifier(domainSelector.getSelectedDomainName(), identifier);
+					String mpi = service.getMPIForIdentifier(getDomainSelector().getSelectedDomainName(), identifier);
 					keepSpecificIdentifierValue(identity, identifier);
 					exportPerson(identity, mpi, identity.getIdentifiers(), "", false);
 				}
@@ -272,6 +285,7 @@ public class ExportController extends AbstractBatchBean
 			{
 				logMessage(e.getLocalizedMessage(), Severity.ERROR);
 			}
+			counter++;
 		}
 
 		if (exportData.isEmpty())
@@ -279,7 +293,7 @@ public class ExportController extends AbstractBatchBean
 			logMessage(getBundle().getString("export.warn.noPersons"), Severity.WARN);
 		}
 	}
-
+	
 	/**
 	 * If the identity has multiple identifiers for the same domain, keep only the value of the given identifier for this domain
 	 *
@@ -351,10 +365,8 @@ public class ExportController extends AbstractBatchBean
 
 	public enum Mode
 	{
-		start, exportAllPersons, exportByIdentifierDomain, exportByIdentifiers
+		start, exportAllPersons, exportByIdentifierDomain, exportByIdentifiers, exportByIDAT
 	}
-
-	;
 
 	public String getMode()
 	{
@@ -365,8 +377,6 @@ public class ExportController extends AbstractBatchBean
 	{
 		original, reference
 	}
-
-	;
 
 	public IdentityType[] getIdentityTypes()
 	{
@@ -396,5 +406,10 @@ public class ExportController extends AbstractBatchBean
 	public boolean isSearched()
 	{
 		return searched;
+	}
+
+	public SearchForm getSearchForm()
+	{
+		return searchForm;
 	}
 }

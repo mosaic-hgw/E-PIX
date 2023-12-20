@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -36,8 +36,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   ###license-information-end###
   -->
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html" xmlns:f="http://java.sun.com/jsf/core"
-	  xmlns:p="http://primefaces.org/ui" xmlns:ui="http://java.sun.com/jsf/facelets" xmlns:components="http://java.sun.com/jsf/composite/components">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:idat-form="http://java.sun.com/jsf/composite/components/idat/form"
+	  xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:p="http://primefaces.org/ui" xmlns:ui="http://java.sun.com/jsf/facelets">
 <!-- author: Arne Blumentritt -->
 <h:body>
 	<ui:composition template="/resources/templates/epix.xhtml">
@@ -63,230 +66,15 @@
 		<ui:define name="content">
 			<h:form id="main" onkeypress="if (event.keyCode === 13) { document.getElementById('main:addIdentityButton').click(); return false; }">
 				<p:focus context="@form" />
-				<div class="ui-g">
-					<div class="ui-g-12 ui-md-6 ui-lg-6">
-						<p:panel>
-							<p:commandButton id="emptyFieldsButton" value="#{msg['add.label.emptyFields']}" actionListener="#{addController.init}" update="main"
-											 rendered="#{addController.emptyButton}" />
-							<h4>
-								<h:outputText value="#{msg['add.label.idat']}" />
-							</h4>
-							<p:panelGrid columns="2" columnClasses="ui-grid-col-6,ui-grid-col-6" layout="grid">
+				<div class="grid">
+					<idat-form:identity identity="#{addController.identity}" person="#{addController.person}" />
 
-								<p:outputLabel for="mpi" value="#{msg['common.person.MPI']}" rendered="#{not empty addController.mpi}" />
-								<h:outputText id="mpi" value="#{addController.mpi}" rendered="#{not empty addController.mpi}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="degree" value="#{msg['common.person.degree']}" />
-								<p:inputText id="degree" value="#{addController.identity.degree}" required="#{addController.required('degree')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="firstName" value="#{msg['common.person.firstName']}" />
-								<p:inputText id="firstName" value="#{addController.identity.firstName}" required="#{addController.required('firstName')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="lastName" value="#{msg['common.person.lastName']}" />
-								<p:inputText id="lastName" value="#{addController.identity.lastName}" required="#{addController.required('lastName')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="middleName" value="#{msg['common.person.middleName']}" />
-								<p:inputText id="middleName" value="#{addController.identity.middleName}" required="#{addController.required('middleName')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="mothersMaidenName" value="#{msg['common.person.mothersMaidenName']}" />
-								<p:inputText id="mothersMaidenName" value="#{addController.identity.mothersMaidenName}"
-											 required="#{addController.required('mothersMaidenName')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="birthDate" value='#{msg["common.person.birthDate"]} (#{cmsg["ui.date.pattern.date"]})' />
-								<p:inputMask id="birthDate" converter="date" required="#{addController.required('birthDate')}"
-											 value='#{addController.identity.birthDate}' mask='#{addController.getDateTimeMask("date")}' />
-								<!--************************************************************** -->
-								<p:outputLabel for="birthPlace" value="#{msg['common.person.birthPlace']}" />
-								<p:inputText id="birthPlace" value="#{addController.identity.birthPlace}" required="#{addController.required('birthPlace')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="gender" value="#{msg['common.person.gender']}" />
-								<p:selectOneMenu id="gender" value="#{addController.identity.gender}" required="#{addController.required('gender')}">
-									<f:selectItem noSelectionOption="true" itemLabel="#{msg['common.pleaseSelect']}" itemDisabled="true" />
-									<f:selectItems value="#{addController.genders}" var="_gender" itemLabel="#{msg['common.person.gender.'.concat(_gender.name())]}"
-												   itemValue="#{_gender}" />
-								</p:selectOneMenu>
-								<!--************************************************************** -->
-								<p:outputLabel for="prefix" value="#{msg['common.person.prefix']}" />
-								<p:inputText id="prefix" value="#{addController.identity.prefix}" required="#{addController.required('prefix')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="suffix" value="#{msg['common.person.suffix']}" />
-								<p:inputText id="suffix" value="#{addController.identity.suffix}" required="#{addController.required('suffix')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="race" value="#{msg['common.person.race']}" />
-								<p:inputText id="race" value="#{addController.identity.race}" required="#{addController.required('race')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="religion" value="#{msg['common.person.religion']}" />
-								<p:inputText id="religion" value="#{addController.identity.religion}" required="#{addController.required('religion')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="motherTongue" value="#{msg['common.person.motherTongue']}" />
-								<p:inputText id="motherTongue" value="#{addController.identity.motherTongue}" required="#{addController.required('motherTongue')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="nationality" value="#{msg['common.person.nationality']}" />
-								<p:inputText id="nationality" value="#{addController.identity.nationality}" required="#{addController.required('nationality')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="civilStatus" value="#{msg['common.person.civilStatus']}" />
-								<p:inputText id="civilStatus" value="#{addController.identity.civilStatus}" required="#{addController.required('civilStatus')}" />
-								<!--************************************************************** -->
-								<h:panelGroup>
-									<p:outputLabel for="identityExternalDate" value="#{msg['common.person.externalDate']} (#{cmsg['ui.date.pattern.date']})" />
-									<components:tooltip value="#{msg['common.person.externalDate.hint']}" />
-								</h:panelGroup>
-								<p:inputMask id="identityExternalDate" converter="date" required="#{addController.required('externalDate')}"
-											 value='#{addController.identity.externalDate}' mask='#{addController.getDateTimeMask("date")}' />
-							</p:panelGrid>
-						</p:panel>
-					</div>
-					<div class="ui-g-12 ui-md-6 ui-lg-6">
+					<idat-form:contact identity="#{addController.identity}" />
 
-						<p:panel rendered="#{not empty domainSelector.selectedDomainConfiguration.valueFieldMapping}">
-							<h4>
-								<h:outputText value="#{msg['add.label.values']}" />
-							</h4>
-							<p:panelGrid columns="2" columnClasses="ui-grid-col-6,ui-grid-col-6" layout="grid">
-								<p:outputLabel for="value1" value="#{addController.getValueFieldLabel('value1')}" rendered="#{addController.showValueField('value1', false)}" />
-								<p:inputText id="value1" value="#{addController.identity.value1}" rendered="#{addController.showValueField('value1', false)}"
-											 required="#{addController.required('value1')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value2" value="#{addController.getValueFieldLabel('value2')}" rendered="#{addController.showValueField('value2', false)}" />
-								<p:inputText id="value2" value="#{addController.identity.value2}" rendered="#{addController.showValueField('value2', false)}"
-											 required="#{addController.required('value2')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value3" value="#{addController.getValueFieldLabel('value3')}" rendered="#{addController.showValueField('value3', false)}" />
-								<p:inputText id="value3" value="#{addController.identity.value3}" rendered="#{addController.showValueField('value3', false)}"
-											 required="#{addController.required('value3')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value4" value="#{addController.getValueFieldLabel('value4')}" rendered="#{addController.showValueField('value4', false)}" />
-								<p:inputText id="value4" value="#{addController.identity.value4}" rendered="#{addController.showValueField('value4', false)}"
-											 required="#{addController.required('value4')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value5" value="#{addController.getValueFieldLabel('value5')}" rendered="#{addController.showValueField('value5', false)}" />
-								<p:inputText id="value5" value="#{addController.identity.value5}" rendered="#{addController.showValueField('value5', false)}"
-											 required="#{addController.required('value5')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value6" value="#{addController.getValueFieldLabel('value6')}" rendered="#{addController.showValueField('value6', false)}" />
-								<p:inputTextarea id="value6" value="#{addController.identity.value6}" rows="1" rendered="#{addController.showValueField('value6', false)}"
-												 required="#{addController.required('value6')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value7" value="#{addController.getValueFieldLabel('value7')}" rendered="#{addController.showValueField('value7', false)}" />
-								<p:inputTextarea id="value7" value="#{addController.identity.value7}" rows="1" rendered="#{addController.showValueField('value7', false)}"
-											 required="#{addController.required('value7')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value8" value="#{addController.getValueFieldLabel('value8')}" rendered="#{addController.showValueField('value8', false)}" />
-								<p:inputTextarea id="value8" value="#{addController.identity.value8}" rows="1" rendered="#{addController.showValueField('value8', false)}"
-											 required="#{addController.required('value8')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value9" value="#{addController.getValueFieldLabel('value9')}" rendered="#{addController.showValueField('value9', false)}" />
-								<p:inputTextarea id="value9" value="#{addController.identity.value9}" rows="1" rendered="#{addController.showValueField('value9', false)}"
-											 required="#{addController.required('value9')}" />
-								<!--************************************************************** -->
-								<p:outputLabel for="value10" value="#{addController.getValueFieldLabel('value10')}" rendered="#{addController.showValueField('value10', false)}" />
-								<p:inputTextarea id="value10" value="#{addController.identity.value10}" rows="1" rendered="#{addController.showValueField('value10', false)}"
-											 required="#{addController.required('value10')}" />
-							</p:panelGrid>
-						</p:panel>
-					</div>
+					<idat-form:identifier identity="#{addController.identity}" />
 				</div>
 
-				<p:panel style="margin-top: 15px;">
-					<h4>
-						<h:outputText value="#{msg['add.label.contacts']}" />
-					</h4>
-					<h:panelGroup id="contacts">
-						<p:dataTable value="#{addController.identity.contacts}" var="_contact" rowIndexVar="_i" rendered="#{not empty addController.identity.contacts}">
-							<p:column headerText="#{msg['common.person.street']}">
-								<h:outputText value="#{_contact.street}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.zipCode']}">
-								<h:outputText value="#{_contact.zipCode}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.city']}">
-								<h:outputText value="#{_contact.city}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.state']}">
-								<h:outputText value="#{_contact.state}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.country']}">
-								<h:outputText value="#{_contact.country}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.countryCode']}">
-								<h:outputText value="#{_contact.countryCode}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.email']}">
-								<h:outputText value="#{_contact.email}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.phone']}">
-								<h:outputText value="#{_contact.phone}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.district']}">
-								<h:outputText value="#{_contact.district}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.municipalityKey']}">
-								<h:outputText value="#{_contact.municipalityKey}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.person.externalDate']}">
-								<h:outputText value='#{_contact.externalDate}' converter="date" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.button.actions']}" style="width:120px; text-align:center;">
-								<p:commandButton action="#{addController.onEditContact(_i)}" oncomplete="PF('newContact').show();" process="@this" update=":newContact"
-												 icon="fa fa-fw fa-pencil" alt="#{msg['common.button.edit']}" title="#{msg['common.button.edit']}" rendered="#{empty addController.mpi}" />
-								<p:commandButton action="#{addController.onDeleteContact(_i)}" icon="mdi mdi-delete-empty" alt="#{msg['common.button.delete']}"
-												 title="#{msg['common.button.delete']}" process="@this" update="main:contacts" rendered="#{empty addController.mpi}">
-									<p:confirm header="#{msg['common.confirmation']}" message="#{msg['add.label.contact.confirmDelete']}" icon="mdi mdi-alert-outline" />
-								</p:commandButton>
-							</p:column>
-						</p:dataTable>
-					</h:panelGroup>
-					<div class="space"></div>
-					<p:commandButton id="newContactButton" value="#{msg['add.label.newContact']}" actionListener="#{addController.onNewContact}" icon="mdi mdi-plus"
-									 process="@this" styleClass="secondary" update=":newContact" oncomplete="PF('newContact').show();">
-						<p:resetInput target=":newContact" />
-					</p:commandButton>
-				</p:panel>
-
-				<p:panel style="margin-top: 15px;">
-					<h4>
-						<h:outputText value="#{msg['common.identifier.localIdentifiers']}" />
-					</h4>
-					<h:panelGroup id="identifiers">
-						<p:dataTable value="#{addController.identifiers}" var="_identifier" rowIndexVar="_i"
-									 rendered="#{not empty addController.identifiers}">
-							<p:column headerText="#{msg['common.identifier.localIdentifierDomain']}">
-								<h:outputText value="#{addController.domainSelector.selectedDomain.mpiDomain.name == _identifier.identifierDomain.name ? msg['add.label.mpi.alternative'] : _identifier.identifierDomain.label}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.identifier.localIdentifier']}">
-								<h:outputText value="#{_identifier.value}" />
-							</p:column>
-							<!--************************************************** -->
-							<p:column headerText="#{msg['common.button.actions']}" style="width:120px; text-align:center;">
-								<p:commandButton action="#{addController.onEditIdentifier(_i)}" rendered="#{empty addController.mpi}" oncomplete="PF('newIdentifier').show();"
-												 process="@this" update=":newIdentifier" icon="fa fa-fw fa-pencil" alt="#{msg['common.button.edit']}" title="#{msg['common.button.edit']}" />
-								<p:commandButton action="#{addController.onDeleteIdentifier(_i)}" rendered="#{empty addController.mpi}" process="@this"
-												 update="main:identifiers" icon="mdi mdi-delete-empty" alt="#{msg['common.button.delete']}" title="#{msg['common.button.delete']}">
-									<p:confirm header="#{msg['common.confirmation']}" message="#{msg['add.label.identifier.confirmDelete']}" icon="mdi mdi-alert-outline" />
-								</p:commandButton>
-							</p:column>
-						</p:dataTable>
-					</h:panelGroup>
-					<div class="space"></div>
-					<p:commandButton id="newIdentifierButton" value="#{msg['add.label.newIdentifier']}" actionListener="#{addController.onNewIdentifier}"
-									 icon="mdi mdi-plus" process="@this" styleClass="secondary" update=":newIdentifier" oncomplete="PF('newIdentifier').show();">
-						<p:resetInput target=":newIdentifier" />
-					</p:commandButton>
-				</p:panel>
-
-				<p:panel style="margin-top: 15px;">
+				<p:panel style="margin-top: 8px;">
 					<p:panelGrid columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
 						<p:outputLabel for="updateComment" value="#{msg['add.label.updateComment']}" rendered="#{not empty addController.mpi}" />
 						<p:inputText id="updateComment" value="#{addController.comment}" rendered="#{not empty addController.mpi}" />
@@ -301,97 +89,8 @@
 					<p:commandButton id="addIdentityButton" icon="mdi mdi-check"
 									 rendered="#{empty addController.mpi}" value="#{msg['add.label.addIdentity']}"
 									 actionListener="#{addController.onAddIdentity}" update="main" oncomplete="scrollToMessage(args)" />
-					<p:commandButton id="updateIdentityButton" icon="mdi mdi-check"
-									 rendered="#{not empty addController.mpi}" value="#{msg['edit.label.updateIdentity']}"
-									 action="#{addController.onUpdateIdentity}" oncomplete="scrollToMessage(args)" update="main" />
-					<p:commandButton id="cancelUpdateIdentityButton" icon="mdi mdi-close"
-									 rendered="#{not empty addController.mpi}" value="#{msg['common.button.cancel']}"
-									 action="#{addController.onCancelUpdateIdentity}" onclick="PF('loading').show();" immediate="true" styleClass="secondary" />
 				</p:panel>
 			</h:form>
-
-			<p:dialog id="newContact" widgetVar="newContact" modal="true" closeOnEscape="true">
-				<h:form>
-					<p:messages escape="false" />
-					<h4>
-						<h:outputText value="#{msg['add.label.newContact']}" rendered="#{!addController.editContact}" />
-						<h:outputText value="#{msg['add.label.editContact']}" rendered="#{addController.editContact}" />
-					</h4>
-					<p:panelGrid columns="2" columnClasses="ui-grid-col-6,ui-grid-col-6" layout="grid">
-						<p:outputLabel for="street" value="#{msg['common.person.street']}" />
-						<p:inputText id="street" value="#{addController.contact.street}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="zipCode" value="#{msg['common.person.zipCode']}" />
-						<p:inputText id="zipCode" value="#{addController.contact.zipCode}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="city" value="#{msg['common.person.city']}" />
-						<p:inputText id="city" value="#{addController.contact.city}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="state" value="#{msg['common.person.state']}" />
-						<p:inputText id="state" value="#{addController.contact.state}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="country" value="#{msg['common.person.country']}" />
-						<p:inputText id="country" value="#{addController.contact.country}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="countryCode" value="#{msg['common.person.countryCode']}" />
-						<p:inputText id="countryCode" value="#{addController.contact.countryCode}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="district" value="#{msg['common.person.district']}" />
-						<p:inputText id="district" value="#{addController.contact.district}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="municipalityKey" value="#{msg['common.person.municipalityKey']}" />
-						<p:inputText id="municipalityKey" value="#{addController.contact.municipalityKey}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="email" value="#{msg['common.person.email']}" />
-						<p:inputText id="email" value="#{addController.contact.email}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="phone" value="#{msg['common.person.phone']}" />
-						<p:inputText id="phone" value="#{addController.contact.phone}" />
-						<!--************************************************************** -->
-						<p:outputLabel for="contactExternalDate" value="#{msg['common.person.externalDate']}" />
-						<p:inputMask id="contactExternalDate" converter="date"
-									 value='#{addController.contact.externalDate}' mask='#{addController.getDateTimeMask("date")}' />
-						<!--************************************************************** -->
-					</p:panelGrid>
-					<p:commandButton id="addContactButton" icon="mdi mdi-check"
-									 rendered="#{!addController.editContact}" value="#{msg['common.button.add']}"
-									 actionListener="#{addController.onAddContact}" oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newContact').hide()"
-									 update="@form, main:contacts" />
-					<p:commandButton id="editContactButton" icon="mdi mdi-check"
-									 rendered="#{addController.editContact}" value="#{msg['common.button.save']}"
-									 actionListener="#{addController.onUpdateContact}" oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newContact').hide()"
-									 update="@form, main:contacts" />
-				</h:form>
-			</p:dialog>
-
-			<p:dialog id="newIdentifier" widgetVar="newIdentifier" modal="true" closeOnEscape="true">
-				<h:form>
-					<p:messages escape="false" />
-					<h4>
-						<h:outputText value="#{msg['add.label.newIdentifier']}" rendered="#{!addController.editIdentifier}" />
-						<h:outputText value="#{msg['add.label.editIdentifier']}" rendered="#{addController.editIdentifier}" />
-					</h4>
-					<p:panelGrid columns="2" columnClasses="ui-grid-col-6,ui-grid-col-6" layout="grid">
-						<p:outputLabel for="identifierDomain" value="#{msg['common.identifier.localIdentifierDomain']}" />
-						<p:selectOneMenu label="#{msg['import.label.source']}" id="identifierDomain" value="#{addController.identifier.identifierDomain}"
-										 converter="#{identifierDomainDTOConverter}" required="true" requiredMessage="#{msg['import.label.pleaseSelectDomain']}">
-							<f:selectItem noSelectionOption="true" itemLabel="#{msg['common.pleaseSelect']}" itemDisabled="true" />
-							<f:selectItems value="#{addController.identifierDomainsFiltered}" var="_domain" itemLabel="#{_domain.label}" itemValue="#{_domain}" />
-						</p:selectOneMenu>
-						<!--************************************************************** -->
-						<p:outputLabel for="identifierValue" value="#{msg['common.identifier.localIdentifier']}" />
-						<p:inputText id="identifierValue" value="#{addController.identifier.value}" required="true" />
-					</p:panelGrid>
-					<p:commandButton id="addIdentifierButton" icon="mdi mdi-check"
-									 rendered="#{!addController.editIdentifier}" value="#{msg['common.button.add']}"
-									 actionListener="#{addController.onAddIdentifier}" oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newIdentifier').hide()"
-									 update="@form, main:identifiers" />
-					<p:commandButton id="editIdentifierButton" icon="mdi mdi-check"
-									 rendered="#{addController.editIdentifier}" value="#{msg['common.button.save']}"
-									 actionListener="#{addController.onUpdateIdentifier}" oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newIdentifier').hide()"
-									 update="@form, main:identifiers" />
-				</h:form>
-			</p:dialog>
 
 			<p:confirmDialog global="true">
 				<p:commandButton value="#{msg['common.button.yes']}" type="button" styleClass="ui-confirmdialog-yes" />

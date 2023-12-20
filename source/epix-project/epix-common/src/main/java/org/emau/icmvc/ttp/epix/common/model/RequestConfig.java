@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,19 +39,18 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 
 import org.emau.icmvc.ttp.epix.common.model.enums.RequestSaveAction;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class RequestConfig implements Serializable
 {
-	private static final long serialVersionUID = -6322114780576094176L;
+	private static final long serialVersionUID = 5265127194649779408L;
 	private RequestSaveAction saveAction = RequestSaveAction.SAVE_ALL;
 	private boolean forceReferenceUpdate = false;
 
@@ -63,8 +62,13 @@ public class RequestConfig implements Serializable
 	public RequestConfig(RequestSaveAction saveAction, boolean forceReferenceUpdate)
 	{
 		super();
-		this.saveAction = saveAction;
+		setSaveAction(saveAction);
 		this.forceReferenceUpdate = forceReferenceUpdate;
+	}
+
+	public RequestConfig(RequestConfig rConfig)
+	{
+		this(rConfig.getSaveAction(), rConfig.isForceReferenceUpdate());
 	}
 
 	public RequestSaveAction getSaveAction()
@@ -74,7 +78,7 @@ public class RequestConfig implements Serializable
 
 	public void setSaveAction(RequestSaveAction saveAction)
 	{
-		this.saveAction = saveAction;
+		this.saveAction = saveAction != null ? saveAction : RequestSaveAction.SAVE_ALL;
 	}
 
 	public boolean isForceReferenceUpdate()
@@ -93,7 +97,7 @@ public class RequestConfig implements Serializable
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (forceReferenceUpdate ? 1231 : 1237);
-		result = prime * result + ((saveAction == null) ? 0 : saveAction.hashCode());
+		result = prime * result + (saveAction == null ? 0 : saveAction.hashCode());
 		return result;
 	}
 
@@ -101,16 +105,26 @@ public class RequestConfig implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		RequestConfig other = (RequestConfig) obj;
 		if (forceReferenceUpdate != other.forceReferenceUpdate)
+		{
 			return false;
+		}
 		if (saveAction != other.saveAction)
+		{
 			return false;
+		}
 		return true;
 	}
 

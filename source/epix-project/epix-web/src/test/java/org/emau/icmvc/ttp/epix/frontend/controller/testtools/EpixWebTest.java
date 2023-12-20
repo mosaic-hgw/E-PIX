@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.testtools;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -48,6 +48,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Answers;
 import org.mockito.Mock;
 
+import static org.mockito.MockitoAnnotations.initMocks;
+
 public abstract class EpixWebTest extends JsfTest
 {
 	@Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -61,5 +63,7 @@ public abstract class EpixWebTest extends JsfTest
 
 	@BeforeEach
 	protected void setUpEpixWebTest()
-	{}
+	{
+		initMocks(this);
+	}
 }

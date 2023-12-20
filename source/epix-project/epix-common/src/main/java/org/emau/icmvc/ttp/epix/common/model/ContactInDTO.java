@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,12 +39,11 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -62,16 +61,15 @@ public class ContactInDTO implements Serializable
 	private String district;
 	private String municipalityKey;
 	private Date externalDate;
+	private Date dateOfMoveIn;
+	private Date dateOfMoveOut;
 
 	public ContactInDTO()
-	{
-		super();
-	}
+	{}
 
 	public ContactInDTO(String street, String zipCode, String city, String state, String country, String email, String phone, String countryCode,
-			String district, String municipalityKey, Date externalDate)
+			String district, String municipalityKey, Date externalDate, Date dateOfMoveIn, Date dateOfMoveOut)
 	{
-		super();
 		this.street = street;
 		this.zipCode = zipCode;
 		this.city = city;
@@ -82,13 +80,15 @@ public class ContactInDTO implements Serializable
 		this.countryCode = countryCode;
 		this.district = district;
 		this.municipalityKey = municipalityKey;
-		this.externalDate = externalDate;
+		setExternalDate(externalDate);
+		setDateOfMoveIn(dateOfMoveIn);
+		setDateOfMoveOut(dateOfMoveOut);
 	}
 
 	public ContactInDTO(ContactInDTO dto)
 	{
 		this(dto.getStreet(), dto.getZipCode(), dto.getCity(), dto.getState(), dto.getCountry(), dto.getEmail(), dto.getPhone(), dto.getCountryCode(),
-				dto.getDistrict(), dto.getMunicipalityKey(), dto.getExternalDate());
+				dto.getDistrict(), dto.getMunicipalityKey(), dto.getExternalDate(), dto.getDateOfMoveIn(), dto.getDateOfMoveOut());
 	}
 
 	public String getStreet()
@@ -198,7 +198,27 @@ public class ContactInDTO implements Serializable
 
 	public void setExternalDate(Date externalDate)
 	{
-		this.externalDate = externalDate;
+		this.externalDate = externalDate != null ? new Date(externalDate.getTime()) : null;
+	}
+
+	public Date getDateOfMoveIn()
+	{
+		return dateOfMoveIn;
+	}
+
+	public void setDateOfMoveIn(Date dateOfMoveIn)
+	{
+		this.dateOfMoveIn = dateOfMoveIn != null ? new Date(dateOfMoveIn.getTime()) : null;
+	}
+
+	public Date getDateOfMoveOut()
+	{
+		return dateOfMoveOut;
+	}
+
+	public void setDateOfMoveOut(Date dateOfMoveOut)
+	{
+		this.dateOfMoveOut = dateOfMoveOut != null ? new Date(dateOfMoveOut.getTime()) : null;
 	}
 
 	@Override
@@ -206,17 +226,19 @@ public class ContactInDTO implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((city == null) ? 0 : city.hashCode());
-		result = prime * result + ((country == null) ? 0 : country.hashCode());
-		result = prime * result + ((countryCode == null) ? 0 : countryCode.hashCode());
-		result = prime * result + ((district == null) ? 0 : district.hashCode());
-		result = prime * result + ((email == null) ? 0 : email.hashCode());
-		result = prime * result + ((municipalityKey == null) ? 0 : municipalityKey.hashCode());
-		result = prime * result + ((externalDate == null) ? 0 : externalDate.hashCode());
-		result = prime * result + ((phone == null) ? 0 : phone.hashCode());
-		result = prime * result + ((state == null) ? 0 : state.hashCode());
-		result = prime * result + ((street == null) ? 0 : street.hashCode());
-		result = prime * result + ((zipCode == null) ? 0 : zipCode.hashCode());
+		result = prime * result + (city == null ? 0 : city.hashCode());
+		result = prime * result + (country == null ? 0 : country.hashCode());
+		result = prime * result + (countryCode == null ? 0 : countryCode.hashCode());
+		result = prime * result + (district == null ? 0 : district.hashCode());
+		result = prime * result + (email == null ? 0 : email.hashCode());
+		result = prime * result + (municipalityKey == null ? 0 : municipalityKey.hashCode());
+		result = prime * result + (externalDate == null ? 0 : externalDate.hashCode());
+		result = prime * result + (phone == null ? 0 : phone.hashCode());
+		result = prime * result + (state == null ? 0 : state.hashCode());
+		result = prime * result + (street == null ? 0 : street.hashCode());
+		result = prime * result + (zipCode == null ? 0 : zipCode.hashCode());
+		result = prime * result + (dateOfMoveIn == null ? 0 : dateOfMoveIn.hashCode());
+		result = prime * result + (dateOfMoveOut == null ? 0 : dateOfMoveOut.hashCode());
 		return result;
 	}
 
@@ -224,89 +246,161 @@ public class ContactInDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		ContactInDTO other = (ContactInDTO) obj;
 		if (city == null)
 		{
 			if (other.city != null)
+			{
 				return false;
+			}
 		}
 		else if (!city.equals(other.city))
+		{
 			return false;
+		}
 		if (country == null)
 		{
 			if (other.country != null)
+			{
 				return false;
+			}
 		}
 		else if (!country.equals(other.country))
+		{
 			return false;
+		}
 		if (countryCode == null)
 		{
 			if (other.countryCode != null)
+			{
 				return false;
+			}
 		}
 		else if (!countryCode.equals(other.countryCode))
+		{
 			return false;
+		}
 		if (district == null)
 		{
 			if (other.district != null)
+			{
 				return false;
+			}
 		}
 		else if (!district.equals(other.district))
+		{
 			return false;
+		}
 		if (email == null)
 		{
 			if (other.email != null)
+			{
 				return false;
+			}
 		}
 		else if (!email.equals(other.email))
+		{
 			return false;
+		}
 		if (municipalityKey == null)
 		{
 			if (other.municipalityKey != null)
+			{
 				return false;
+			}
 		}
 		else if (!municipalityKey.equals(other.municipalityKey))
+		{
 			return false;
+		}
 		if (externalDate == null)
 		{
 			if (other.externalDate != null)
+			{
 				return false;
+			}
 		}
 		else if (!externalDate.equals(other.externalDate))
+		{
 			return false;
+		}
 		if (phone == null)
 		{
 			if (other.phone != null)
+			{
 				return false;
+			}
 		}
 		else if (!phone.equals(other.phone))
+		{
 			return false;
+		}
 		if (state == null)
 		{
 			if (other.state != null)
+			{
 				return false;
+			}
 		}
 		else if (!state.equals(other.state))
+		{
 			return false;
+		}
 		if (street == null)
 		{
 			if (other.street != null)
+			{
 				return false;
+			}
 		}
 		else if (!street.equals(other.street))
+		{
 			return false;
+		}
 		if (zipCode == null)
 		{
 			if (other.zipCode != null)
+			{
 				return false;
+			}
 		}
 		else if (!zipCode.equals(other.zipCode))
+		{
 			return false;
+		}
+		if (dateOfMoveIn == null)
+		{
+			if (other.dateOfMoveIn != null)
+			{
+				return false;
+			}
+		}
+		else if (!dateOfMoveIn.equals(other.dateOfMoveIn))
+		{
+			return false;
+		}
+		if (dateOfMoveOut == null)
+		{
+			if (other.dateOfMoveOut != null)
+			{
+				return false;
+			}
+		}
+		else if (!dateOfMoveOut.equals(other.dateOfMoveOut))
+		{
+			return false;
+		}
 		return true;
 	}
 
@@ -320,6 +414,9 @@ public class ContactInDTO implements Serializable
 	{
 		return "ContactDTO [street=" + street + ", zipCode=" + zipCode + ", city=" + city + ", state=" + state + ", country=" + country
 				+ ", countryCode=" + countryCode + ", email=" + email + ", phone=" + phone + ", district=" + district + ", municipalityKey="
-				+ municipalityKey + ", externalDate=" + externalDate + "]";
+				+ municipalityKey + ", externalDate=" + externalDate
+				+ (dateOfMoveIn != null ? ", dateOfMoveIn=" : dateOfMoveIn)
+				+ (dateOfMoveOut != null ? ", dateOfMoveOut=" : dateOfMoveOut)
+				+ "]";
 	}
 }

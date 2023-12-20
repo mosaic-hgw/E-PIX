@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -97,6 +97,10 @@ public class Contact implements Serializable
 	private Timestamp createTimestamp;
 	@Column(nullable = false)
 	private Timestamp timestamp;
+	@Column(name = "date_of_move_in")
+	private Date dateOfMoveIn;
+	@Column(name = "date_of_move_out")
+	private Date dateOfMoveOut;
 
 	@ManyToOne(cascade = CascadeType.MERGE, optional = false)
 	private Identity identity;
@@ -104,28 +108,30 @@ public class Contact implements Serializable
 	public Contact()
 	{
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-		this.version = 0;
-		this.createTimestamp = timestamp;
+		version = 0;
+		createTimestamp = timestamp;
 		this.timestamp = timestamp;
 	}
 
 	public Contact(ContactInDTO dto, Identity identity, Timestamp timestamp)
 	{
-		this.street = dto.getStreet();
-		this.zipCode = dto.getZipCode();
-		this.city = dto.getCity();
-		this.state = dto.getState();
-		this.country = dto.getCountry();
-		this.email = dto.getEmail();
-		this.phone = dto.getPhone();
-		this.countryCode = dto.getCountryCode();
-		this.district = dto.getDistrict();
-		this.municipalityKey = dto.getMunicipalityKey();
-		this.externalTimestamp = dto.getExternalDate() != null ? new Timestamp(dto.getExternalDate().getTime()) : null;
+		street = dto.getStreet();
+		zipCode = dto.getZipCode();
+		city = dto.getCity();
+		state = dto.getState();
+		country = dto.getCountry();
+		email = dto.getEmail();
+		phone = dto.getPhone();
+		countryCode = dto.getCountryCode();
+		district = dto.getDistrict();
+		municipalityKey = dto.getMunicipalityKey();
+		externalTimestamp = dto.getExternalDate() != null ? new Timestamp(dto.getExternalDate().getTime()) : null;
+		dateOfMoveIn = dto.getDateOfMoveIn();
+		dateOfMoveOut = dto.getDateOfMoveOut();
 		this.identity = identity;
-		this.createTimestamp = timestamp;
+		createTimestamp = timestamp;
 		this.timestamp = timestamp;
-		this.version = 0;
+		version = 0;
 	}
 
 	public long getId()
@@ -288,6 +294,26 @@ public class Contact implements Serializable
 		this.timestamp = timestamp;
 	}
 
+	public Date getDateOfMoveIn()
+	{
+		return dateOfMoveIn;
+	}
+
+	public void setDateOfMoveIn(Date dateOfMoveIn)
+	{
+		this.dateOfMoveIn = dateOfMoveIn;
+	}
+
+	public Date getDateOfMoveOut()
+	{
+		return dateOfMoveOut;
+	}
+
+	public void setDateOfMoveOut(Date dateOfMoveOut)
+	{
+		this.dateOfMoveOut = dateOfMoveOut;
+	}
+
 	public Identity getIdentity()
 	{
 		return identity;
@@ -311,13 +337,15 @@ public class Contact implements Serializable
 		this.district = newContact.getDistrict();
 		this.municipalityKey = newContact.getMunicipalityKey();
 		this.externalTimestamp = newContact.getExternalTimestamp() != null ? new Timestamp(newContact.getExternalTimestamp().getTime()) : null;
+		this.dateOfMoveIn = newContact.dateOfMoveIn;
+		this.dateOfMoveOut = newContact.dateOfMoveOut;
 		this.timestamp = timestamp;
 	}
 
 	public ContactOutDTO toDTO()
 	{
 		ContactInDTO inDTO = new ContactInDTO(street, zipCode, city, state, country, email, phone, countryCode, district, municipalityKey,
-				externalTimestamp == null ? null : new Date(externalTimestamp.getTime()));
+				externalTimestamp == null ? null : new Date(externalTimestamp.getTime()), dateOfMoveIn, dateOfMoveOut);
 		return new ContactOutDTO(inDTO, id, version, identity.getId(), deactivated,
 				createTimestamp == null ? null : new Date(createTimestamp.getTime()), timestamp == null ? null : new Date(timestamp.getTime()));
 	}
@@ -431,6 +459,20 @@ public class Contact implements Serializable
 		}
 		else if (!zipCode.equals(other.zipCode))
 			return false;
+		if (dateOfMoveIn == null)
+		{
+			if (other.dateOfMoveIn != null)
+				return false;
+		}
+		else if (!dateOfMoveIn.equals(other.dateOfMoveIn))
+			return false;
+		if (dateOfMoveOut == null)
+		{
+			if (other.dateOfMoveOut != null)
+				return false;
+		}
+		else if (!dateOfMoveOut.equals(other.dateOfMoveOut))
+			return false;
 		return true;
 	}
 
@@ -448,6 +490,10 @@ public class Contact implements Serializable
 				+ ", email=" + email + ", phone=" + phone + ", country=" + country + ", countryCode=" + countryCode + ", district=" + district
 				+ ", municipalityKey=" + municipalityKey + ", deactivated=" + deactivated + ", externalTimestamp=" + externalTimestamp
 				+ ", createTimestamp=" + createTimestamp + ", timestamp=" + timestamp + ", identityId="
-				+ (identity == null ? "null" : identity.getId()) + "]";
+				+ (identity == null ? "null" : identity.getId())
+				+ (dateOfMoveIn != null ? ", dateOfMoveIn=" : dateOfMoveIn)
+				+ (dateOfMoveOut != null ? ", dateOfMoveOut=" : dateOfMoveOut)
+				+ (identity == null ? "null" : identity.getId())
+				+ "]";
 	}
 }

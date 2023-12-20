@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * gICS - a Generic Informed Consent Service
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -49,22 +49,11 @@ import javax.xml.bind.annotation.XmlElement;
 
 public class StatisticDTO implements Serializable
 {
-	private static final long serialVersionUID = 6505298240681730274L;
+	private static final long serialVersionUID = 3248339807246508058L;
 	private final long id;
 	private final Date entrydate;
 	private final Date entrydateWithoutTime;
 	private final Map<String, Long> mappedStatValue = new LinkedHashMap<>();
-
-	public StatisticDTO(long id, Date entrydate, Map<String, Long> mappedStatValue)
-	{
-		this.id = id;
-		this.entrydate = entrydate;
-		this.entrydateWithoutTime = stripTime(entrydate);
-		if (mappedStatValue != null)
-		{
-			this.mappedStatValue.putAll(mappedStatValue);
-		}
-	}
 
 	public StatisticDTO()
 	{
@@ -73,8 +62,28 @@ public class StatisticDTO implements Serializable
 		this.entrydateWithoutTime = stripTime(entrydate);
 	}
 
+	public StatisticDTO(long id, Date entrydate, Map<String, Long> mappedStatValue)
+	{
+		this.id = id;
+		this.entrydate = entrydate != null ? new Date(entrydate.getTime()) : null;
+		this.entrydateWithoutTime = stripTime(entrydate);
+		if (mappedStatValue != null)
+		{
+			this.mappedStatValue.putAll(mappedStatValue);
+		}
+	}
+
+	public StatisticDTO(StatisticDTO dto)
+	{
+		this(dto.getId(), dto.getEntrydate(), dto.getMappedStatValue());
+	}
+
 	private Date stripTime(Date date)
 	{
+		if (date == null)
+		{
+			return null;
+		}
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
 		cal.set(Calendar.HOUR_OF_DAY, 0);

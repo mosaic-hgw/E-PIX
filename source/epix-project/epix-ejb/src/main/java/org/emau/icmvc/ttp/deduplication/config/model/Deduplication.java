@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,13 +39,13 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import org.emau.icmvc.ttp.epix.common.model.config.DeduplicationDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
@@ -53,9 +53,12 @@ import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
 /**
  * @author Christopher Hampf
  */
-@XmlAccessorType(XmlAccessType.FIELD) @XmlType(name = "Deduplication", propOrder = { "reasons" }) public class Deduplication
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(name = "Deduplication", propOrder = { "reasons" })
+public class Deduplication
 {
-	@XmlElement(name = "reason") private final List<Reason> reasons = new ArrayList<>();
+	@XmlElement(name = "reason")
+	private final List<Reason> reasons = new ArrayList<>();
 
 	public Deduplication()
 	{
@@ -91,7 +94,8 @@ import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
 		return new DeduplicationDTO(tmpReason);
 	}
 
-	@Override public boolean equals(Object obj)
+	@Override
+	public boolean equals(Object obj)
 	{
 		if (this == obj)
 		{
@@ -105,7 +109,8 @@ import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
 		return reasons.equals(other.reasons);
 	}
 
-	@Override public int hashCode()
+	@Override
+	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
@@ -113,7 +118,8 @@ import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
 		return result;
 	}
 
-	@Override public String toString()
+	@Override
+	public String toString()
 	{
 		return "Deduplication [" +
 				"reasons=" + reasons +

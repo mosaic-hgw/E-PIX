@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -41,8 +41,9 @@ package org.emau.icmvc.ttp.deduplication;
 
 import java.util.HashMap;
 
-import org.apache.logging.log4j.Logger;
+import com.google.gwt.dev.util.editdistance.GeneralEditDistance;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.deduplication.config.model.Field;
 import org.emau.icmvc.ttp.deduplication.impl.LevenshteinAlgorithm;
 import org.emau.icmvc.ttp.deduplication.model.MatchResult;
@@ -53,8 +54,6 @@ import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.internal.LevenshteinCache;
 import org.emau.icmvc.ttp.epix.internal.PreprocessedCacheObject;
 import org.emau.icmvc.ttp.utils.ReflectionUtil;
-
-import com.google.gwt.dev.util.editdistance.GeneralEditDistance;
 
 /**
  *

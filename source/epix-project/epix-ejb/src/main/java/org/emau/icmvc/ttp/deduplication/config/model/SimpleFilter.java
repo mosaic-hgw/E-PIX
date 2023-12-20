@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -45,7 +45,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 /**
- * Simple filter that replaces all characters with the specified replace character that are not included in the pass alphabet.
+ * Simple filter that replaces all characters that are not included in the pass alphabet with the specified replace character.
+ *
  * @author hampfc
  */
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -56,6 +57,15 @@ public class SimpleFilter
 	private String passAlphabet;
 	@XmlElement(name = "replace-character", required = false, defaultValue = "")
 	private String replaceCharacter;
+
+	public SimpleFilter()
+	{}
+
+	public SimpleFilter(String passAlphabet, Character replaceCharacter)
+	{
+		this.passAlphabet = passAlphabet;
+		this.replaceCharacter = replaceCharacter == null ? "" : Character.toString(replaceCharacter);
+	}
 
 	public String getPassAlphabet()
 	{
@@ -82,8 +92,8 @@ public class SimpleFilter
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((passAlphabet == null) ? 0 : passAlphabet.hashCode());
-		result = prime * result + ((replaceCharacter == null) ? 0 : replaceCharacter.hashCode());
+		result = prime * result + (passAlphabet == null ? 0 : passAlphabet.hashCode());
+		result = prime * result + (replaceCharacter == null ? 0 : replaceCharacter.hashCode());
 		return result;
 	}
 
@@ -91,26 +101,40 @@ public class SimpleFilter
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		SimpleFilter other = (SimpleFilter) obj;
 		if (passAlphabet == null)
 		{
 			if (other.passAlphabet != null)
+			{
 				return false;
+			}
 		}
 		else if (!passAlphabet.equals(other.passAlphabet))
+		{
 			return false;
+		}
 		if (replaceCharacter == null)
 		{
 			if (other.replaceCharacter != null)
+			{
 				return false;
+			}
 		}
 		else if (!replaceCharacter.equals(other.replaceCharacter))
+		{
 			return false;
+		}
 		return true;
 	}
 

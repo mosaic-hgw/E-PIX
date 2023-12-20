@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,6 +40,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  */
 
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -59,6 +60,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
+import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
 
@@ -77,7 +79,8 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
 		@NamedQuery(name = "IdentityLinkHistory.findByIdentity", query = "SELECT il FROM IdentityLinkHistory il WHERE (il.updatedIdentity = :identity OR il.srcIdentity = :identity OR il.destIdentity = :identity)"),})
 public class IdentityLinkHistory implements Serializable
 {
-	private static final long serialVersionUID = -6823220640081892330L;
+	@Serial
+	private static final long serialVersionUID = -3738318289858418589L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "identitylink_history_index")
 	private long id;
@@ -106,28 +109,20 @@ public class IdentityLinkHistory implements Serializable
 	@OneToOne(cascade = CascadeType.MERGE, optional = false)
 	@JoinColumn(name = "dest_person")
 	private Person destPerson;
+	private String user;
 
 	public IdentityLinkHistory()
 	{
 		historyTimestamp = new Timestamp(System.currentTimeMillis());
 	}
 
-	public IdentityLinkHistory(IdentityLink identitylink, PossibleMatchSolution solution, String comment, Timestamp timestamp)
+	public IdentityLinkHistory(IdentityLink identitylink, PossibleMatchSolution solution, String comment, Timestamp timestamp, String user)
 	{
-		this.srcIdentity = identitylink.getSrcIdentity();
-		this.destIdentity = identitylink.getDestIdentity();
-		this.threshold = identitylink.getThreshold();
-		this.algorithm = identitylink.getAlgorithm();
-		this.srcPerson = srcIdentity.getPerson();
-		this.destPerson = destIdentity.getPerson();
-		this.event = solution;
-		this.comment = comment;
-		this.historyTimestamp = timestamp;
-		this.identityLinkId = identitylink.getId();
+		this(identitylink, solution, comment, timestamp, user, null);
 	}
 
 	public IdentityLinkHistory(IdentityLink identitylink, PossibleMatchSolution solution, String comment, Timestamp timestamp,
-			Identity updatedIdentity)
+			String user, Identity updatedIdentity)
 	{
 		this.srcIdentity = identitylink.getSrcIdentity();
 		this.destIdentity = identitylink.getDestIdentity();
@@ -140,6 +135,7 @@ public class IdentityLinkHistory implements Serializable
 		this.comment = comment;
 		this.historyTimestamp = timestamp;
 		this.identityLinkId = identitylink.getId();
+		this.user = user;
 	}
 
 	public long getId()
@@ -262,10 +258,20 @@ public class IdentityLinkHistory implements Serializable
 		this.destPerson = destPerson;
 	}
 
+	public String getUser()
+	{
+		return user;
+	}
+
+	public void setUser(String user)
+	{
+		this.user = user;
+	}
+
 	public PossibleMatchHistoryDTO toDTO()
 	{
 		return new PossibleMatchHistoryDTO(id, srcIdentity.getId(), destIdentity.getId(), identityLinkId, threshold, algorithm, historyTimestamp,
-				updatedIdentity != null ? updatedIdentity.getId() : -1, srcPerson.getId(), destPerson.getId(), event, comment);
+				updatedIdentity != null ? updatedIdentity.getId() : -1, srcPerson.getId(), destPerson.getId(), event, comment, user);
 	}
 
 	@Override
@@ -295,10 +301,18 @@ public class IdentityLinkHistory implements Serializable
 	@Override
 	public String toString()
 	{
-		return "IdentityLinkHistory [id=" + id + ", srcIdentityId=" + (srcIdentity == null ? "null" : srcIdentity.getId()) + ", destIdentityId="
-				+ (destIdentity == null ? "null" : destIdentity.getId()) + ", identityLinkId=" + identityLinkId + ", threshold=" + threshold
-				+ ", algorithm=" + algorithm + ", historyTimestamp=" + historyTimestamp + ", updatedIdentityId="
-				+ (updatedIdentity != null ? updatedIdentity.getId() : "null") + ", srcPersonId=" + (srcPerson == null ? "null" : srcPerson.getId())
-				+ ", destPersonID=" + (destPerson == null ? "null" : destPerson.getId()) + ", event=" + event + ", comment=" + comment + "]";
+		return "IdentityLinkHistory [id=" + id + ", historyTimestamp=" + historyTimestamp
+				+ (event != null ? ", event=" + event : "")
+				+ ", srcIdentityId=" + (srcIdentity == null ? "null" : srcIdentity.getId())
+				+ ", destIdentityId=" + (destIdentity == null ? "null" : destIdentity.getId())
+				+ ", identityLinkId=" + identityLinkId
+				+ ", threshold=" + threshold
+				+ ", algorithm=" + algorithm
+				+ (updatedIdentity != null ? ", updatedIdentityId=" + updatedIdentity.getId() : "")
+				+ (srcPerson != null ? ", srcPersonId=" + srcPerson.getId() : "")
+				+ (destPerson != null ? ", destPersonID=" + destPerson.getId() : "")
+				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+				+ "]";
 	}
 }

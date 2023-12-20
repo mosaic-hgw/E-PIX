@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -120,7 +120,7 @@ public class BloomFilterConfig
 				sf.setName(sfDTO.getName());
 				sf.setSaltField(sfDTO.getSaltField());
 				sf.setSaltValue(sfDTO.getSaltValue());
-				sf.setSeed(sf.getSeed());
+				sf.setSeed(sfDTO.getSeed());
 
 				sourceFields.add(sf);
 			}

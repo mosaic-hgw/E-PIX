@@ -4,21 +4,21 @@ package org.emau.icmvc.ttp.epix.persistence;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
- *
+ * 
  * 							concept and implementation
  * 							l.geidel,c.schack, d.langner, g.koetzschke
- *
+ * 
  * 							web client
  * 							a.blumentritt, f.m. moser
- *
+ * 
  * 							docker
  * 							r.schuldt
- *
+ * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
- *
+ * 
  * 							please cite our publications
  * 							http://dx.doi.org/10.3414/ME14-01-0133
  * 							http://dx.doi.org/10.1186/s12967-015-0545-6
@@ -28,12 +28,12 @@ package org.emau.icmvc.ttp.epix.persistence;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ###license-information-end###
@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.PreDestroy;
@@ -60,6 +61,11 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.deduplication.FellegiSunterAlgorithm;
@@ -79,13 +85,19 @@ import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
+import org.emau.icmvc.ttp.epix.common.model.PossibleMatchDTO;
 import org.emau.icmvc.ttp.epix.common.model.RequestConfig;
 import org.emau.icmvc.ttp.epix.common.model.ResponseEntryDTO;
 import org.emau.icmvc.ttp.epix.common.model.SourceDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.ContactHistoryEvent;
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentifierDeletionResult;
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentifierHistoryEvent;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
 import org.emau.icmvc.ttp.epix.common.model.enums.MatchStatus;
 import org.emau.icmvc.ttp.epix.common.model.enums.MatchingMode;
 import org.emau.icmvc.ttp.epix.common.model.enums.PersistMode;
+import org.emau.icmvc.ttp.epix.common.model.enums.PersonHistoryEvent;
+import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
 import org.emau.icmvc.ttp.epix.common.model.enums.RequestSaveAction;
 import org.emau.icmvc.ttp.epix.common.model.strings.IdentityHistoryStrings;
@@ -102,6 +114,7 @@ import org.emau.icmvc.ttp.epix.persistence.model.Domain_;
 import org.emau.icmvc.ttp.epix.persistence.model.Identifier;
 import org.emau.icmvc.ttp.epix.persistence.model.IdentifierDomain;
 import org.emau.icmvc.ttp.epix.persistence.model.IdentifierDomain_;
+import org.emau.icmvc.ttp.epix.persistence.model.IdentifierHistory;
 import org.emau.icmvc.ttp.epix.persistence.model.IdentifierId;
 import org.emau.icmvc.ttp.epix.persistence.model.Identifier_;
 import org.emau.icmvc.ttp.epix.persistence.model.Identity;
@@ -116,11 +129,6 @@ import org.emau.icmvc.ttp.epix.persistence.model.PersonHistory;
 import org.emau.icmvc.ttp.epix.persistence.model.Person_;
 import org.emau.icmvc.ttp.epix.persistence.model.Source;
 import org.emau.icmvc.ttp.epix.persistence.model.Source_;
-
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
 /**
  * central data access point (db and cache) - private parts
@@ -158,7 +166,7 @@ public abstract class DAO
 				Identifier identifier = getDBLastMPIIdentifierByDomain(domain);
 				// TODO FIXME non-MPI-ids
 				CounterMapKey key = new CounterMapKey(domain.getMpiDomain().getName(), domain.getMatchingConfiguration().getMpiPrefix());
-				if (identifier != null && !identifier.getValue().isEmpty() && identifier.getValue().length() == 13)
+				if (identifier != null && identifier.getValue().length() == 13)
 				{
 					long count = Long.parseLong(identifier.getValue().substring(4, 12));
 					logger.debug("mpi counter for domain '" + domain.getName() + "' is " + count);
@@ -167,7 +175,7 @@ public abstract class DAO
 				else
 				{
 					logger.debug("no mpi ids found for domain '" + domain.getName() + "' - so mpi counter is set to 0");
-					COUNTER_MAP.put(key, 0l);
+					COUNTER_MAP.put(key, 0L);
 				}
 			}
 			Map<String, Long> personCounterForDomains = new HashMap<>();
@@ -289,7 +297,8 @@ public abstract class DAO
 	// ***********************************
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public ResponseEntryDTO saveMPIRequest(String domainName, String sourceName, IdentityInBaseDTO identityDTO, String comment,
-			RequestConfig requestConfig, Timestamp timestamp) throws InvalidParameterException, MPIException, UnknownObjectException
+			RequestConfig requestConfig, Timestamp timestamp, String user)
+			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		ResponseEntryDTO result;
 		Domain domain = getDBDomain(domainName);
@@ -305,7 +314,7 @@ public abstract class DAO
 		identityPP = DOMAIN_CACHE.setPrivacyAttributes(domainName, identityPP, false);
 
 		// Entferne alle IDAT Felder (ausser Felder in denen Bloomfilter gespeichert sind)
-		if (PersistMode.PRIVACY_PRESERVING.equals(DOMAIN_CACHE.getConfigurationContainerForDomain(domainName).getPersistMode()))
+		if (PersistMode.PRIVACY_PRESERVING.equals(DOMAIN_CACHE.getDomain(domainName).getConfigurationContainer().getPersistMode()))
 		{
 			identityPP = DOMAIN_CACHE.removePII(domainName, identityPP);
 			identity = DOMAIN_CACHE.removePII(domainName, identity);
@@ -316,17 +325,17 @@ public abstract class DAO
 
 		if (identity.getPerson() != null)
 		{
-			result = processRequestMPIWithIdentifier(domain, requestConfig.getSaveAction(), identity, identityPP, comment, timestamp, false);
+			result = processRequestMPIWithIdentifier(domain, requestConfig.getSaveAction(), identity, identityPP, comment, timestamp, false, user);
 		}
 		else
 		{
-			result = processRequestMPIWithoutIdentifier(domain, requestConfig.getSaveAction(), identity, identityPP, comment, timestamp);
+			result = processRequestMPIWithoutIdentifier(domain, requestConfig.getSaveAction(), identity, identityPP, comment, timestamp, user);
 		}
 		return result;
 	}
 
 	private ResponseEntryDTO processRequestMPIWithIdentifier(Domain domain, RequestSaveAction saveAction, Identity identity,
-			IdentityPreprocessed identityPP, String comment, Timestamp timestamp, boolean fromUpdate) throws MPIException, UnknownObjectException
+			IdentityPreprocessed identityPP, String comment, Timestamp timestamp, boolean fromUpdate, String user) throws MPIException, UnknownObjectException
 	{
 		// diese methode gibt aber nie "null" zurueck - eclipse erkennt nicht, dass die throw... bzw. handleSaveServiceException auf jeden fall ne exception werfen
 		ResponseEntryDTO result = null;
@@ -348,11 +357,11 @@ public abstract class DAO
 			{
 				perfectMatch = updateIdentity(domain, perfectMatchPPCO.getIdentityId(), identity, identityPP, perfectMatchPPCO,
 						fromUpdate ? IdentityHistoryEvent.UPDATE : IdentityHistoryEvent.PERFECT_MATCH, comment,
-						FellegiSunterAlgorithm.MATCHING_SCORE_FOR_PERFECT_MATCH, timestamp);
+						FellegiSunterAlgorithm.MATCHING_SCORE_FOR_PERFECT_MATCH, timestamp, user);
 			}
 			else if (RequestSaveAction.DONT_SAVE_ON_PERFECT_MATCH_EXCEPT_CONTACTS.equals(saveAction))
 			{
-				perfectMatch = saveContacts(perfectMatchPPCO.getIdentityId(), identity.getContacts());
+				perfectMatch = saveContacts(perfectMatchPPCO.getIdentityId(), identity.getContacts(), timestamp, user);
 			}
 			else
 			{
@@ -398,7 +407,7 @@ public abstract class DAO
 					double matchingScore = deduplicationResultForDB.getHighestMatchingScoreForPersonId(identity.getPerson().getId());
 					matchingPerson = saveIdentityAndPossibleMatches(domain, identity, identityPP, identityPPCO,
 							fromUpdate ? IdentityHistoryEvent.UPDATE : IdentityHistoryEvent.MATCH, deduplicationResultForDB.getMatches(), comment,
-							matchingScore, timestamp);
+							matchingScore, timestamp, user);
 				}
 				result = new ResponseEntryDTO(matchingPerson.toDTO(), MatchStatus.MATCH);
 			}
@@ -427,7 +436,7 @@ public abstract class DAO
 						double matchingScore = deduplicationResultForDB.getHighestMatchingScoreForPersonId(identity.getPerson().getId());
 						matchingPerson = saveIdentityAndPossibleMatches(domain, identity, identityPP, identityPPCO,
 								fromUpdate ? IdentityHistoryEvent.UPDATE : IdentityHistoryEvent.MATCH, deduplicationResultForDB.getPossibleMatches(),
-								comment, matchingScore, timestamp);
+								comment, matchingScore, timestamp, user);
 					}
 					result = new ResponseEntryDTO(matchingPerson.toDTO(), MatchStatus.MATCH);
 				}
@@ -459,7 +468,7 @@ public abstract class DAO
 	}
 
 	private ResponseEntryDTO processRequestMPIWithoutIdentifier(Domain domain, RequestSaveAction saveAction, Identity identity,
-			IdentityPreprocessed identityPP, String comment, Timestamp timestamp) throws MPIException, UnknownObjectException
+			IdentityPreprocessed identityPP, String comment, Timestamp timestamp, String user) throws MPIException, UnknownObjectException
 	{
 		// diese methode gibt aber nie "null" zurueck - eclipse erkennt nicht, dass die throw... bzw. handleSaveServiceException auf jeden fall ne exception werfen
 		ResponseEntryDTO result = null;
@@ -474,11 +483,11 @@ public abstract class DAO
 			if (RequestSaveAction.SAVE_ALL.equals(saveAction))
 			{
 				perfectMatch = updateIdentity(domain, perfectMatchPPCO.getIdentityId(), identity, identityPP, perfectMatchPPCO,
-						IdentityHistoryEvent.PERFECT_MATCH, comment, FellegiSunterAlgorithm.MATCHING_SCORE_FOR_PERFECT_MATCH, timestamp);
+						IdentityHistoryEvent.PERFECT_MATCH, comment, FellegiSunterAlgorithm.MATCHING_SCORE_FOR_PERFECT_MATCH, timestamp, user);
 			}
 			else if (RequestSaveAction.DONT_SAVE_ON_PERFECT_MATCH_EXCEPT_CONTACTS.equals(saveAction))
 			{
-				perfectMatch = saveContacts(perfectMatchPPCO.getIdentityId(), identity.getContacts());
+				perfectMatch = saveContacts(perfectMatchPPCO.getIdentityId(), identity.getContacts(), timestamp, user);
 			}
 			else
 			{
@@ -498,7 +507,7 @@ public abstract class DAO
 				Person newPerson;
 				if (!RequestSaveAction.DONT_SAVE.equals(saveAction))
 				{
-					newPerson = saveIdentity(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.NEW, comment, 0.0, timestamp);
+					newPerson = saveIdentity(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.NEW, comment, 0.0, timestamp, user);
 				}
 				else
 				{
@@ -509,7 +518,7 @@ public abstract class DAO
 			else
 			{
 				long matchingPersonId = deduplicationResultForDB.getUniqueMatchPersonId();
-				if (matchingPersonId != -1l)
+				if (matchingPersonId != -1L)
 				{
 					logger.debug("match found within db - add identity");
 					logger.debug("requestMPI path 12");
@@ -520,7 +529,7 @@ public abstract class DAO
 						logger.debug("unique match found within db - add identity to the matching person");
 						double matchingScore = deduplicationResultForDB.getHighestMatchingScoreForPersonId(identity.getPerson().getId());
 						matchingPerson = saveIdentity(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.MATCH, comment, matchingScore,
-								timestamp);
+								timestamp, user);
 					}
 					// kein else - rueckgabe ist ja der stand nach abfrage - bei save = false halt die matchende person
 					result = new ResponseEntryDTO(matchingPerson.toDTO(), MatchStatus.MATCH);
@@ -533,7 +542,7 @@ public abstract class DAO
 					{
 						logger.debug("multiple matches found within db - store a new person for the request and possible matches for the matches");
 						newPerson = saveIdentityAndPossibleMatches(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.NEW,
-								deduplicationResultForDB.getMatches(), comment, 0.0, timestamp);
+								deduplicationResultForDB.getMatches(), comment, 0.0, timestamp, user);
 					}
 					else
 					{
@@ -549,7 +558,7 @@ public abstract class DAO
 					{
 						logger.debug("found possible matches within db - store a new person for the request and the found possible matches");
 						newPerson = saveIdentityAndPossibleMatches(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.NEW,
-								deduplicationResultForDB.getPossibleMatches(), comment, 0.0, timestamp);
+								deduplicationResultForDB.getPossibleMatches(), comment, 0.0, timestamp, user);
 					}
 					else
 					{
@@ -598,7 +607,7 @@ public abstract class DAO
 		Person existingPerson = null;
 		try
 		{
-			existingPerson = getDBPersonByMultipleLocalIdentifier(domain, localIdentifiers, false, true);
+			existingPerson = getActiveDBPersonByMultipleLocalIdentifier(domain, localIdentifiers, false, true);
 		}
 		catch (MPIException e)
 		{
@@ -668,9 +677,6 @@ public abstract class DAO
 		throw new MPIException(MPIErrorCode.MULTIPLE_PERSONS_FOR_IDENTIFIER, message, allRelatedMPIIds);
 	}
 
-	// ***********************************
-	// cache (search)
-	// ***********************************
 	private IdentityPreprocessed getDBIdentityPreprocessedByIdentityId(long identityId) throws UnknownObjectException
 	{
 		logger.debug("getIdentityPreprocessedFromDBByIdentityId for " + identityId);
@@ -770,7 +776,7 @@ public abstract class DAO
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void deleteDBDomain(String domainName, boolean force) throws ObjectInUseException, UnknownObjectException
+	public void deleteDBDomain(String domainName, boolean force, String user) throws ObjectInUseException, UnknownObjectException
 	{
 		logger.debug("deleteDomain");
 		Domain domain = getDBDomain(domainName);
@@ -778,14 +784,16 @@ public abstract class DAO
 		{
 			for (Person person : getAllPersonsForDomain(domain))
 			{
-				deactivatePersonObject(person);
+				deactivatePersonObject(person, user);
 				try
 				{
-					deletePersonObject(person);
+					deletePersonObject(person, user);
 				}
 				catch (IllegalOperationException | UnknownObjectException impossible)
 				{
-					logger.fatal("impossible exception while forcefully deleting domain " + domain.getName());
+					String message = "impossible exception while forcefully deleting domain " + domain.getName() + ": " + impossible.getMessage();
+					logger.fatal(message);
+					throw new ObjectInUseException(message, impossible);
 				}
 			}
 		}
@@ -799,14 +807,6 @@ public abstract class DAO
 		em.remove(domain);
 		em.flush();
 		DOMAIN_CACHE.removeDomain(domain.getName());
-		synchronized (COUNTER_MAP)
-		{
-			CounterMapKey key = new CounterMapKey(domain.getMpiDomain().getName(), domain.getMatchingConfiguration().getMpiPrefix());
-			if (COUNTER_MAP.containsKey(key))
-			{
-				COUNTER_MAP.removeLong(key);
-			}
-		}
 	}
 
 	private List<Person> getAllPersonsForDomain(Domain domain)
@@ -915,16 +915,16 @@ public abstract class DAO
 	// identifier
 	// ***********************************
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void saveIdentifierToPerson(String domainName, String mpiId, List<IdentifierDTO> localIds, Timestamp timestamp)
+	public void saveIdentifierToActivePerson(String domainName, String mpiId, List<IdentifierDTO> localIds, Timestamp timestamp, String user)
 			throws MPIException, UnknownObjectException
 	{
 		logger.debug("saveIdentifierToPerson");
 		Domain domain = getDBDomain(domainName);
-		Person person = getDBPersonByMPI(domain, mpiId);
-		addIdsToIdentity(domain, person.getReferenceIdentity(), localIds, timestamp);
+		Person person = getActiveDBPersonByMPI(domain, mpiId);
+		addIdsToIdentity(domain, person.getReferenceIdentity(), localIds, timestamp, user);
 	}
 
-	private void addIdsToIdentity(Domain domain, Identity identity, List<IdentifierDTO> localIds, Timestamp timestamp)
+	private void addIdsToIdentity(Domain domain, Identity identity, List<IdentifierDTO> localIds, Timestamp timestamp, String user)
 			throws UnknownObjectException, MPIException
 	{
 		logger.debug("addIdsToIdentity");
@@ -938,7 +938,7 @@ public abstract class DAO
 				identifier = getDBIdentifierById(identifierId);
 				try
 				{
-					Person existingPerson = getDBPersonByLocalIdentifier(domain, identifier);
+					Person existingPerson = getActiveDBPersonByLocalIdentifier(domain, identifier);
 					if (!identity.getPerson().equals(existingPerson))
 					{
 						Set<String> relatedMPIIds = new HashSet<>();
@@ -955,22 +955,205 @@ public abstract class DAO
 			{
 				identifier = new Identifier(identifierDTO, identifierDomain, timestamp);
 				em.persist(identifier);
-				em.flush();
+				em.persist(new IdentifierHistory(identifier, IdentifierHistoryEvent.NEW, null, timestamp, user));
 			}
 			if (!identity.getIdentifiers().contains(identifier))
 			{
 				identity.getIdentifiers().add(identifier);
+				em.persist(new IdentityHistory(identity, IdentityHistoryEvent.ADD_IDENTIF,
+						"added identifier with id '" + identifier.getId() + "' to identity", 0.0, timestamp, user));
 			}
 			else
 			{
 				logger.info("identifier already belongs this identity");
 			}
+			em.flush();
 			logger.debug("identifier added to identity");
 		}
 	}
 
+	/**
+	 * Deletes identifiers in the given domain from the associated persons' identities and from the DB
+	 * if it is not used in other domains. An identifier cannot be deleted if its identifier domain is the
+	 * MPI domain of the given domain.
+	 *
+	 * @param domainName
+	 *            the name of the domain to delete the local identifier in
+	 * @param localIds
+	 *            the spec of the local identifiers to delete
+	 * @param user
+	 * @return a map with the identifiers and their deletion result
+	 * @throws UnknownObjectException
+	 *             if domain does not exist
+	 */
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void saveLocalIdentifierToIdentifier(String domainName, IdentifierDTO identifierDTO, List<IdentifierDTO> localIds, Timestamp timestamp)
+	public Map<IdentifierDTO, IdentifierDeletionResult> deleteDBIdentifier(String domainName, List<IdentifierDTO> localIds, String user) throws UnknownObjectException
+	{
+		logger.debug("deleteIdentifiers");
+		Domain domain = getDBDomain(domainName);
+		Map<IdentifierDTO, IdentifierDeletionResult> result = new HashMap<>();
+
+		for (IdentifierDTO localID : localIds)
+		{
+			try
+			{
+				deleteDBIdentifier(domain, localID, user);
+				// identifier successfully was deleted from the associated person in the given domain
+				logger.debug("{}: {}", localID.toShortString(),
+						IdentifierDeletionResult.FOUND_AND_DELETED);
+				result.put(localID, IdentifierDeletionResult.FOUND_AND_DELETED);
+			}
+			catch (UnknownObjectException e)
+			{
+				// identifier does not exist in the given domain
+				logger.debug("{}: {} ({})", localID.toShortString(),
+						IdentifierDeletionResult.NOT_FOUND_AND_IGNORED, e.getMessage());
+				result.put(localID, IdentifierDeletionResult.NOT_FOUND_AND_IGNORED);
+			}
+			catch (MPIException e)
+			{
+				// identifier exists in the given domain but could not be deleted
+				logger.debug("{}: {} ({})", localID.toShortString(),
+						IdentifierDeletionResult.FOUND_AND_NOT_DELETED_AS_USED_IN_MPI_DOMAIN, e.getMessage());
+				result.put(localID, IdentifierDeletionResult.FOUND_AND_NOT_DELETED_AS_USED_IN_MPI_DOMAIN);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Deletes an identifier in the given domain from the associated person's identities and from the DB
+	 * if it is not used in other domains. An identifier cannot be deleted if its identifier domain is the
+	 * MPI domain of the given domain.
+	 *
+	 * @param domainName
+	 *            the name of the domain to delete the local identifier in
+	 * @param localId
+	 *            the spec of the local identifier to delete
+	 * @param user
+	 * @return true if the identifier existed in the domain and could be removed from the associated person's identities
+	 * @throws UnknownObjectException
+	 *             if the given domain does not exist
+	 * @throws MPIException
+	 *             if there is a person with the given identifier in this domain
+	 *             but the identifier is from the domain's MPI domain
+	 */
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public boolean deleteDBIdentifier(String domainName, IdentifierDTO localId, String user) throws UnknownObjectException, MPIException
+	{
+		logger.debug("deleteIdentifier");
+		Domain domain = getDBDomain(domainName);
+		try
+		{
+			deleteDBIdentifier(domain, localId, user);
+			return true;
+		}
+		catch (UnknownObjectException expected)
+		{
+			// identifier does not exist - nothing to do
+			logger.debug("{}: {} ({})", localId.toShortString(),
+					IdentifierDeletionResult.NOT_FOUND_AND_IGNORED, expected.getMessage());
+		}
+		return false;
+	}
+
+	/**
+	 * Deletes an identifier in the given domain from the associated person's identities and from the DB
+	 * if it is not used in other domains. An identifier cannot be deleted if its identifier domain is the
+	 * MPI domain of the given domain.
+	 *
+	 * @param domain
+	 *            the domain to delete the local identifier in
+	 * @param identifierDTO
+	 *            the spec of the local identifier to delete
+	 * @param user
+	 * @throws UnknownObjectException
+	 *             if there is no such identifier
+	 *             or no person with that identifier in the given domain
+	 * @throws MPIException
+	 *             if there is a person with the given identifier in this domain
+	 *             but the identifier is from the domain's MPI domain
+	 */
+	private void deleteDBIdentifier(Domain domain, IdentifierDTO identifierDTO, String user) throws UnknownObjectException, MPIException
+	{
+		IdentifierId identifierId = new IdentifierId(identifierDTO);
+		Identifier identifier = getDBIdentifierById(identifierId);
+		Person person = getActiveDBPersonByLocalIdentifier(domain, identifier);
+		// now we know, that there is a person with the given identifier in this domain,
+		// otherwise an UnknownObjectException would have been thrown
+		deleteIdentifierObject(domain, user, identifier, person, true);
+	}
+
+	private void deleteIdentifierObject(Domain domain, String user, Identifier identifier, Person person, boolean createHistEntry) throws MPIException
+	{
+		List<Domain> domains = getDBDomains();
+		for (Domain d : domains)
+		{
+			if (identifier.getIdentifierDomain().equals(d.getMpiDomain()))
+			{
+				try
+				{
+					this.getDBPersonByFirstMPI(domain, identifier);
+					// mpi einer anderen person; durch zusammenlegung entstanden
+					// die mpiId gehoert immer noch zu der "verliererperson" und darf hier daher nicht geloescht werden
+					throw new MPIException(MPIErrorCode.RESTRICTIONS_VIOLATED, "Cannot delete an identifier from a MPI domain which is in use as MPI for a person within domain '" + d.getName() + "')",
+							Set.of(identifier.getValue()));
+				}
+				catch (UnknownObjectException expected)
+				{}
+			}
+		}
+
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		for (Identity identity : person.getIdentities())
+		{
+			if (identity.getIdentifiers().remove(identifier))
+			{
+				this.getDBHistoryForIdentity(identity).forEach(e -> e.getIdentifiers().remove(identifier));
+				if (createHistEntry)
+				{
+					this.em.persist(new IdentityHistory(identity, IdentityHistoryEvent.DEL_IDENTIF, "removed identifier with id '" + identifier.getId() + "' from identity", 0.0D, timestamp, user));
+				}
+
+				logger.debug("identifier removed from identity {}", identity.getId());
+			}
+			else
+			{
+				logger.debug("identifier does not belong to identity {}", identity.getId());
+			}
+		}
+
+		this.em.flush();
+		boolean used = false;
+		for (Domain d : domains)
+		{
+			if (!domain.equals(d))
+			{
+				try
+				{
+					if (this.getActiveDBPersonByLocalIdentifier(d, identifier) != null)
+					{
+						used = true;
+						break;
+					}
+				}
+				catch (UnknownObjectException expected)
+				{
+					// intentionally empty
+				}
+			}
+		}
+
+		if (!used)
+		{
+			this.getDBHistoryForIdentifier(identifier).forEach(ih -> em.remove(ih));
+			this.em.remove(identifier);
+			this.em.flush();
+		}
+	}
+
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void saveLocalIdentifierToIdentifier(String domainName, IdentifierDTO identifierDTO, List<IdentifierDTO> localIds, Timestamp timestamp, String user)
 			throws MPIException, UnknownObjectException
 	{
 		logger.debug("saveLocalIdentifierToIdentifier");
@@ -979,7 +1162,7 @@ public abstract class DAO
 		List<Identity> identities = getDBIdentitiesByIdentifierForDomain(domain, identifierDTO.getValue(), identifierDomain);
 		for (Identity identity : identities)
 		{
-			addIdsToIdentity(domain, identity, localIds, timestamp);
+			addIdsToIdentity(domain, identity, localIds, timestamp, user);
 		}
 		logger.debug("local identifier added");
 	}
@@ -999,13 +1182,6 @@ public abstract class DAO
 			logger.debug("identifier found");
 			return result;
 		}
-	}
-
-	private List<Identifier> getDBIdentifierByPerson(Person person)
-	{
-		@SuppressWarnings("unchecked")
-		List<Identifier> idList = em.createNamedQuery("Identifier.findByPerson").setParameter("person", person).getResultList();
-		return idList;
 	}
 
 	// ***********************************
@@ -1080,9 +1256,9 @@ public abstract class DAO
 	// ***********************************
 	// persons
 	// ***********************************
-	protected Person getDBPersonByLocalIdentifier(Domain domain, Identifier identifier) throws UnknownObjectException
+	protected Person getActiveDBPersonByLocalIdentifier(Domain domain, Identifier identifier) throws UnknownObjectException
 	{
-		logger.debug("getDBPersonByLocalIdentifier");
+		logger.debug("getActiveDBPersonByLocalIdentifier");
 		try
 		{
 			Person result = (Person) em.createNamedQuery("Person.findByLocalIdentifierForDomain").setParameter("identifier", identifier)
@@ -1097,7 +1273,7 @@ public abstract class DAO
 		}
 	}
 
-	protected Person getDBPersonByMultipleLocalIdentifier(Domain domain, List<Identifier> identifierList, boolean allIdentifierRequired,
+	protected Person getActiveDBPersonByMultipleLocalIdentifier(Domain domain, List<Identifier> identifierList, boolean allIdentifierRequired,
 			boolean suppressLoggingForUnknownObjectException) throws MPIException, UnknownObjectException
 	{
 		logger.debug("getPersonByMultipleLocalIdentifier");
@@ -1107,7 +1283,7 @@ public abstract class DAO
 		{
 			try
 			{
-				Person possibleDuplicate = getDBPersonByLocalIdentifier(domain, identifier);
+				Person possibleDuplicate = getActiveDBPersonByLocalIdentifier(domain, identifier);
 				if (result == null || result.equals(possibleDuplicate))
 				{
 					result = possibleDuplicate;
@@ -1175,9 +1351,7 @@ public abstract class DAO
 		Person result = em.find(Person.class, id);
 		if (result == null)
 		{
-			String message = "person not found, id: " + id;
-			logger.debug(message);
-			throw new UnknownObjectException(message, UnknownObjectType.PERSON, Long.toString(id));
+			throw createUnknownPersonIdException(id);
 		}
 		else
 		{
@@ -1186,42 +1360,67 @@ public abstract class DAO
 		}
 	}
 
+	public static UnknownObjectException createUnknownPersonIdException(long id)
+	{
+		String message = "person not found, id: " + id;
+		logger.debug(message);
+		return new UnknownObjectException(message, UnknownObjectType.PERSON, Long.toString(id));
+	}
+
 	/**
-	 * Returns the active person with the given mpi as firstMPI.
+	 * Returns the person for the given mpiId.
+	 *
+	 * @param domain
+	 *            the person's domain
+	 * @param mpiId
+	 *            the identifier ID
+	 * @return the associated active person for the given mpiId.
+	 * @throws UnknownObjectException
+	 *             when no such person is found
+	 */
+	protected Person getDBPersonByFirstMPI(Domain domain, String mpiId) throws UnknownObjectException
+	{
+		IdentifierId identifierId = new IdentifierId(domain.getMpiDomain().getName(), mpiId);
+		Identifier mpi = getDBIdentifierById(identifierId);
+		return getDBPersonByFirstMPI(domain, mpi);
+	}
+
+	protected List<Person> getDBPersonsByFirstMPIBatch(Domain domain, List<String> mpiIds)
+	{
+		List<Person> result = new ArrayList<>();
+		for (String mpiId : mpiIds)
+		{
+			IdentifierId identifierId = new IdentifierId(domain.getMpiDomain().getName(), mpiId);
+			try
+			{
+				Identifier mpi = getDBIdentifierById(identifierId);
+				result.add(getDBPersonByFirstMPI(domain, mpi));
+			}
+			catch (UnknownObjectException e)
+			{
+				logger.warn("MPI not found: " + mpiId);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Returns the person with the given mpi as firstMPI.
 	 *
 	 * @param domain
 	 *            the person's domain
 	 * @param mpi
 	 *            the identifier
-	 * @return the active person with the given mpi as firstMPI.
+	 * @return the person with the given mpi as firstMPI.
 	 * @throws UnknownObjectException
 	 *             when no such person is found
 	 */
 	protected Person getDBPersonByFirstMPI(Domain domain, Identifier mpi) throws UnknownObjectException
 	{
-		return getDBPersonByFirstMPI(domain, mpi, false);
-	}
-
-	/**
-	 * Returns the (active or deactivated) person with the given mpi as firstMPI.
-	 *
-	 * @param domain
-	 *            the person's domain
-	 * @param mpi
-	 *            the identifier
-	 * @param includeDeactivatedPersons
-	 *            true to also find deactivated persons
-	 * @return the (active or deactivated) person with the given mpi as firstMPI.
-	 * @throws UnknownObjectException
-	 *             when no such person is found
-	 */
-	protected Person getDBPersonByFirstMPI(Domain domain, Identifier mpi, boolean includeDeactivatedPersons) throws UnknownObjectException
-	{
-		logger.debug("getDBPersonByFirstMPI " + (includeDeactivatedPersons ? "(even if deactivated)" : ""));
+		logger.debug("getDBPersonByFirstMPI");
 		try
 		{
-			String query = includeDeactivatedPersons ? "Person.findByFirstMPIForDomainEvenIfDeactivated" : "Person.findByFirstMPIForDomain";
-			Person result = (Person) em.createNamedQuery(query).setParameter("domain", domain).setParameter("mpi", mpi).getSingleResult();
+			Person result = (Person) em.createNamedQuery("Person.findByFirstMPIForDomain").setParameter("domain", domain).setParameter("mpi", mpi).getSingleResult();
 			logger.debug("person found");
 			return result;
 		}
@@ -1244,78 +1443,73 @@ public abstract class DAO
 	 * @throws UnknownObjectException
 	 *             when no such person is found
 	 */
-	protected Person getDBPersonByMPI(Domain domain, String mpiId) throws UnknownObjectException
+	protected Person getActiveDBPersonByMPI(Domain domain, String mpiId) throws UnknownObjectException
 	{
 		IdentifierId identifierId = new IdentifierId(domain.getMpiDomain().getName(), mpiId);
 		Identifier mpi = getDBIdentifierById(identifierId);
-		return getDBPersonByMPI(domain, mpi, false);
+		return getActiveDBPersonByMPI(domain, mpi);
 	}
 
-	/**
-	 * Returns the associated (active or deactivated) person for the given mpiId. When including deactivated persons,
-	 * then a deactivated person with the given mpi as firstMPI will be preferred over reassigned persons.
-	 *
-	 * @param domain
-	 *            the person's domain
-	 * @param mpiId
-	 *            the identifier ID
-	 * @param includeDeactivatedPersons
-	 *            true to also find deactivated persons
-	 * @return the associated (active or deactivated) person for the given mpiId.
-	 * @throws UnknownObjectException
-	 *             when no such person is found
-	 */
-	protected Person getDBPersonByMPI(Domain domain, Identifier mpi, boolean includeDeactivatedPersons) throws UnknownObjectException
+	protected List<Person> getDBPersonsByMPIBatch(Domain domain, List<String> mpiIds)
 	{
-		logger.debug("getDBPersonByMPI for mpi " + mpi.getValue() + " within domain " + domain.getName());
-		Person result;
-		try
+		List<Person> result = new ArrayList<>();
+		for (String mpiId : mpiIds)
 		{
-			result = getDBPersonByFirstMPI(domain, mpi, includeDeactivatedPersons);
-		}
-		catch (UnknownObjectException e)
-		{
-			if (MatchingMode.MATCHING_IDENTITIES.equals(domain.getMatchingConfiguration().getMatchingMode()))
+			IdentifierId identifierId = new IdentifierId(domain.getMpiDomain().getName(), mpiId);
+			try
 			{
-				// mpi koennte durch eine zusammenfuehrung zum lokalen identifier geworden sein
-				result = getDBPersonByLocalIdentifier(domain, mpi);
+				Identifier mpi = getDBIdentifierById(identifierId);
+				result.add(getActiveDBPersonByMPI(domain, mpi));
 			}
-			else
+			catch (UnknownObjectException e)
 			{
-				// im nd-modus kann eine mpi nicht zur lokalen id werden, da hier keine possible matches entstehen
-				logger.info("no person found");
-				throw e;
+				logger.warn("MPI not found: " + mpiId);
 			}
 		}
 		return result;
 	}
 
 	/**
-	 * Returns true if the given mpi is associated with a (active or deactivated) person.
+	 * Returns the associated person for the given mpiId.
 	 *
 	 * @param domain
 	 *            the person's domain
 	 * @param mpi
-	 *            the person's identifier
-	 * @param includeDeactivatedPersons
-	 *            true to include deactivated persons
-	 * @return true if the given mpi is associated with a (active or deactivated) person
+	 *            the identifier ID
+	 * @return the associated person for the given mpiId.
+	 * @throws UnknownObjectException
+	 *             when no such person is found
 	 */
-	private boolean hasDBPersonForMPI(Domain domain, Identifier mpi, boolean includeDeactivatedPersons)
+	protected Person getActiveDBPersonByMPI(Domain domain, Identifier mpi) throws UnknownObjectException
 	{
+		logger.debug("getActiveDBPersonByMPI for mpi " + mpi.getValue() + " within domain " + domain.getName());
+		Person result = null;
 		try
 		{
-			return getDBPersonByMPI(domain, mpi, includeDeactivatedPersons) != null;
+			if (MatchingMode.MATCHING_IDENTITIES.equals(domain.getMatchingConfiguration().getMatchingMode()))
+			{
+				// mpi koennte durch eine zusammenfuehrung zum lokalen identifier geworden sein
+				result = getActiveDBPersonByLocalIdentifier(domain, mpi);
+			}
 		}
-		catch (UnknownObjectException e)
+		catch (UnknownObjectException expected)
 		{
-			return false;
+			// intentionally empty
 		}
+		if (result == null)
+		{
+			result = getDBPersonByFirstMPI(domain, mpi);
+		}
+		if (result.isDeactivated())
+		{
+			throw new UnknownObjectException("person is deactivated. use getPersonByFirstMPI.");
+		}
+		return result;
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public ResponseEntryDTO updateDBPerson(String domainName, String mpiId, IdentityInDTO identityDTO, String sourceName, boolean force,
-			String comment, RequestConfig requestConfig, Timestamp timestamp) throws InvalidParameterException, MPIException, UnknownObjectException
+			String comment, RequestConfig requestConfig, Timestamp timestamp, String user) throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		logger.debug("updateDBPerson");
 		ResponseEntryDTO result = null;
@@ -1339,7 +1533,7 @@ public abstract class DAO
 		if (!force)
 		{
 			logger.debug("updatePerson path 4");
-			result = processRequestMPIWithIdentifier(domain, saveAction, identity, identityPP, comment, timestamp, true);
+			result = processRequestMPIWithIdentifier(domain, saveAction, identity, identityPP, comment, timestamp, true, user);
 		}
 		else
 		{
@@ -1359,11 +1553,11 @@ public abstract class DAO
 				if (RequestSaveAction.SAVE_ALL.equals(saveAction))
 				{
 					perfectMatch = updateIdentity(domain, perfectMatchPPCO.getIdentityId(), identity, identityPP, perfectMatchPPCO,
-							IdentityHistoryEvent.FORCED_UPDATE, comment, FellegiSunterAlgorithm.MATCHING_SCORE_FOR_PERFECT_MATCH, timestamp);
+							IdentityHistoryEvent.FORCED_UPDATE, comment, FellegiSunterAlgorithm.MATCHING_SCORE_FOR_PERFECT_MATCH, timestamp, user);
 				}
 				else if (RequestSaveAction.DONT_SAVE_ON_PERFECT_MATCH_EXCEPT_CONTACTS.equals(saveAction))
 				{
-					perfectMatch = saveContacts(perfectMatchPPCO.getIdentityId(), identity.getContacts());
+					perfectMatch = saveContacts(perfectMatchPPCO.getIdentityId(), identity.getContacts(), timestamp, user);
 				}
 				else
 				{
@@ -1393,17 +1587,17 @@ public abstract class DAO
 					if (deduplicationResultForDB.hasMatches())
 					{
 						person = saveIdentityAndPossibleMatches(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.FORCED_UPDATE,
-								deduplicationResultForDB.getMatches(), comment, matchingScore, timestamp);
+								deduplicationResultForDB.getMatches(), comment, matchingScore, timestamp, user);
 					}
 					else if (deduplicationResultForDB.hasPossibleMatches())
 					{
 						person = saveIdentityAndPossibleMatches(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.FORCED_UPDATE,
-								deduplicationResultForDB.getPossibleMatches(), comment, matchingScore, timestamp);
+								deduplicationResultForDB.getPossibleMatches(), comment, matchingScore, timestamp, user);
 					}
 					else
 					{
 						person = saveIdentity(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.FORCED_UPDATE, comment, matchingScore,
-								timestamp);
+								timestamp, user);
 					}
 				}
 				result = new ResponseEntryDTO(person.toDTO(), MatchStatus.MATCH);
@@ -1414,7 +1608,7 @@ public abstract class DAO
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public ResponseEntryDTO addDBPerson(String domainName, IdentityInDTO identityDTO, String sourceName, String comment, Timestamp timestamp)
+	public ResponseEntryDTO addDBPerson(String domainName, IdentityInDTO identityDTO, String sourceName, String comment, Timestamp timestamp, String user)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		logger.debug("addDBPerson");
@@ -1447,16 +1641,16 @@ public abstract class DAO
 		if (deduplicationResultForDB.hasMatches())
 		{
 			person = saveIdentityAndPossibleMatches(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.NEW,
-					deduplicationResultForDB.getMatches(), comment, 0.0, timestamp);
+					deduplicationResultForDB.getMatches(), comment, 0.0, timestamp, user);
 		}
 		else if (deduplicationResultForDB.hasPossibleMatches())
 		{
 			person = saveIdentityAndPossibleMatches(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.NEW,
-					deduplicationResultForDB.getPossibleMatches(), comment, 0.0, timestamp);
+					deduplicationResultForDB.getPossibleMatches(), comment, 0.0, timestamp, user);
 		}
 		else
 		{
-			person = saveIdentity(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.NEW, comment, 0.0, timestamp);
+			person = saveIdentity(domain, identity, identityPP, identityPPCO, IdentityHistoryEvent.NEW, comment, 0.0, timestamp, user);
 		}
 		result = new ResponseEntryDTO(person.toDTO(), MatchStatus.NO_MATCH);
 		DOMAIN_CACHE.incPersonCount(domainName);
@@ -1465,93 +1659,89 @@ public abstract class DAO
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void deactivateDBPerson(String domainName, String mpiId) throws InvalidParameterException, UnknownObjectException
+	public void deactivateDBPerson(String domainName, String mpiId, String user) throws UnknownObjectException
 	{
 		Domain domain = getDBDomain(domainName);
 		IdentifierId mpiIdentifierId = new IdentifierId(domain.getMpiDomain().getName(), mpiId);
 		Identifier mpiIdentifier = getDBIdentifierById(mpiIdentifierId);
-		Person person = getDBPersonByFirstMPI(domain, mpiIdentifier, true);
+		Person person = getDBPersonByFirstMPI(domain, mpiIdentifier);
 
-		deactivatePersonObject(person);
-		PersonHistory personHistory = new PersonHistory(person, "person deactivated", new Timestamp(System.currentTimeMillis()));
-		em.persist(personHistory);
+		if (!person.isDeactivated())
+		{
+			deactivatePersonObject(person, user);
+			em.persist(new PersonHistory(person, PersonHistoryEvent.DEACTIVATE, "person deactivated",
+					new Timestamp(System.currentTimeMillis()), user));
+		}
+		else
+		{
+			logger.debug("person was already deactivated");
+		}
 	}
 
-	private void deactivatePersonObject(Person person) throws UnknownObjectException
+	private void deactivatePersonObject(Person person, String user) throws UnknownObjectException
 	{
 		person.setDeactivated(true);
 
 		for (Identity identity : person.getIdentities())
 		{
-			deactivateDBIdentity(identity.getId());
+			deactivateDBIdentity(identity.getId(), user);
 		}
 		em.flush();
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void deleteDBPerson(String domainName, String mpiId) throws IllegalOperationException, UnknownObjectException
+	public void deleteDBPerson(String domainName, String mpiId, String user) throws IllegalOperationException, UnknownObjectException
 	{
 		Domain domain = getDBDomain(domainName);
 		IdentifierId mpiIdentifierId = new IdentifierId(domain.getMpiDomain().getName(), mpiId);
 		Identifier mpiIdentifier = getDBIdentifierById(mpiIdentifierId);
-		deletePersonObject(getDBPersonByFirstMPI(domain, mpiIdentifier, true));
+		deletePersonObject(getDBPersonByFirstMPI(domain, mpiIdentifier), user);
 	}
 
-	private void deletePersonObject(Person person) throws IllegalOperationException, UnknownObjectException
+	private void deletePersonObject(Person person, String user) throws IllegalOperationException, UnknownObjectException
 	{
 		if (!person.isDeactivated())
 		{
 			throw new IllegalOperationException("person with first mpi id " + person.getFirstMPI().getId() + " is not deactivated and therefore can't be deleted");
 		}
 
-		// if a person is deactivated all its identities also have been deactivated,
-		// so person.getIdentities() will return an empty list, right?
-		// TODO: If so, then there is no need to loop over an empty list:
 		for (Identity identity : new ArrayList<>(person.getIdentities()))
 		{
-			// TODO: this does never happens
-			deleteDBIdentity(identity.getId());
+			deleteDBIdentity(identity.getId(), user);
 		}
 
-		getDBHistoryForPerson(person).stream().forEach(e -> em.remove(e));
-		getDBHistoryForIdentityByPerson(person).stream().forEach(e -> em.remove(e));
-		getDBPossibleMatchHistoryForPerson(person).stream().forEach(e -> em.remove(e));
+		getDBHistoryForPerson(person).forEach(e -> em.remove(e));
+		getDBHistoryForIdentityByPerson(person).forEach(e -> em.remove(e));
+		getDBPossibleMatchHistoryForPerson(person).forEach(e -> em.remove(e));
 
 		Identifier firstMPI = person.getFirstMPI();
-		IdentifierDomain mpiDomain = person.getDomain().getMpiDomain();
-		List<Identifier> idList = getDBIdentifierByPerson(person);
-		for (Identifier id : idList)
-		{
-			if (id.getIdentifierDomain().equals(mpiDomain) && !id.getValue().equals(person.getFirstMPI().getValue()))
-			{
-				// mpi einer anderen person; durch zusammenlegung entstanden
-				// die mpiId gehoert immer noch zu der "verliererperson" und kann hier daher nicht geloescht werden
-				continue;
-			}
-			em.remove(id);
-		}
+
 		em.remove(person);
 		em.flush();
 		DOMAIN_CACHE.decPersonCount(person.getDomain().getName());
 
 		// removing a person is not cascaded with deleting the person's first MPI anymore because the MPI might (and should)
 		// be left in 'identity_identifier' (by reassigning) even after removing the person so check manually if it can be removed
-		if (!hasDBPersonForMPI(person.getDomain(), firstMPI, true))
+		try
+		{
+			getActiveDBPersonByMPI(person.getDomain(), firstMPI);
+		}
+		catch (UnknownObjectException expected)
 		{
 			em.remove(firstMPI);
 		}
 	}
 
-	public void updateDBPrivacy(String domainName, List<String> mpiIds, boolean onlyReferenceIdentity) throws InvalidParameterException, MPIException, UnknownObjectException
+	public void updateDBPrivacy(String domainName, List<String> mpiIds, boolean onlyReferenceIdentity, String user) throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		// No PII available --> bloomfilters cannot be generated
-		if (PersistMode.PRIVACY_PRESERVING.equals(DOMAIN_CACHE.getConfigurationContainerForDomain(domainName).getPersistMode()))
+		if (PersistMode.PRIVACY_PRESERVING.equals(DOMAIN_CACHE.getDomain(domainName).getConfigurationContainer().getPersistMode()))
 		{
 			return;
 		}
 
 		// No Privacy defined
-		if (DOMAIN_CACHE.getConfigurationContainerForDomain(domainName).getPrivacy() == null)
+		if (DOMAIN_CACHE.getDomain(domainName).getConfigurationContainer().getPrivacy() == null)
 		{
 			return;
 		}
@@ -1592,7 +1782,7 @@ public abstract class DAO
 				DOMAIN_CACHE.copyPrivacyAttributes(domainName, identityPP, ident);
 
 				updateIdentity(domain, ident.getId(), ident, identityPP, DOMAIN_CACHE.createPreprocessedCacheObjectFromIdentityPP(domainName, identityPP),
-						IdentityHistoryEvent.UPDATE, "Bloom filter added retroactively", FellegiSunterAlgorithm.MATCHING_SCORE_FOR_PERFECT_MATCH, new Timestamp(System.currentTimeMillis()));
+						IdentityHistoryEvent.UPDATE, "Bloom filter added retroactively", FellegiSunterAlgorithm.MATCHING_SCORE_FOR_PERFECT_MATCH, new Timestamp(System.currentTimeMillis()), user);
 			}
 		}
 	}
@@ -1617,9 +1807,7 @@ public abstract class DAO
 		Identity result = em.find(Identity.class, id);
 		if (result == null)
 		{
-			String message = "identity not found, id: " + id;
-			logger.debug(message);
-			throw new UnknownObjectException(message, UnknownObjectType.IDENTITY, Long.toString(id));
+			throw createUnknownIdentityIdException(id);
 		}
 		else
 		{
@@ -1628,14 +1816,22 @@ public abstract class DAO
 		}
 	}
 
+	public static UnknownObjectException createUnknownIdentityIdException(long id)
+	{
+		String message = "identity not found, id: " + id;
+		logger.debug(message);
+		return new UnknownObjectException(message, UnknownObjectType.IDENTITY, Long.toString(id));
+	}
+
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public Person saveIdentity(Domain domain, Identity identity, IdentityPreprocessed identityPreprocessed, PreprocessedCacheObject identityPPCO,
-			IdentityHistoryEvent historyEvent, String comment, double matchingScore, Timestamp timestamp)
+			IdentityHistoryEvent historyEvent, String comment, double matchingScore, Timestamp timestamp, String user)
 			throws MPIException, UnknownObjectException
 	{
 		logger.debug("saveIdentity");
 		Person person = identity.getPerson();
 		boolean newPerson = person == null;
+
 		if (newPerson)
 		{
 			logger.debug("no person set - create new");
@@ -1650,11 +1846,26 @@ public abstract class DAO
 		{
 			logger.debug("add identity to person with id: " + person.getId());
 		}
-		IdentityHistory identityHistory = new IdentityHistory(identity, historyEvent, comment, matchingScore, timestamp);
-		PersonHistory personHistory = new PersonHistory(person, comment, timestamp);
 		em.persist(identity);
-		em.persist(identityHistory);
-		em.persist(personHistory);
+		em.persist(new IdentityHistory(identity, historyEvent, comment, matchingScore, timestamp, user));
+		if (newPerson)
+		{
+			em.persist(new PersonHistory(person, PersonHistoryEvent.NEW, comment, timestamp, user));
+		}
+		else
+		{
+			em.persist(new PersonHistory(person, PersonHistoryEvent.ADD_IDENTITY,
+					"added identity with id '" + identity.getId() + "' to person" + (!StringUtils.isBlank(comment) ? " (" + comment : ")"), timestamp, user));
+		}
+		if (newPerson || historyEvent.equals(IdentityHistoryEvent.NEW))
+		{
+			identity.getContacts().forEach(c ->
+			{
+				em.persist(new ContactHistory(c, ContactHistoryEvent.NEW, comment, timestamp, user));
+				em.persist(new IdentityHistory(identity, IdentityHistoryEvent.ADD_CONTACT,
+						"added contact with id '" + c.getId() + "' to identity" + (!StringUtils.isBlank(comment) ? " (" + comment : ")"), 0.0, timestamp, user));
+			});
+		}
 		person.getIdentities().add(identity);
 		identityPreprocessed.setDBIds(identity.getId(), person.getId(), domain.getName(), timestamp);
 		identityPPCO.setDBIds(person.getId(), identity.getId());
@@ -1671,14 +1882,25 @@ public abstract class DAO
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public Identity updateIdentity(Domain domain, long identityId, Identity newIdentity, IdentityPreprocessed newIdentityPP,
-			PreprocessedCacheObject newIdentityPPCO, IdentityHistoryEvent ihEvent, String comment, double matchingScore, Timestamp timestamp)
+			PreprocessedCacheObject newIdentityPPCO, IdentityHistoryEvent ihEvent, String comment, double matchingScore, Timestamp timestamp, String user)
 			throws MPIException, UnknownObjectException
 	{
 		logger.debug("updateDBIdentity for identity with id " + " because of " + ihEvent);
 		Identity oldIdentity = getDBIdentityById(identityId);
-		oldIdentity.update(newIdentity, timestamp);
-		IdentityHistory identityHistory = new IdentityHistory(oldIdentity, ihEvent, comment, matchingScore, timestamp);
+		Set<Contact> oldContacts = new HashSet<>(oldIdentity.getContacts());
+		List<Contact> newContacts = oldIdentity.update(newIdentity, timestamp);
+		oldContacts.removeAll(new HashSet<>(oldIdentity.getContacts()));
+		oldContacts.forEach(c -> em.persist(new IdentityHistory(oldIdentity, IdentityHistoryEvent.DEL_CONTACT,
+				"removed contact with id '" + c.getId() + "' from identity", 0.0, timestamp, user)));
+		IdentityHistory identityHistory = new IdentityHistory(oldIdentity, ihEvent, comment, matchingScore, timestamp, user);
 		em.persist(identityHistory);
+		newContacts.forEach(c ->
+		{
+			em.persist(new ContactHistory(c, ContactHistoryEvent.NEW, null, timestamp, user));
+			em.persist(new IdentityHistory(oldIdentity, IdentityHistoryEvent.ADD_CONTACT,
+					"added contact with id '" + c.getId() + "' to identity" + (!StringUtils.isBlank(comment) ? " (" + comment : ")"), matchingScore, timestamp, user));
+		});
+
 		IdentityPreprocessed ipFromDB = getDBIdentityPreprocessedByIdentityId(oldIdentity.getId());
 		ipFromDB.update(newIdentityPP);
 		em.flush();
@@ -1720,7 +1942,7 @@ public abstract class DAO
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void saveReferenceIdentity(String domainName, String mpiId, long identityId, String comment, Timestamp timestamp)
+	public ResponseEntryDTO saveReferenceIdentity(String domainName, String mpiId, long identityId, String comment, Timestamp timestamp, String user)
 			throws MPIException, UnknownObjectException
 	{
 		logger.debug("saveReferenceIdentity for domain " + domainName);
@@ -1740,19 +1962,20 @@ public abstract class DAO
 			throw new MPIException(MPIErrorCode.RESTRICTIONS_VIOLATED, message, relatedMpiIds);
 		}
 		IdentityHistory identityHistory = new IdentityHistory(identity, IdentityHistoryEvent.SET_REFERENCE, "set as reference identity", 0.0,
-				timestamp);
+				timestamp, user);
 		em.persist(identityHistory);
 		identity.setTimestamp(timestamp);
 		identity.setForcedReference(true);
 		person.setTimestamp(timestamp);
-		PersonHistory personHistory = new PersonHistory(person, "set reference identity", timestamp);
-		em.persist(personHistory);
+		em.persist(new PersonHistory(person, PersonHistoryEvent.SET_REF_IDENTITY,
+				"set reference identity", timestamp, user));
 		em.flush();
 		logger.debug("reference identity set");
+		return new ResponseEntryDTO(person.toDTO(), MatchStatus.PERFECT_MATCH_WITH_UPDATE);
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void deactivateDBIdentity(long identityId) throws UnknownObjectException
+	public void deactivateDBIdentity(long identityId, String user) throws UnknownObjectException
 	{
 		Identity identity = getDBIdentityById(identityId);
 
@@ -1767,7 +1990,7 @@ public abstract class DAO
 		{
 			for (IdentityLink il : possibleMatches)
 			{
-				saveRemovePossibleMatch(il.getId(), IdentityHistoryStrings.DEACTIVATED, new Timestamp(System.currentTimeMillis()));
+				saveRemovePossibleMatch(il.getId(), IdentityHistoryStrings.DEACTIVATED, new Timestamp(System.currentTimeMillis()), user);
 			}
 		}
 		catch (InvalidParameterException impossible)
@@ -1775,9 +1998,14 @@ public abstract class DAO
 			logger.fatal("impossible exception while deactivating identity with id " + identityId, impossible);
 		}
 
+		for (Contact c : identity.getContacts())
+		{
+			deactivateDBContact(c.getId(), user);
+		}
+
 		// Deactivate identity and remove from domain cache
 		identity.setDeactivated(true);
-		DOMAIN_CACHE.deleteIdentity(identity.getPerson().getDomain().getName(), identityId);
+		DOMAIN_CACHE.removeIdentity(identity.getPerson().getDomain().getName(), identityId);
 
 		// Remove pre-processed identity
 		IdentityPreprocessed ip = em.find(IdentityPreprocessed.class, identity.getId());
@@ -1786,7 +2014,7 @@ public abstract class DAO
 		Timestamp refTimestamp = new Timestamp(System.currentTimeMillis());
 
 		// Add history entry
-		IdentityHistory identityHistory = new IdentityHistory(identity, IdentityHistoryEvent.DEACTIVATED, IdentityHistoryStrings.DEACTIVATED, 0.0, refTimestamp);
+		IdentityHistory identityHistory = new IdentityHistory(identity, IdentityHistoryEvent.DEACTIVATED, IdentityHistoryStrings.DEACTIVATED, 0.0, refTimestamp, user);
 		em.persist(identityHistory);
 
 		Person person = identity.getPerson();
@@ -1802,14 +2030,14 @@ public abstract class DAO
 		if (allIdentitiesDeactivated)
 		{
 			person.setDeactivated(true);
-			PersonHistory personHistory = new PersonHistory(person, "person deactivated because all identities are deactivated", refTimestamp);
-			em.persist(personHistory);
+			em.persist(new PersonHistory(person, PersonHistoryEvent.DEACTIVATE,
+					"person deactivated because all identities are deactivated", refTimestamp, user));
 		}
 		em.flush();
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void deleteDBIdentity(long identityId) throws IllegalOperationException, UnknownObjectException
+	public void deleteDBIdentity(long identityId, String user) throws IllegalOperationException, UnknownObjectException
 	{
 		Identity identity = getDBIdentityById(identityId);
 		logger.debug("deleteDBIdentity: identity=" + identity);
@@ -1821,39 +2049,40 @@ public abstract class DAO
 
 		for (Contact c : identity.getContacts())
 		{
-			getDBHistoryForContact(c).stream().forEach(e -> em.remove(e));
+			getDBHistoryForContact(c).forEach(e -> em.remove(e));
+			em.remove(c);
 		}
 
-		getDBPossibleMatchHistoryByIdentity(identity).stream().forEach(e -> em.remove(e));
-		getDBPossibleMatchesByIdentity(identity).stream().forEach(e -> em.remove(e));
-		getDBHistoryForIdentity(identity).stream().forEach(e -> em.remove(e));
-		em.flush();
-
-		IdentifierDomain mpiDomain = identity.getPerson().getDomain().getMpiDomain();
+		getDBPossibleMatchHistoryByIdentity(identity).forEach(e -> em.remove(e));
+		getDBPossibleMatchesByIdentity(identity).forEach(e -> em.remove(e));
+		Person person = identity.getPerson();
 		for (Identifier identifier : new ArrayList<>(identity.getIdentifiers()))
 		{
-			if (identifier.getIdentifierDomain().equals(mpiDomain))
+			try
 			{
-				// mpi einer anderen person; durch zusammenlegung entstanden
-				// die mpiId gehoert immer noch zu der "verliererperson" und kann hier daher nicht geloescht werden
+				deleteIdentifierObject(person.getDomain(), user, identifier, person, false);
+			}
+			catch (MPIException maybe)
+			{
+				// identifer ist eine mpi und gehoert noch zu einer anderen person
+				// hier aus der relation loeschen, damit der identifier nicht durch cascade delete aus der db geloescht wird
 				identity.getIdentifiers().remove(identifier);
-				// removing a person is not cascaded with deleting the person's first MPI anymore because the MPI might (and should)
-				// be left in 'identity_identifier' (by reassigning) even after removing the person so check manually if it can be removed
-				if (!hasDBPersonForMPI(identity.getPerson().getDomain(), identifier, true))
-				{
-					em.remove(identifier);
-				}
 			}
 		}
+		getDBHistoryForIdentity(identity).forEach(e -> em.remove(e));
+		em.flush();
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+
 		em.remove(identity);
-		Person person = identity.getPerson();
 		person.getIdentities().remove(identity);
+		em.persist(new PersonHistory(person, PersonHistoryEvent.DELETE_IDENTITY,
+				"removed identity with id '" + identity.getId() + "' from person", timestamp, user));
 
 		if (person.getIdentities().isEmpty())
 		{
-			deactivatePersonObject(person);
-			PersonHistory personHistory = new PersonHistory(person, "person deactivated because last identity was deleted", new Timestamp(System.currentTimeMillis()));
-			em.persist(personHistory);
+			deactivatePersonObject(person, user);
+			em.persist(new PersonHistory(person, PersonHistoryEvent.DEACTIVATE,
+					"person deactivated because last identity was deleted", timestamp, user));
 		}
 		em.flush();
 	}
@@ -1867,9 +2096,7 @@ public abstract class DAO
 		Contact result = em.find(Contact.class, id);
 		if (result == null)
 		{
-			String message = "unknown contact " + id;
-			logger.info(message);
-			throw new UnknownObjectException(message, UnknownObjectType.CONTACT, Long.toString(id));
+			throw createUnknownContactIdException(id);
 		}
 		else
 		{
@@ -1878,23 +2105,83 @@ public abstract class DAO
 		}
 	}
 
+	public static UnknownObjectException createUnknownContactIdException(long id)
+	{
+		String message = "unknown contact " + id;
+		logger.debug(message);
+		return new UnknownObjectException(message, UnknownObjectType.CONTACT, Long.toString(id));
+	}
+
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Identity saveContact(long identityId, ContactInDTO contactDTO, Timestamp timestamp) throws UnknownObjectException
+	public Identity saveContact(long identityId, ContactInDTO contactDTO, Timestamp timestamp, String user) throws UnknownObjectException
 	{
 		Contact contact = new Contact(contactDTO, null, timestamp);
 		Identity identity = getDBIdentityById(identityId);
-		identity.addContacts(Collections.singletonList(contact));
+		identity.addContacts(Collections.singletonList(contact)).forEach(
+				c ->
+				{
+					em.persist(new ContactHistory(c, ContactHistoryEvent.NEW, null, timestamp, user));
+					em.persist(new IdentityHistory(identity, IdentityHistoryEvent.ADD_CONTACT,
+							"added contact with id '" + c.getId() + "' to identity", 0.0, timestamp, user));
+				});
 		em.flush();
 		return identity;
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public Identity saveContacts(long identityId, List<Contact> contacts) throws UnknownObjectException
+	public Identity saveContacts(long identityId, List<Contact> contacts, Timestamp timestamp, String user) throws UnknownObjectException
 	{
 		Identity identity = getDBIdentityById(identityId);
-		identity.addContacts(contacts);
+		identity.addContacts(contacts).forEach(
+				c ->
+				{
+					em.persist(new ContactHistory(c, ContactHistoryEvent.NEW, null, timestamp, user));
+					em.persist(new IdentityHistory(identity, IdentityHistoryEvent.ADD_CONTACT,
+							"added contact with id '" + c.getId() + "' to identity", 0.0, timestamp, user));
+				});
 		em.flush();
 		return identity;
+	}
+
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void deactivateDBContact(long contactId, String user) throws UnknownObjectException
+	{
+		Contact contact = getDBContactById(contactId);
+		if (contact.isDeactivated())
+		{
+			return; // Nothing to do
+		}
+		contact.setDeactivated(true);
+		Timestamp refTimestamp = new Timestamp(System.currentTimeMillis());
+
+		// Add history entry
+		ContactHistory contactHistory = new ContactHistory(contact, ContactHistoryEvent.DEACTIVATED, null, refTimestamp, user);
+		em.persist(contactHistory);
+		em.flush();
+	}
+
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void deleteDBContact(long contactId, String comment, String user) throws IllegalOperationException, UnknownObjectException
+	{
+		Contact contact = getDBContactById(contactId);
+		logger.debug("deleteDBContact: contact=" + contact);
+
+		if (!contact.isDeactivated())
+		{
+			throw new IllegalOperationException("contact with id " + contactId + " is not deactivated and therefor can't be deleted");
+		}
+
+		getDBHistoryForContact(contact).forEach(e -> em.remove(e));
+		em.remove(contact);
+		em.flush();
+
+		Identity identity = contact.getIdentity();
+		identity.getContacts().remove(contact);
+		em.persist(new IdentityHistory(identity, IdentityHistoryEvent.DEL_CONTACT,
+				"removed contact with id '" + contact.getId() + "' from identity" +
+						(!StringUtils.isBlank(comment) ? " (" + comment : ")"),
+				0.0, new Timestamp(System.currentTimeMillis()), user));
+		em.flush();
 	}
 
 	// ***********************************
@@ -1932,10 +2219,10 @@ public abstract class DAO
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public Person saveIdentityAndPossibleMatches(Domain domain, Identity identity, IdentityPreprocessed identityPP,
 			PreprocessedCacheObject identityPPCO, IdentityHistoryEvent historyEvent, List<MatchResult> possibleMatches, String comment,
-			double matchingScore, Timestamp timestamp) throws MPIException, UnknownObjectException
+			double matchingScore, Timestamp timestamp, String user) throws MPIException, UnknownObjectException
 	{
 		logger.debug("savePossibleMatches");
-		Person person = saveIdentity(domain, identity, identityPP, identityPPCO, historyEvent, comment, matchingScore, timestamp);
+		Person person = saveIdentity(domain, identity, identityPP, identityPPCO, historyEvent, comment, matchingScore, timestamp, user);
 		for (MatchResult mr : possibleMatches)
 		{
 			Identity possibleMatchIdentity;
@@ -1975,20 +2262,42 @@ public abstract class DAO
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void saveRemovePossibleMatch(long possibleMatchId, String comment, Timestamp timestamp) throws InvalidParameterException
+	public void saveRemovePossibleMatch(long possibleMatchId, String comment, Timestamp timestamp, String user) throws InvalidParameterException
 	{
 		logger.debug("saveRemovePossibleMatch");
 		IdentityLink possibleMatch = getDBPossibleMatchById(possibleMatchId);
-		IdentityLinkHistory linkHistory = new IdentityLinkHistory(possibleMatch, PossibleMatchSolution.SPLIT, comment, timestamp);
+		IdentityLinkHistory linkHistory = new IdentityLinkHistory(possibleMatch, PossibleMatchSolution.SPLIT, comment, timestamp, user);
 		em.persist(linkHistory);
 		em.remove(possibleMatch);
 		em.flush();
-		logger.debug("possible matches removed");
+		logger.debug("possible matche removed");
+	}
+
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public boolean savePrioritizePossibleMatch(long possibleMatchId, PossibleMatchPriority priority, Timestamp timestamp) throws InvalidParameterException
+	{
+		logger.debug("savePostponePossibleMatch");
+		IdentityLink possibleMatch = getDBPossibleMatchById(possibleMatchId);
+		if (priority == null)
+		{
+			priority = PossibleMatchDTO.DEFAULT_PRIORITY;
+		}
+		PossibleMatchPriority oldPriority = possibleMatch.getPriority() != null ? possibleMatch.getPriority() : PossibleMatchDTO.DEFAULT_PRIORITY;
+		if (!Objects.equals(priority, oldPriority))
+		{
+			possibleMatch.setPriority(priority);
+			em.persist(possibleMatch);
+			em.flush();
+			logger.debug("possible match priority changed");
+			return true;
+		}
+		logger.debug("possible match priority not changed");
+		return false;
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public void saveAssignIdentity(IdentityLink possibleMatch, Identity winningIdentity, Identity identityToMerge, String comment,
-			Timestamp timestamp) throws InvalidParameterException, MPIException
+			Timestamp timestamp, String user) throws MPIException
 	{
 		logger.debug("saveAssignIdentity");
 		Person personToMerge = identityToMerge.getPerson();
@@ -2002,20 +2311,20 @@ public abstract class DAO
 				// history vorm aendern der person bei identity erzeugen!
 				if (link.getId() == possibleMatch.getId())
 				{
-					em.persist(new IdentityLinkHistory(link, PossibleMatchSolution.MERGE, comment, timestamp, identityToMerge));
+					em.persist(new IdentityLinkHistory(link, PossibleMatchSolution.MERGE, comment, timestamp, user, identityToMerge));
 				}
 				else
 				{
 					em.persist(new IdentityLinkHistory(link, PossibleMatchSolution.INDIRECT_MERGE,
-							PossibleMatchHistoryStrings.INDIRECT_MERGE + possibleMatch.getId(), timestamp, identityToMerge));
+							PossibleMatchHistoryStrings.INDIRECT_MERGE + possibleMatch.getId(), timestamp, user, identityToMerge));
 				}
 				em.remove(link);
 			}
 		}
 		personToMerge.getReferenceIdentity().getIdentifiers().add(personToMerge.getFirstMPI());
 		String domainName = personToMerge.getDomain().getName();
-		PersonHistory personHistory = new PersonHistory(winningPerson, PersonHistoryStrings.WINNING_PERSON_AT_MERGE, timestamp);
-		em.persist(personHistory);
+		em.persist(new PersonHistory(winningPerson, PersonHistoryEvent.MERGE_AS_WINNER,
+				PersonHistoryStrings.WINNING_PERSON_AT_MERGE, timestamp, user));
 		// cache erst nach erfolgreichem db-update aendern!
 		LongSet identityIdsForCacheUpdate = new LongOpenHashSet();
 		if (!personToMerge.getIdentities().isEmpty())
@@ -2043,7 +2352,7 @@ public abstract class DAO
 			// ref-identitaet aktualisieren, damit sie ref bleibt
 			Timestamp refTimestamp = new Timestamp(timestamp.getTime() + 1);
 			IdentityHistory identityHistory = new IdentityHistory(winningPerson.getReferenceIdentity(), IdentityHistoryEvent.MERGE,
-					IdentityHistoryStrings.UPDATED_REF_IDENTITY_AT_MERGE, possibleMatch.getThreshold(), refTimestamp);
+					IdentityHistoryStrings.UPDATED_REF_IDENTITY_AT_MERGE, possibleMatch.getThreshold(), refTimestamp, user);
 			em.persist(identityHistory);
 			winningPerson.getReferenceIdentity().setTimestamp(refTimestamp);
 			// forced reference setzen, fuer den fall, dass das bei der verliererperson true war, bei der gewinner aber nicht
@@ -2051,7 +2360,7 @@ public abstract class DAO
 			winningPerson.setTimestamp(timestamp);
 			for (Identity identity : personToMerge.getIdentities())
 			{
-				identityHistory = new IdentityHistory(identity, IdentityHistoryEvent.MERGE, comment, possibleMatch.getThreshold(), timestamp);
+				identityHistory = new IdentityHistory(identity, IdentityHistoryEvent.MERGE, comment, possibleMatch.getThreshold(), timestamp, user);
 				em.persist(identityHistory);
 				identity.setPerson(winningPerson);
 				identity.setTimestamp(timestamp);
@@ -2067,8 +2376,8 @@ public abstract class DAO
 				em.persist(ip);
 			}
 		}
-		personHistory = new PersonHistory(personToMerge, PersonHistoryStrings.LOOSING_PERSON_AT_MERGE, timestamp);
-		em.persist(personHistory);
+		em.persist(new PersonHistory(personToMerge, PersonHistoryEvent.MERGE_AS_LOOSER,
+				PersonHistoryStrings.LOOSING_PERSON_AT_MERGE, timestamp, user));
 		personToMerge.getIdentities().clear();
 		personToMerge.setDeactivated(true);
 		personToMerge.setTimestamp(timestamp);
@@ -2092,7 +2401,7 @@ public abstract class DAO
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public void saveMoveIdentitiesForIdentifierToPerson(String domainName, IdentifierDTO identifierDTO, String mpiId, String comment,
-			Timestamp timestamp) throws MPIException, UnknownObjectException
+			Timestamp timestamp, String user) throws MPIException, UnknownObjectException
 	{
 		logger.debug("saveMoveIdentitiesForIdentifierToPerson");
 		Domain domain = getDBDomain(domainName);
@@ -2143,7 +2452,7 @@ public abstract class DAO
 				if (link.getSrcIdentity().getPerson().equals(person) && identitiesToMove.contains(link.getDestIdentity())
 						|| link.getDestIdentity().getPerson().equals(person) && identitiesToMove.contains(link.getSrcIdentity()))
 				{
-					em.persist(new IdentityLinkHistory(link, PossibleMatchSolution.MERGE_BY_MOVE, comment, timestamp, person.getReferenceIdentity()));
+					em.persist(new IdentityLinkHistory(link, PossibleMatchSolution.MERGE_BY_MOVE, comment, timestamp, user, person.getReferenceIdentity()));
 					em.remove(link);
 				}
 			}
@@ -2170,14 +2479,14 @@ public abstract class DAO
 			// ref-identitaet aktualisieren, damit sie ref bleibt
 			Timestamp refTimestamp = new Timestamp(timestamp.getTime() + 1);
 			IdentityHistory identityHistory = new IdentityHistory(person.getReferenceIdentity(), IdentityHistoryEvent.MERGE,
-					IdentityHistoryStrings.UPDATED_REF_IDENTITY_AT_MOVE, 0.0, refTimestamp);
+					IdentityHistoryStrings.UPDATED_REF_IDENTITY_AT_MOVE, 0.0, refTimestamp, user);
 			em.persist(identityHistory);
 			person.getReferenceIdentity().setTimestamp(refTimestamp);
 			// forced reference setzen, fuer den fall, dass das bei der verliererperson true war, bei der gewinner aber nicht
 			person.getReferenceIdentity().setForcedReference(true);
 			for (Identity identity : identitiesToMove)
 			{
-				em.persist(new IdentityHistory(identity, IdentityHistoryEvent.MOVE, comment, 0.0, timestamp));
+				em.persist(new IdentityHistory(identity, IdentityHistoryEvent.MOVE, comment, 0.0, timestamp, user));
 				identity.setPerson(person);
 				identity.setTimestamp(timestamp);
 				person.getIdentities().add(identity);
@@ -2192,15 +2501,15 @@ public abstract class DAO
 				ip.setDBIds(ip.getIdentityId(), person.getId(), domainName, timestamp);
 				em.persist(ip);
 			}
-			PersonHistory personHistory = new PersonHistory(spendingPerson, "spending person at move identities", timestamp);
-			em.persist(personHistory);
+			em.persist(new PersonHistory(spendingPerson, PersonHistoryEvent.MOVE_SPENDING,
+					"spending person at move identities", timestamp, user));
 			spendingPerson.setTimestamp(timestamp);
 			if (spendingPerson.getIdentities().isEmpty())
 			{
 				spendingPerson.setDeactivated(true);
 			}
-			personHistory = new PersonHistory(person, "receiving person at move identities", timestamp);
-			em.persist(personHistory);
+			em.persist(new PersonHistory(person, PersonHistoryEvent.MOVE_RECEIVING,
+					"receiving person at move identities", timestamp, user));
 			person.setTimestamp(timestamp);
 			em.flush();
 			for (long id : identityIdsForCacheUpdate)
@@ -2299,6 +2608,14 @@ public abstract class DAO
 		@SuppressWarnings("unchecked")
 		List<ContactHistory> histories = em.createNamedQuery("ContactHistory.findByContact")
 				.setParameter("contact", contact).getResultList();
+		return histories;
+	}
+
+	protected List<IdentifierHistory> getDBHistoryForIdentifier(Identifier identifier)
+	{
+		@SuppressWarnings("unchecked")
+		List<IdentifierHistory> histories = em.createNamedQuery("IdentifierHistory.findByIdentifier")
+				.setParameter("identifier", identifier).getResultList();
 		return histories;
 	}
 

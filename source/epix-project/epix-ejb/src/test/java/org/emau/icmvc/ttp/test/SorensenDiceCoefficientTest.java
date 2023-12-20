@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,12 +39,12 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-end###
  */
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.emau.icmvc.ttp.deduplication.impl.SorensenDiceCoefficient;
 import org.emau.icmvc.ttp.deduplication.impl.SorensenDiceCoefficientCoded;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SorensenDiceCoefficientTest
 {

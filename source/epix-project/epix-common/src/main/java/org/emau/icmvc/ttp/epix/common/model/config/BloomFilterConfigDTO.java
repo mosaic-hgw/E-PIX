@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,37 +39,47 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-end###
  */
 
-import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
+
 public class BloomFilterConfigDTO implements Serializable
 {
-	private static final long serialVersionUID = -4812871977413201397L;
-	private final String algorithm;
-	private final FieldName field;
-	private final int length;
-	private final int ngrams;
-	private final int bitsPerNgram;
-	private final int fold;
-	private final String alphabet;
-	private final BalancedDTO balanced;
+	private static final long serialVersionUID = 505962401870367366L;
+	private static final String DEFAULT_ALGORITHM = "org.emau.icmvc.ttp.deduplication.impl.bloomfilter.RandomHashingStrategy";
+	private static final String DEFAULT_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ .-0123456789mfoux";
+	private String algorithm = DEFAULT_ALGORITHM;
+	private FieldName field;
+	private int length = 1000;
+	private int ngrams = 2;
+	private int bitsPerNgram = 15;
+	private int fold = 0;
+	private String alphabet = DEFAULT_ALPHABET;
+	private BalancedDTO balanced;
 	private final List<SourceFieldDTO> sourceFields = new ArrayList<>();
+
+	public BloomFilterConfigDTO()
+	{}
 
 	public BloomFilterConfigDTO(String algorithm, FieldName field, int length, int ngrams, int bitsPerNgram, int fold, String alphabet, BalancedDTO balanced, List<SourceFieldDTO> sourceFields)
 	{
 		super();
-		this.algorithm = algorithm;
+		setAlgorithm(algorithm);
 		this.field = field;
 		this.length = length;
 		this.ngrams = ngrams;
 		this.bitsPerNgram = bitsPerNgram;
 		this.fold = fold;
-		this.alphabet = alphabet;
-		this.balanced = balanced;
-		this.sourceFields.addAll(sourceFields);
+		setAlphabet(alphabet);
+		setBalanced(balanced);
+		setSourceFields(sourceFields);
+	}
+
+	public BloomFilterConfigDTO(BloomFilterConfigDTO dto)
+	{
+		this(dto.getAlgorithm(), dto.getField(), dto.getLength(), dto.getNgrams(), dto.getBitsPerNgram(), dto.getFold(), dto.getAlphabet(), dto.getBalanced(), dto.getSourceFields());
 	}
 
 	public String getAlgorithm()
@@ -77,9 +87,19 @@ public class BloomFilterConfigDTO implements Serializable
 		return algorithm;
 	}
 
+	public void setAlgorithm(String algorithm)
+	{
+		this.algorithm = algorithm != null ? algorithm : DEFAULT_ALGORITHM;
+	}
+
 	public FieldName getField()
 	{
 		return field;
+	}
+
+	public void setField(FieldName field)
+	{
+		this.field = field;
 	}
 
 	public int getLength()
@@ -87,9 +107,19 @@ public class BloomFilterConfigDTO implements Serializable
 		return length;
 	}
 
+	public void setLength(int length)
+	{
+		this.length = length;
+	}
+
 	public int getNgrams()
 	{
 		return ngrams;
+	}
+
+	public void setNgrams(int ngrams)
+	{
+		this.ngrams = ngrams;
 	}
 
 	public int getBitsPerNgram()
@@ -97,9 +127,19 @@ public class BloomFilterConfigDTO implements Serializable
 		return bitsPerNgram;
 	}
 
+	public void setBitsPerNgram(int bitsPerNgram)
+	{
+		this.bitsPerNgram = bitsPerNgram;
+	}
+
 	public int getFold()
 	{
 		return fold;
+	}
+
+	public void setFold(int fold)
+	{
+		this.fold = fold;
 	}
 
 	public String getAlphabet()
@@ -107,9 +147,19 @@ public class BloomFilterConfigDTO implements Serializable
 		return alphabet;
 	}
 
+	public void setAlphabet(String alphabet)
+	{
+		this.alphabet = alphabet != null ? alphabet : DEFAULT_ALPHABET;
+	}
+
 	public BalancedDTO getBalanced()
 	{
 		return balanced;
+	}
+
+	public void setBalanced(BalancedDTO balanced)
+	{
+		this.balanced = balanced != null ? new BalancedDTO(balanced) : null;
 	}
 
 	public List<SourceFieldDTO> getSourceFields()
@@ -117,20 +167,31 @@ public class BloomFilterConfigDTO implements Serializable
 		return sourceFields;
 	}
 
+	public void setSourceFields(List<SourceFieldDTO> sourceFields)
+	{
+		this.sourceFields.clear();
+		if (sourceFields != null)
+		{
+			for (SourceFieldDTO sfDTO : sourceFields)
+			{
+				this.sourceFields.add(new SourceFieldDTO(sfDTO));
+			}
+		}
+	}
 
 	@Override
 	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((algorithm == null) ? 0 : algorithm.hashCode());
-		result = prime * result + ((field == null) ? 0 : field.hashCode());
+		result = prime * result + (algorithm == null ? 0 : algorithm.hashCode());
+		result = prime * result + (field == null ? 0 : field.hashCode());
 		result = prime * result + length;
 		result = prime * result + ngrams;
 		result = prime * result + bitsPerNgram;
 		result = prime * result + fold;
-		result = prime * result + ((alphabet == null) ? 0 : alphabet.hashCode());
-		result = prime * result + ((balanced == null) ? 0 : balanced.hashCode());
+		result = prime * result + (alphabet == null ? 0 : alphabet.hashCode());
+		result = prime * result + (balanced == null ? 0 : balanced.hashCode());
 		result = prime * result + sourceFields.hashCode();
 		return result;
 	}
@@ -139,48 +200,78 @@ public class BloomFilterConfigDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		BloomFilterConfigDTO other = (BloomFilterConfigDTO) obj;
 		if (algorithm == null)
 		{
 			if (other.algorithm != null)
+			{
 				return false;
+			}
 		}
 		else if (!algorithm.equals(other.algorithm))
+		{
 			return false;
+		}
 		if (field == null)
 		{
 			if (other.field != null)
+			{
 				return false;
+			}
 		}
 		else if (!field.equals(other.field))
+		{
 			return false;
+		}
 		if (length != other.length)
+		{
 			return false;
+		}
 		if (ngrams != other.ngrams)
+		{
 			return false;
+		}
 		if (bitsPerNgram != other.bitsPerNgram)
+		{
 			return false;
+		}
 		if (fold != other.fold)
+		{
 			return false;
+		}
 		if (alphabet == null)
 		{
 			if (other.alphabet != null)
+			{
 				return false;
+			}
 		}
 		else if (!alphabet.equals(other.alphabet))
+		{
 			return false;
+		}
 		if (balanced == null)
 		{
 			if (other.balanced != null)
+			{
 				return false;
+			}
 		}
 		else if (!balanced.equals(other.balanced))
+		{
 			return false;
+		}
 		return sourceFields.equals(other.sourceFields);
 	}
 

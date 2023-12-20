@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,14 +39,13 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -67,8 +66,8 @@ public class MPIRequestDTO implements Serializable
 		super();
 		this.domainName = domainName;
 		this.sourceName = sourceName;
-		this.requestEntries.addAll(requestEntries);
-		this.requestConfig = requestConfig;
+		setRequestEntries(requestEntries);
+		setRequestConfig(requestConfig);
 	}
 
 	public String getDomainName()
@@ -108,10 +107,13 @@ public class MPIRequestDTO implements Serializable
 
 	public void setRequestEntries(List<IdentityInDTO> requestEntries)
 	{
-		if (!this.requestEntries.equals(requestEntries))
+		this.requestEntries.clear();
+		if (requestEntries != null)
 		{
-			this.requestEntries.clear();
-			this.requestEntries.addAll(requestEntries);
+			for (IdentityInDTO iDTO : requestEntries)
+			{
+				this.requestEntries.add(new IdentityInDTO(iDTO));
+			}
 		}
 	}
 
@@ -122,7 +124,7 @@ public class MPIRequestDTO implements Serializable
 
 	public void setRequestConfig(RequestConfig requestConfig)
 	{
-		this.requestConfig = requestConfig;
+		this.requestConfig = requestConfig != null ? new RequestConfig(requestConfig) : new RequestConfig();
 	}
 
 	@Override
@@ -130,11 +132,11 @@ public class MPIRequestDTO implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((comment == null) ? 0 : comment.hashCode());
-		result = prime * result + ((domainName == null) ? 0 : domainName.hashCode());
-		result = prime * result + ((requestConfig == null) ? 0 : requestConfig.hashCode());
-		result = prime * result + ((requestEntries == null) ? 0 : requestEntries.hashCode());
-		result = prime * result + ((sourceName == null) ? 0 : sourceName.hashCode());
+		result = prime * result + (comment == null ? 0 : comment.hashCode());
+		result = prime * result + (domainName == null ? 0 : domainName.hashCode());
+		result = prime * result + (requestConfig == null ? 0 : requestConfig.hashCode());
+		result = prime * result + (requestEntries == null ? 0 : requestEntries.hashCode());
+		result = prime * result + (sourceName == null ? 0 : sourceName.hashCode());
 		return result;
 	}
 
@@ -142,47 +144,73 @@ public class MPIRequestDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		MPIRequestDTO other = (MPIRequestDTO) obj;
 		if (comment == null)
 		{
 			if (other.comment != null)
+			{
 				return false;
+			}
 		}
 		else if (!comment.equals(other.comment))
+		{
 			return false;
+		}
 		if (domainName == null)
 		{
 			if (other.domainName != null)
+			{
 				return false;
+			}
 		}
 		else if (!domainName.equals(other.domainName))
+		{
 			return false;
+		}
 		if (requestConfig == null)
 		{
 			if (other.requestConfig != null)
+			{
 				return false;
+			}
 		}
 		else if (!requestConfig.equals(other.requestConfig))
+		{
 			return false;
+		}
 		if (requestEntries == null)
 		{
 			if (other.requestEntries != null)
+			{
 				return false;
+			}
 		}
 		else if (!requestEntries.equals(other.requestEntries))
+		{
 			return false;
+		}
 		if (sourceName == null)
 		{
 			if (other.sourceName != null)
+			{
 				return false;
+			}
 		}
 		else if (!sourceName.equals(other.sourceName))
+		{
 			return false;
+		}
 		return true;
 	}
 

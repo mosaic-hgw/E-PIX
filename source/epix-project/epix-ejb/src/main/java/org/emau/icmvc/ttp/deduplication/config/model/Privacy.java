@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -60,6 +60,14 @@ public class Privacy
 	@XmlElement(name = "bloomfilter-config", required = true)
 	private final List<BloomFilterConfig> bloomFilterConfigs = new ArrayList<>();
 
+	public Privacy()
+	{}
+
+	public Privacy(PrivacyDTO privacy)
+	{
+		setBloomFilterConfigsFromDTOs(privacy.getBloomFilterConfigs());
+	}
+
 	public List<BloomFilterConfig> getBloomFilterConfigs()
 	{
 		return bloomFilterConfigs;
@@ -68,7 +76,22 @@ public class Privacy
 	public void setBloomFilterConfigs(List<BloomFilterConfig> bloomFilterConfigs)
 	{
 		this.bloomFilterConfigs.clear();
-		this.bloomFilterConfigs.addAll(bloomFilterConfigs);
+		if (bloomFilterConfigs != null)
+		{
+			this.bloomFilterConfigs.addAll(bloomFilterConfigs);
+		}
+	}
+
+	private void setBloomFilterConfigsFromDTOs(List<BloomFilterConfigDTO> bloomFilterConfigs)
+	{
+		this.bloomFilterConfigs.clear();
+		if (bloomFilterConfigs != null)
+		{
+			for (BloomFilterConfigDTO dto : bloomFilterConfigs)
+			{
+				this.bloomFilterConfigs.add(new BloomFilterConfig(dto));
+			}
+		}
 	}
 
 	public PrivacyDTO toDTO()

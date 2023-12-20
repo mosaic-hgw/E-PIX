@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,25 +39,41 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
+import org.emau.icmvc.ttp.epix.common.exception.MPIErrorCode;
+import org.emau.icmvc.ttp.epix.common.exception.MPIException;
+import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
+import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.common.model.enums.MatchingMode;
 import org.emau.icmvc.ttp.epix.common.model.enums.PersistMode;
+import org.emau.icmvc.ttp.epix.common.utils.XMLBindingUtil;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "MatchingConfiguration", propOrder = { "matchingMode", "mpiGenerator", "mpiPrefix", "useNotifications", "lowMemory", "persistMode", "requiredFields",
 		"valueFieldsMapping", "deduplication", "privacy", "preprocessingConfig", "matching" })
+@XmlRootElement(name = "MatchingConfiguration")
 public class MatchingConfiguration
 {
+	private static final String DOMAIN_CONFIG_XSD = "matching-config-2.9.0.xsd";
+	private static final XMLBindingUtil BINDER = new XMLBindingUtil();
+
 	@XmlElement(name = "matching-mode", required = true)
 	private MatchingMode matchingMode;
 	@XmlElement(name = "mpi-generator", required = true)
@@ -82,6 +98,59 @@ public class MatchingConfiguration
 	private PreprocessingConfig preprocessingConfig;
 	@XmlElement(required = true)
 	private Matching matching;
+
+	public MatchingConfiguration()
+	{}
+
+	public MatchingConfiguration(ConfigurationContainer configObjects, String domainName)
+	{
+		// TODO validierung
+		if (configObjects == null)
+		{
+			throw new RuntimeException(new MPIException(MPIErrorCode.INTERNAL_ERROR,
+					"exception while marshaling matching configuration objects for domain '" + domainName + "'"));
+		}
+		matchingMode = configObjects.getMatchingMode();
+		mpiGenerator = configObjects.getMpiGenerator();
+		mpiPrefix = configObjects.getMpiPrefix();
+		useNotifications = configObjects.isUseNotifications();
+		lowMemory = configObjects.isLimitSearchForLowMemory();
+		persistMode = configObjects.getPersistMode();
+		if (configObjects.getRequiredFields() != null)
+		{
+			requiredFields = new RequiredFields(configObjects.getRequiredFields());
+		}
+		if (configObjects.getValueFieldMapping() != null)
+		{
+			valueFieldsMapping = new ValueFieldsMapping();
+			valueFieldsMapping.setValue1(configObjects.getValueFieldMapping().get("value1"));
+			valueFieldsMapping.setValue2(configObjects.getValueFieldMapping().get("value2"));
+			valueFieldsMapping.setValue3(configObjects.getValueFieldMapping().get("value3"));
+			valueFieldsMapping.setValue4(configObjects.getValueFieldMapping().get("value4"));
+			valueFieldsMapping.setValue5(configObjects.getValueFieldMapping().get("value5"));
+			valueFieldsMapping.setValue6(configObjects.getValueFieldMapping().get("value6"));
+			valueFieldsMapping.setValue7(configObjects.getValueFieldMapping().get("value7"));
+			valueFieldsMapping.setValue8(configObjects.getValueFieldMapping().get("value8"));
+			valueFieldsMapping.setValue9(configObjects.getValueFieldMapping().get("value9"));
+			valueFieldsMapping.setValue10(configObjects.getValueFieldMapping().get("value10"));
+		}
+		if (configObjects.getDeduplication() != null)
+		{
+			deduplication = new Deduplication(configObjects.getDeduplication());
+		}
+		if (configObjects.getPrivacy() != null)
+		{
+			privacy = new Privacy(configObjects.getPrivacy());
+		}
+		if (configObjects.getPreprocessingFields() != null && !configObjects.getPreprocessingFields().isEmpty())
+		{
+			preprocessingConfig = new PreprocessingConfig(configObjects.getPreprocessingFields());
+		}
+		if (configObjects.getMatchingConfig() != null)
+		{
+			matching = new Matching(configObjects.getMatchingConfig());
+		}
+	}
 
 	public MatchingMode getMatchingMode()
 	{
@@ -203,41 +272,164 @@ public class MatchingConfiguration
 		this.matching = matching;
 	}
 
-	@Override public boolean equals(Object o)
+	/**
+	 * Marshals this matching configuration into the XML representation.
+	 * @return the XML representation for this matching configuration
+	 * @throws JAXBException if this matching configuration can not be marshalled
+	 */
+	public String toXml() throws JAXBException
+	{
+		return BINDER.marshal(DOMAIN_CONFIG_XSD, this);
+	}
+
+	/**
+	 * Marshals this matching configuration into the XML representation. If it cannot be marshalled,
+	 * this method throws a runtime exception which wraps an {@link MPIException} describing the
+	 * problem referring to the given domain name.
+	 * @param domainName the name of the domain to refer to in case of problems
+	 * @return the XML representation for this matching configuration
+	 * @throws RuntimeException if this matching configuration can not be marshalled
+	 */
+	public String toXml(String domainName) throws RuntimeException
+	{
+		try
+		{
+			return toXml();
+		}
+		catch (JAXBException e)
+		{
+			throw new RuntimeException(new MPIException(MPIErrorCode.INTERNAL_ERROR,
+					"exception while marshaling matching configuration objects for domain '" + domainName + "': " + e.getMessage(), e));
+		}
+	}
+
+	/**
+	 * {@return a configuration container for this matching configuration}
+	 */
+	public ConfigurationContainer toConfigurationContainer()
+	{
+		List<FieldName> requiredFields = new ArrayList<>();
+		if (getRequiredFields() != null)
+		{
+			requiredFields.addAll(getRequiredFields().getNames());
+		}
+		Map<String, String> valueFieldMapping = new HashMap<>();
+		if (getValueFieldsMapping() != null)
+		{
+			ValueFieldsMapping mapping = getValueFieldsMapping();
+			// unschoen, aber wird bei umstellung auf eav eh anders
+			if (mapping.getValue1() != null && !mapping.getValue1().isEmpty())
+			{
+				valueFieldMapping.put("value1", mapping.getValue1());
+			}
+			if (mapping.getValue2() != null && !mapping.getValue2().isEmpty())
+			{
+				valueFieldMapping.put("value2", mapping.getValue2());
+			}
+			if (mapping.getValue3() != null && !mapping.getValue3().isEmpty())
+			{
+				valueFieldMapping.put("value3", mapping.getValue3());
+			}
+			if (mapping.getValue4() != null && !mapping.getValue4().isEmpty())
+			{
+				valueFieldMapping.put("value4", mapping.getValue4());
+			}
+			if (mapping.getValue5() != null && !mapping.getValue5().isEmpty())
+			{
+				valueFieldMapping.put("value5", mapping.getValue5());
+			}
+			if (mapping.getValue6() != null && !mapping.getValue6().isEmpty())
+			{
+				valueFieldMapping.put("value6", mapping.getValue6());
+			}
+			if (mapping.getValue7() != null && !mapping.getValue7().isEmpty())
+			{
+				valueFieldMapping.put("value7", mapping.getValue7());
+			}
+			if (mapping.getValue8() != null && !mapping.getValue8().isEmpty())
+			{
+				valueFieldMapping.put("value8", mapping.getValue8());
+			}
+			if (mapping.getValue9() != null && !mapping.getValue9().isEmpty())
+			{
+				valueFieldMapping.put("value9", mapping.getValue9());
+			}
+			if (mapping.getValue10() != null && !mapping.getValue10().isEmpty())
+			{
+				valueFieldMapping.put("value10", mapping.getValue10());
+			}
+		}
+
+		return new ConfigurationContainer(getMatchingMode(), getMpiGenerator(),
+				getMpiPrefix(), isUseNotifications(), isLowMemory(), getPersistMode(),
+				requiredFields, valueFieldMapping, getDeduplication() != null ? getDeduplication().toDTO() : null,
+				getPrivacy() != null ? getPrivacy().toDTO() : null, getMatching().toDTO(),
+				getPreprocessingConfig() != null ? getPreprocessingConfig().toDTO() : null);
+	}
+
+	@Override
+	public boolean equals(Object o)
 	{
 		if (this == o)
+		{
 			return true;
+		}
 		if (!(o instanceof MatchingConfiguration))
+		{
 			return false;
+		}
 
 		MatchingConfiguration that = (MatchingConfiguration) o;
 
 		if (isUseNotifications() != that.isUseNotifications())
+		{
 			return false;
+		}
 		if (isLowMemory() != that.isLowMemory())
+		{
 			return false;
+		}
 		if (getMatchingMode() != that.getMatchingMode())
+		{
 			return false;
+		}
 		if (getMpiGenerator() != null ? !getMpiGenerator().equals(that.getMpiGenerator()) : that.getMpiGenerator() != null)
+		{
 			return false;
+		}
 		if (getMpiPrefix() != null ? !getMpiPrefix().equals(that.getMpiPrefix()) : that.getMpiPrefix() != null)
+		{
 			return false;
+		}
 		if (getPersistMode() != that.getPersistMode())
+		{
 			return false;
+		}
 		if (getRequiredFields() != null ? !getRequiredFields().equals(that.getRequiredFields()) : that.getRequiredFields() != null)
+		{
 			return false;
+		}
 		if (getValueFieldsMapping() != null ? !getValueFieldsMapping().equals(that.getValueFieldsMapping()) : that.getValueFieldsMapping() != null)
+		{
 			return false;
+		}
 		if (getDeduplication() != null ? !getDeduplication().equals(that.getDeduplication()) : that.getDeduplication() != null)
+		{
 			return false;
+		}
 		if (getPrivacy() != null ? !getPrivacy().equals(that.getPrivacy()) : that.getPrivacy() != null)
+		{
 			return false;
+		}
 		if (getPreprocessingConfig() != null ? !getPreprocessingConfig().equals(that.getPreprocessingConfig()) : that.getPreprocessingConfig() != null)
+		{
 			return false;
+		}
 		return getMatching() != null ? getMatching().equals(that.getMatching()) : that.getMatching() == null;
 	}
 
-	@Override public int hashCode()
+	@Override
+	public int hashCode()
 	{
 		int result = getMatchingMode() != null ? getMatchingMode().hashCode() : 0;
 		result = 31 * result + (getMpiGenerator() != null ? getMpiGenerator().hashCode() : 0);
@@ -260,5 +452,59 @@ public class MatchingConfiguration
 		return "MatchingConfiguration [matchingMode=" + matchingMode + ", mpiGenerator=" + mpiGenerator + ", mpiPrefix=" + mpiPrefix
 				+ ", useNotifications=" + useNotifications + ", lowMemory=" + lowMemory + ", persistMode=" + persistMode
 				+ ", requiredFields=" + requiredFields + ", valueFieldsMapping=" + valueFieldsMapping + ", preprocessingConfig=" + preprocessingConfig + ", matching=" + matching + "]";
+	}
+
+	/**
+	 * Creates a matching configuration from an XML description
+	 * @param configXml the configuration as XML
+	 * @return a matching configuration for an XML description
+	 * @throws JAXBException if the XML cannot be parsed
+	 */
+	public static MatchingConfiguration fromXml(String configXml) throws JAXBException
+	{
+			return BINDER.parse(MatchingConfiguration.class, configXml, DOMAIN_CONFIG_XSD);
+	}
+
+	/**
+	 * Creates a matching configuration from an XML description. If the XML cannot be parsed,
+	 * this method throws a runtime exception which wraps an {@link MPIException} describing the
+	 * problem referring to the given domain name.
+	 * @param configXml the configuration as XML
+	 * @param domainName the name of the domain to refer to in case of problems
+	 * @return a matching configuration for an XML description
+	 * @throws RuntimeException if the XML cannot be parsed
+	 */
+	public static MatchingConfiguration fromXml(String configXml, String domainName) throws RuntimeException
+	{
+		MatchingConfiguration matchingConfiguration;
+		try
+		{
+			matchingConfiguration = fromXml(configXml);
+		}
+		catch (JAXBException e)
+		{
+			throw new RuntimeException(new MPIException(MPIErrorCode.INTERNAL_ERROR,
+					"exception while parsing matching configuration for domain '" + domainName + "': " + e.getMessage(), e));
+		}
+		if (matchingConfiguration.getMatching() == null)
+		{
+			throw new RuntimeException(
+					new InvalidParameterException("domain.config", "matching configuration <matching> not set for domain: " + domainName));
+		}
+		else if (matchingConfiguration.getMatchingMode().equals(MatchingMode.MATCHING_IDENTITIES)
+				&& (matchingConfiguration.getMatching().getFields() == null || matchingConfiguration.getMatching().getFields().isEmpty()))
+		{
+			throw new RuntimeException(
+					new InvalidParameterException("domain.config", "matching configuration <matching> contains no fields for domain: " + domainName));
+		}
+		for (Field field : matchingConfiguration.getMatching().getFields())
+		{
+			if (field.getBlockingThreshold() == 0. && field.getMatchingThreshold() == 0.)
+			{
+				throw new RuntimeException(new InvalidParameterException("domain.config",
+						"matching configuration <matching> for domain: " + domainName + " contains no threshold for field " + field.getName()));
+			}
+		}
+		return matchingConfiguration;
 	}
 }

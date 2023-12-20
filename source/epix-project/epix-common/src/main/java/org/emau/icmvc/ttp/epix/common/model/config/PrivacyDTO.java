@@ -5,7 +5,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * E-PIX - Enterprise Patient Identifier
  * 							Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,19 +40,27 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PrivacyDTO implements Serializable
 {
-	private static final long serialVersionUID = -8035109879000056425L;
-	private final List<BloomFilterConfigDTO> bloomFilterConfigs;
+	private static final long serialVersionUID = -5472484681723853680L;
+	private final List<BloomFilterConfigDTO> bloomFilterConfigs = new ArrayList<>();
+
+	public PrivacyDTO()
+	{}
 
 	public PrivacyDTO(List<BloomFilterConfigDTO> bloomFilterConfigs)
 	{
 		super();
-		this.bloomFilterConfigs = bloomFilterConfigs;
+		setBloomFilterConfigs(bloomFilterConfigs);
+	}
+
+	public PrivacyDTO(PrivacyDTO dto)
+	{
+		this(dto.getBloomFilterConfigs());
 	}
 
 	public List<BloomFilterConfigDTO> getBloomFilterConfigs()
@@ -60,12 +68,24 @@ public class PrivacyDTO implements Serializable
 		return bloomFilterConfigs;
 	}
 
+	public void setBloomFilterConfigs(List<BloomFilterConfigDTO> bloomFilterConfigs)
+	{
+		this.bloomFilterConfigs.clear();
+		if (bloomFilterConfigs != null)
+		{
+			for (BloomFilterConfigDTO configDTO : bloomFilterConfigs)
+			{
+				this.bloomFilterConfigs.add(new BloomFilterConfigDTO(configDTO));
+			}
+		}
+	}
+
 	@Override
 	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((bloomFilterConfigs == null) ? 0 : bloomFilterConfigs.hashCode());
+		result = prime * result + (bloomFilterConfigs == null ? 0 : bloomFilterConfigs.hashCode());
 		return result;
 	}
 
@@ -73,11 +93,17 @@ public class PrivacyDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		PrivacyDTO other = (PrivacyDTO) obj;
 		if (bloomFilterConfigs == null)
 		{

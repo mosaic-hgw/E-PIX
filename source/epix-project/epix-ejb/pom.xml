@@ -1,17 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<artifactId>epix-project</artifactId>
-		<groupId>org.emau.icmvc.ttp.epix</groupId>
-		<version>2.13.1</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
-
 	<artifactId>epix-ejb</artifactId>
-	<name>epix-ejb</name>
-	<url>https://mosaic-greifswald.de</url>
+	<packaging>ejb</packaging>
+	<parent>
+		<groupId>org.emau.icmvc.ttp.epix</groupId>
+		<artifactId>epix-project</artifactId>
+		<version>2023.1.2</version>
+	</parent>
 
 	<dependencies>
 		<dependency>
@@ -50,7 +46,7 @@
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 		</dependency>
-		<!-- fuer notificationservice -->
+		<!-- for notification-service and soap/web-auth-->
 		<dependency>
 			<groupId>org.emau.icmvc.ttp</groupId>
 			<artifactId>ths-utils</artifactId>
@@ -75,19 +71,14 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-ejb-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Dependencies>io.undertow.servlet export, io.undertow.core export, org.wildfly.security.elytron-http-oidc export, org.apache.cxf.impl export</Dependencies>
+						</manifestEntries>
+					</archive>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-
-	<reporting>
-		<plugins>
-			<!-- Code metrics -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>javancss-maven-plugin</artifactId>
-				<version>2.1</version>
-			</plugin>
-		</plugins>
-	</reporting>
-
 </project>

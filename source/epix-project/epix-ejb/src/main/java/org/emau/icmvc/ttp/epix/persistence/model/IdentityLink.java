@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -47,6 +47,8 @@ import java.util.Date;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -62,6 +64,7 @@ import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.MPIIdentityDTO;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchDTO;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchForMPIDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 
 /**
  * 
@@ -81,11 +84,13 @@ public class IdentityLink implements Serializable
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "identitylink_index")
 	private long id;
-	private double threshold = 0.0;
+	private double threshold;
 	private String algorithm;
 	@Column(name = "create_timestamp", nullable = false)
 	private Timestamp createTimestamp;
-
+	@Column(columnDefinition = "char(14)")
+	@Enumerated(EnumType.STRING)
+	private PossibleMatchPriority priority;
 	@OneToOne(cascade = CascadeType.MERGE, optional = false)
 	@JoinColumn(name = "src_identity")
 	private Identity srcIdentity;
@@ -95,17 +100,17 @@ public class IdentityLink implements Serializable
 
 	public IdentityLink()
 	{
-		this.createTimestamp = new Timestamp(System.currentTimeMillis());
+		this(null, null, null, 0.0, new Timestamp(System.currentTimeMillis()));
 	}
 
 	public IdentityLink(Identity srcIdentity, Identity destIdentity, String algorithm, double threshold, Timestamp timestamp)
 	{
-		super();
 		this.srcIdentity = srcIdentity;
 		this.destIdentity = destIdentity;
 		this.algorithm = algorithm;
 		this.threshold = threshold;
 		this.createTimestamp = timestamp;
+		this.priority = PossibleMatchDTO.DEFAULT_PRIORITY;
 	}
 
 	public long getId()
@@ -168,11 +173,21 @@ public class IdentityLink implements Serializable
 		this.createTimestamp = createTimestamp;
 	}
 
+	public PossibleMatchPriority getPriority()
+	{
+		return priority;
+	}
+
+	public void setPriority(PossibleMatchPriority priority)
+	{
+		this.priority = priority;
+	}
+
 	public PossibleMatchDTO toDTO()
 	{
 		return new PossibleMatchDTO(new MPIIdentityDTO(srcIdentity.getPerson().getFirstMPI().toDTO(), srcIdentity.toDTO()),
 				new MPIIdentityDTO(destIdentity.getPerson().getFirstMPI().toDTO(), destIdentity.toDTO()), id, threshold,
-				createTimestamp == null ? null : new Date(createTimestamp.getTime()));
+				createTimestamp == null ? null : new Date(createTimestamp.getTime()), priority);
 	}
 
 	public PossibleMatchForMPIDTO toDTOForMPI(String mpiId)
@@ -193,7 +208,7 @@ public class IdentityLink implements Serializable
 			matchingMPIIdentity = new MPIIdentityDTO(srcIdentity.getPerson().getFirstMPI().toDTO(), srcIdentity.toDTO());
 		}
 		return new PossibleMatchForMPIDTO(mpi, assignedIdentity, matchingMPIIdentity, id, threshold,
-				createTimestamp == null ? null : new Date(createTimestamp.getTime()));
+				createTimestamp == null ? null : new Date(createTimestamp.getTime()), priority);
 	}
 
 	@Override
@@ -224,7 +239,7 @@ public class IdentityLink implements Serializable
 	public String toString()
 	{
 		return "IdentityLink [id=" + id + ", threshold=" + threshold + ", algorithm=" + algorithm + ", createTimestamp=" + createTimestamp
-				+ ", srcIdentityId=" + (srcIdentity == null ? "null" : srcIdentity.getId()) + ", destIdentityId="
+				+ ", priority=" + getPriority() + ", srcIdentityId=" + (srcIdentity == null ? "null" : srcIdentity.getId()) + ", destIdentityId="
 				+ (destIdentity == null ? "null" : destIdentity.getId()) + "]";
 	}
 }

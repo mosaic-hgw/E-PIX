@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -41,14 +41,15 @@ package org.emau.icmvc.ttp.epix.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.ejb.Remote;
 import javax.ejb.Stateless;
 import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
+import org.apache.commons.lang3.StringUtils;
+import org.emau.icmvc.ttp.deduplication.config.model.MatchingConfiguration;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
@@ -57,6 +58,7 @@ import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.model.ContactHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.DomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
+import org.emau.icmvc.ttp.epix.common.model.IdentifierHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
@@ -67,6 +69,7 @@ import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
 import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityField;
 import org.emau.icmvc.ttp.epix.common.utils.PaginationConfig;
+import org.emau.icmvc.ttp.epix.persistence.PublicDAO;
 
 /**
  *
@@ -176,6 +179,19 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("addDomain");
 		}
 		checkParameter(domain.getName(), "domain.getName()");
+
+		try
+		{
+			// the only place, where we do not want to throw an UnknownObjectException but an InvalidParameterException
+			// when the caller is not allowed to create (or deal with in general) domains of the given name w.r.t. domain-based roles
+			checkAllowedDomain(domain.getName());
+		}
+		catch (UnknownObjectException e)
+		{
+			throw new InvalidParameterException("domain.name", "Illegal domain name " + domain.getName()
+					+ " (not matching any domain-based role: " + getAuthContext().getDomainBasedRoles() + ")");
+		}
+
 		checkParameter(domain.getMpiDomain(), "domain.getMpiDomain()");
 		checkParameter(domain.getSafeSource(), "domain.getSafeSource()");
 		DomainDTO result = dao.addDomain(domain);
@@ -195,6 +211,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getDomain");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		DomainDTO result = dao.getDomain(domainName);
 		logger.info("returning found domain");
 		return result;
@@ -204,7 +221,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	public List<DomainDTO> getDomains()
 	{
 		logger.info("getDomains");
-		List<DomainDTO> result = dao.getDomains();
+		List<DomainDTO> result = filterAllowedDomains(dao.getDomains());
 		logger.info("found " + result.size() + " domains");
 		return result;
 	}
@@ -221,6 +238,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("updateDomain");
 		}
 		checkParameter(domain.getName(), "domain.getName()");
+		checkAllowedDomain(domain.getName());
 		checkParameter(domain.getMpiDomain(), "domain.getMpiDomain()");
 		checkParameter(domain.getSafeSource(), "domain.getSafeSource()");
 		DomainDTO result = dao.updateDomain(domain);
@@ -241,6 +259,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("updateDomainInUse");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		DomainDTO result = dao.updateDomainInUse(domainName, label, description);
 		logger.info("domain updated");
 		return result;
@@ -258,7 +277,8 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("deleteDomain");
 		}
 		checkParameter(domainName, "domainName");
-		dao.deleteDomain(domainName, force);
+		checkAllowedDomain(domainName);
+		dao.deleteDomain(domainName, force, getAuthUser());
 		logger.info("domain deleted");
 	}
 
@@ -351,7 +371,11 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 		{
 			logger.info("getPersonById");
 		}
-		return dao.getPersonById(id);
+
+		PersonDTO person = dao.getPersonById(id);
+		checkAllowedPerson(person);
+
+		return person;
 	}
 
 	@Override
@@ -365,7 +389,14 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 		{
 			logger.info("getIdentityById");
 		}
-		return dao.getIdentityById(id);
+
+		IdentityOutDTO identity = dao.getIdentityById(id);
+
+		checkAllowedEntity(
+				getPersonIdDomainSupplier(identity.getPersonId()),
+				() -> PublicDAO.createUnknownIdentityIdException(id));
+
+		return identity;
 	}
 
 	@Override
@@ -380,6 +411,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getDeactivatedPersonsForDomain");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<PersonDTO> result = dao.getDeactivatedPersons(domainName);
 		logger.info("found " + result.size() + " persons");
 		return result;
@@ -396,6 +428,8 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 		{
 			logger.info("getDeacticatedIdentitiesForDomain");
 		}
+		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<IdentityOutDTO> result = dao.getDeactivatedIdentitiesByDomain(domainName);
 		logger.info("found " + result.size() + " identities");
 		return result;
@@ -413,6 +447,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getHistoryForPerson");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
 		List<PersonHistoryDTO> result = dao.getHistoryForPerson(domainName, mpiId);
 		logger.info("found " + result.size() + " person history entries");
@@ -431,6 +466,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getIdentityHistoriesForDomain");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<IdentityHistoryDTO> result = dao.getIdentityHistoriesForDomain(domainName, null, false);
 		logger.info("found " + result.size() + " identity history entries");
 		return result;
@@ -451,6 +487,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getIdentityHistoriesForDomainFiltered");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<IdentityHistoryDTO> result = dao.getIdentityHistoriesForDomain(domainName, filter, filterIsCaseSensitive);
 		logger.info("found " + result.size() + " identity history entries");
 		return result;
@@ -469,6 +506,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getIdentityHistoriesForDomainPaginated");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<IdentityHistoryDTO> result = dao.getIdentityHistoriesPaginated(domainName, paginationConfig);
 		logger.info("found " + result.size() + " identity history entries");
 		return result;
@@ -487,6 +525,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("countIdentityHistoriesForDomain");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		long count = dao.countIdentityHistories(domainName, paginationConfig);
 		logger.info("counted " + count + " identity history entries");
 		return count;
@@ -504,6 +543,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("countPossibleMatchHistoriesForDomain");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		long count = dao.countPossibleMatchHistories(domainName, pc);
 		logger.info("counted " + count + " possible match history entries");
 		return count;
@@ -521,6 +561,14 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getHistoryForIdentity");
 		}
 		List<IdentityHistoryDTO> result = dao.getHistoryForIdentity(identityId);
+		if (!result.isEmpty())
+		{
+			// check allowed identity ID via the person ID of the result,
+			// so we can skip an extra call to dao.getIdentityById(id) to get the person ID (to get the domain)
+			checkAllowedEntity(
+					getPersonIdDomainSupplier(result.get(0).getPersonId()),
+					() -> PublicDAO.createUnknownIdentityIdException(identityId));
+		}
 		logger.info("found " + result.size() + " identity history entries");
 		return result;
 	}
@@ -537,7 +585,31 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getHistoryForContact");
 		}
 		List<ContactHistoryDTO> result = dao.getHistoryForContact(contactId);
+		if (!result.isEmpty())
+		{
+			// check allowed identityID via the person ID of the result,
+			// so we can skip an extra call to dao.getIdentityById(id) to get the person ID (to get the domain)
+			checkAllowedEntity(
+					getIdentityIdDomainSupplier(result.get(0).getIdentityId()),
+					() -> PublicDAO.createUnknownContactIdException(contactId));
+		}
 		logger.info("found " + result.size() + " contact history entries");
+		return result;
+	}
+
+	@Override
+	public List<IdentifierHistoryDTO> getHistoryForIdentifier(String identifierDomainName, String value) throws UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("getHistoryForIdentifier with identifierDomainName '" + identifierDomainName + "' and value '" + value + "'");
+		}
+		else
+		{
+			logger.info("getHistoryForIdentifier");
+		}
+		List<IdentifierHistoryDTO> result = dao.getHistoryForIdentifier(identifierDomainName, value);
+		logger.info("found " + result.size() + " identifier history entries");
 		return result;
 	}
 
@@ -554,6 +626,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getPossibleMatchHistoryForPerson");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
 		List<PossibleMatchHistoryDTO> result = dao.getPossibleMatchHistoryForPerson(domainName, mpiId);
 		logger.info("found " + result.size() + " possible match history entries");
@@ -572,6 +645,24 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getPossibleMatchHistoryForUpdatedIdentity");
 		}
 		List<PossibleMatchHistoryDTO> result = dao.getPossibleMatchHistoryForUpdatedIdentity(updatedIdentityId);
+		checkAllowedPossibleMatchHistoryResult(updatedIdentityId, result);
+		logger.info("found " + result.size() + " possible match history entries");
+		return result;
+	}
+
+	@Override
+	public List<PossibleMatchHistoryDTO> getPossibleMatchHistoryByIdentity(long identityId) throws UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("getPossibleMatchHistoryByIdentity for identityId " + identityId);
+		}
+		else
+		{
+			logger.info("getPossibleMatchHistoryForIdentity");
+		}
+		List<PossibleMatchHistoryDTO> result = dao.getPossibleMatchHistoryByIdentity(identityId);
+		checkAllowedPossibleMatchHistoryResult(identityId, result);
 		logger.info("found " + result.size() + " possible match history entries");
 		return result;
 	}
@@ -588,6 +679,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getConfigurationForDomain");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		ConfigurationContainer result = dao.getConfigurationContainerForDomain(domainName);
 		logger.info("configuration found");
 		return result;
@@ -604,6 +696,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 		{
 			logger.info("getReferenceIdentityAtTimestamp");
 		}
+		checkAllowedPersonId(personId);
 		List<IdentityHistoryDTO> result = dao.getIdentityHistoryByPersonId(personId);
 		logger.info("found " + result.size() + " identity history entries for personId");
 		return result;
@@ -621,8 +714,65 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 			logger.info("getDefinedDeduplicationReasons");
 		}
 		checkParameter(domainName, "domainName");
+		checkAllowedDomain(domainName);
 		List<ReasonDTO> result = dao.getDefinedDeduplicationReasons(domainName);
 		logger.info("reasons found");
 		return result;
+	}
+
+	@Override
+	public ConfigurationContainer parseMatchingConfiguration(String xml) throws InvalidParameterException, MPIException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("parseMatchingConfiguration from '{}'",
+					xml == null ? "null" : StringUtils.truncate(xml, 1000) + "...");
+		}
+		else
+		{
+			logger.info("parseMatchingConfiguration");
+		}
+
+		checkParameter(xml, "xml");
+
+		return unwrapRuntimeException(() ->
+				MatchingConfiguration.fromXml(xml, "unknown").toConfigurationContainer());
+	}
+
+	@Override
+	public String encodeMatchingConfiguration(ConfigurationContainer config) throws InvalidParameterException, MPIException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("encodeMatchingConfiguration from '{}'", config == null ? "null" : config);
+		}
+		else
+		{
+			logger.info("encodeMatchingConfiguration");
+		}
+
+		checkParameter(config, "config");
+		return unwrapRuntimeException(() ->
+				new MatchingConfiguration(config, "unknown").toXml("unknown"));
+	}
+
+	private <T> T unwrapRuntimeException(Supplier<T> supplier) throws InvalidParameterException, MPIException
+	{
+		try
+		{
+			return supplier.get();
+		}
+		catch (RuntimeException e)
+		{
+			if (e.getCause() instanceof MPIException mpie)
+			{
+				throw mpie;
+			}
+			else if (e.getCause() instanceof InvalidParameterException ipe)
+			{
+				throw ipe;
+			}
+			throw e;
+		}
 	}
 }

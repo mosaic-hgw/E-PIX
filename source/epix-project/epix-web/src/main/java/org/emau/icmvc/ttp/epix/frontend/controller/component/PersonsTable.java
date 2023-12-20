@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -258,6 +258,16 @@ public class PersonsTable
 			{
 				fields.add(WebPersonField.contactExternalDate);
 			}
+			if (!fields.contains(WebPersonField.dateOfMoveIn)
+					&& person.getContact().getDateOfMoveIn() != null)
+			{
+				fields.add(WebPersonField.dateOfMoveIn);
+			}
+			if (!fields.contains(WebPersonField.dateOfMoveOut)
+					&& person.getContact().getDateOfMoveOut() != null)
+			{
+				fields.add(WebPersonField.dateOfMoveOut);
+			}
 			if (!fields.contains(WebPersonField.MPI)
 					&& StringUtils.isNotEmpty(person.getMpiId()))
 			{
@@ -272,6 +282,16 @@ public class PersonsTable
 					&& StringUtils.isNotEmpty(person.getErrorMsg()))
 			{
 				fields.add(WebPersonField.errorMsg);
+			}
+			if (!fields.contains(WebPersonField.vitalStatus)
+					&& person.getVitalStatus() != null && !person.getVitalStatus().getType().isUnknown())
+			{
+				fields.add(WebPersonField.vitalStatus);
+			}
+			if (!fields.contains(WebPersonField.dateOfDeath)
+					&& person.getDateOfDeath() != null)
+			{
+				fields.add(WebPersonField.dateOfDeath);
 			}
 		}
 

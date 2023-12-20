@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -50,8 +50,10 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
 import javax.validation.constraints.Size;
 
+import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
@@ -62,8 +64,13 @@ import org.emau.icmvc.ttp.epix.common.model.MPIIdentityDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
+import org.emau.icmvc.ttp.epix.common.utils.PaginationConfig;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 import org.emau.icmvc.ttp.epix.frontend.model.PossibleMatchDTOLazyModel;
+import org.icmvc.ttp.web.util.File;
+import org.primefaces.PrimeFaces;
+import org.primefaces.model.StreamedContent;
 
 /**
  * @author Arne Blumentritt
@@ -91,6 +98,8 @@ public class ResolveController extends AbstractEpixWebBean
 
 	private Boolean sendMergeNotification = true;
 
+	private boolean showPostponed = false;
+
 	/**
 	 * Get possible matches when page loads
 	 */
@@ -101,7 +110,7 @@ public class ResolveController extends AbstractEpixWebBean
 		reasons.put(NO_REASON_OPTION, new ReasonDTO(NO_REASON_OPTION, null));
 		try
 		{
-			for (ReasonDTO reasonDTO : managementService.getDefinedDeduplicationReasons(domainSelector.getSelectedDomainName()))
+			for (ReasonDTO reasonDTO : managementService.getDefinedDeduplicationReasons(getDomainSelector().getSelectedDomainName()))
 			{
 				reasons.put(reasonDTO.getName(), reasonDTO);
 			}
@@ -114,6 +123,25 @@ public class ResolveController extends AbstractEpixWebBean
 
 		loadMatches();
 		onNewPossibleMatch();
+	}
+
+	public void load(String domain, String mpi)
+	{
+		if (FacesContext.getCurrentInstance().isPostback())
+		{
+			return;
+		}
+
+		if (StringUtils.isNotEmpty(domain))
+		{
+			getDomainSelector().setSelectedDomain(domain);
+		}
+		if (StringUtils.isNotEmpty(mpi))
+		{
+			PrimeFaces.current().executeScript("PF('blockMatches').show()");
+			PrimeFaces.current().executeScript("$('#main\\\\:matches\\\\:globalFilter').val('" + mpi + "')");
+			PrimeFaces.current().executeScript("PF('matches').filter();");
+		}
 	}
 
 	/**
@@ -137,7 +165,7 @@ public class ResolveController extends AbstractEpixWebBean
 
 			loadMatches();
 		}
-		catch (InvalidParameterException e)
+		catch (InvalidParameterException | UnknownObjectException e)
 		{
 			logMessage(getBundle().getString("resolve.error.reason"), Severity.ERROR);
 		}
@@ -169,6 +197,75 @@ public class ResolveController extends AbstractEpixWebBean
 		}
 	}
 
+	public void onPrioritize(String priority)
+	{
+		try
+		{
+			service.prioritizePossibleMatch(selectedPossibleMatch.getLinkId(), PossibleMatchPriority.valueOf(priority));
+			logMessage(getBundle().getString("resolve.info.prioritized." + PossibleMatchPriority.valueOf(priority)), Severity.INFO);
+			loadMatches();
+		}
+		catch (InvalidParameterException e)
+		{
+			logMessage(e.getLocalizedMessage(), Severity.ERROR);
+		}
+		catch (MPIException e)
+		{
+			logMPIException(e);
+		}
+	}
+
+	public void onShowPostponed(boolean showPostponed)
+	{
+		this.showPostponed = showPostponed;
+		loadMatches();
+	}
+
+	public StreamedContent onDownloadPossibleMatches() throws InvalidParameterException, UnknownObjectException
+	{
+		Map<String, List<Object>> valueMap = new LinkedHashMap<>();
+		List<String> dates = new ArrayList<>();
+
+		valueMap.put(getBundle().getString("common.person.firstName") + " 1", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.lastName") + " 1", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.gender") + " 1", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.birthDate") + " 1", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.birthPlace") + " 1", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.MPI") + " 1", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.firstName") + " 2", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.lastName") + " 2", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.gender") + " 2", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.birthDate") + " 2", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.birthPlace") + " 2", new ArrayList<>());
+		valueMap.put(getBundle().getString("common.person.MPI") + " 2", new ArrayList<>());
+
+		PaginationConfig pc = PaginationConfig.builder()
+				.withPriorityFilter(getPriority())
+				.build();
+
+		for (PossibleMatchDTO possibleMatch : service.getPossibleMatchesForDomainFiltered(getDomainSelector().getSelectedDomainName(), pc))
+		{
+			dates.add(dateToString(possibleMatch.getPossibleMatchCreated(), "datetime"));
+			MPIIdentityDTO i1 = (MPIIdentityDTO) possibleMatch.getMatchingMPIIdentities().toArray()[0];
+			MPIIdentityDTO i2 = (MPIIdentityDTO) possibleMatch.getMatchingMPIIdentities().toArray()[1];
+
+			valueMap.get(getBundle().getString("common.person.firstName") + " 1").add(i1.getIdentity().getFirstName());
+			valueMap.get(getBundle().getString("common.person.lastName") + " 1").add(i1.getIdentity().getLastName());
+			valueMap.get(getBundle().getString("common.person.gender") + " 1").add(i1.getIdentity().getGender());
+			valueMap.get(getBundle().getString("common.person.birthDate") + " 1").add(dateToString(i1.getIdentity().getBirthDate(), "date"));
+			valueMap.get(getBundle().getString("common.person.birthPlace") + " 1").add(i1.getIdentity().getBirthPlace());
+			valueMap.get(getBundle().getString("common.person.MPI") + " 1").add(String.valueOf(i1.getMpiId().getValue()));
+			valueMap.get(getBundle().getString("common.person.firstName") + " 2").add(i2.getIdentity().getFirstName());
+			valueMap.get(getBundle().getString("common.person.lastName") + " 2").add(i2.getIdentity().getFirstName());
+			valueMap.get(getBundle().getString("common.person.gender") + " 2").add(i2.getIdentity().getGender());
+			valueMap.get(getBundle().getString("common.person.birthDate") + " 2").add(dateToString(i2.getIdentity().getBirthDate(), "date"));
+			valueMap.get(getBundle().getString("common.person.birthPlace") + " 2").add(i2.getIdentity().getBirthPlace());
+			valueMap.get(getBundle().getString("common.person.MPI") + " 2").add(String.valueOf(i2.getMpiId().getValue()));
+		}
+
+		return File.get3DDataAsCSV(valueMap, dates, "Possible Matches " + getPriority().name(), TOOL);
+	}
+
 	public void onNewPossibleMatch()
 	{
 		externalPossibleMatchId1 = null;
@@ -183,11 +280,11 @@ public class ResolveController extends AbstractEpixWebBean
 			PossibleMatchDTO result;
 			if (externalPossibleMatchIdType.equals("MPI"))
 			{
-				result = service.externalPossibleMatchForPerson(domainSelector.getSelectedDomainName(), externalPossibleMatchId1, externalPossibleMatchId2);
+				result = service.externalPossibleMatchForPerson(getDomainSelector().getSelectedDomainName(), externalPossibleMatchId1, externalPossibleMatchId2);
 			}
 			else
 			{
-				result = service.externalPossibleMatchForIdentity(domainSelector.getSelectedDomainName(), Long.parseLong(externalPossibleMatchId1), Long.parseLong(externalPossibleMatchId2));
+				result = service.externalPossibleMatchForIdentity(getDomainSelector().getSelectedDomainName(), Long.parseLong(externalPossibleMatchId1), Long.parseLong(externalPossibleMatchId2));
 			}
 
 			// Get both mpis and identites of the added possible match
@@ -229,7 +326,7 @@ public class ResolveController extends AbstractEpixWebBean
 	 * Get all unique contacts of the person with the given identityId
 	 *
 	 * @param identityId
-	 * 		id to gather contacts for
+	 *            id to gather contacts for
 	 * @return list of contacts of the given identity
 	 */
 	public List<ContactOutDTO> getContactsFromPersonForIdentity(Long identityId)
@@ -254,7 +351,7 @@ public class ResolveController extends AbstractEpixWebBean
 		PersonDTO person;
 		try
 		{
-			person = service.getPersonByMPI(domainSelector.getSelectedDomainName(), mpi);
+			person = service.getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), mpi);
 
 			List<IdentityOutDTO> identities = new ArrayList<>();
 			identities.add(person.getReferenceIdentity());
@@ -272,16 +369,20 @@ public class ResolveController extends AbstractEpixWebBean
 		return contacts;
 	}
 
-
 	/**
 	 * Lazyly load possible matches wrt. filter pattern and table page
 	 */
 	private void loadMatches()
 	{
-		getPossibleMatchDTOLazyModel(); // initializes the model if needed
-
+		// initializes the model if needed
+		getPossibleMatchDTOLazyModel().setPriority(getPriority());
 		selectedPossibleMatch = null;
 		otherReason = null;
+	}
+
+	private PossibleMatchPriority getPriority()
+	{
+		return showPostponed ? PossibleMatchPriority.POSTPONED : PossibleMatchPriority.OPEN;
 	}
 
 	public String getOtherReason()
@@ -352,21 +453,11 @@ public class ResolveController extends AbstractEpixWebBean
 	{
 		if (possibleMatchDTOLazyModel == null)
 		{
-			possibleMatchDTOLazyModel = new PossibleMatchDTOLazyModel(service, domainSelector,
+			possibleMatchDTOLazyModel = new PossibleMatchDTOLazyModel(service, getDomainSelector(),
 					getSimpleDateFormat("date").toPattern(), getSimpleDateFormat("datetime").toPattern());
 		}
 
 		return possibleMatchDTOLazyModel;
-	}
-
-	public String getDeduplicationReasonLabel(String reason)
-	{
-		return getBundle().containsKey("deduplication." + reason) ? getBundle().getString("deduplication." + reason) : reason;
-	}
-
-	public String getDeduplicationReasonDescription(String description)
-	{
-		return getBundle().containsKey("deduplication." + description) ? getBundle().getString("deduplication." + description) : description;
 	}
 
 	public PossibleMatchDTO getSelectedPossibleMatch()
@@ -427,5 +518,10 @@ public class ResolveController extends AbstractEpixWebBean
 	public enum Action
 	{
 		SPLIT, ASSIGN
+	}
+
+	public boolean isShowPostponed()
+	{
+		return showPostponed;
 	}
 }

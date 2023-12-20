@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,6 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -58,7 +57,7 @@ import javax.persistence.Table;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 
 /**
- * 
+ *
  * @author Christian Schack, geidell
  * @since 08.11.2010
  */
@@ -67,8 +66,6 @@ import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 @Table(name = "identifier")
 @Cacheable(false)
 @NamedQueries({
-		@NamedQuery(name = "Identifier.findByPerson", query = "SELECT li FROM Identity i JOIN i.identifiers li WHERE i.person = :person GROUP BY li.value, li.identifierDomain"),
-		@NamedQuery(name = "Identifier.findByPersonAndDomain", query = "SELECT li FROM Identity i JOIN i.identifiers li WHERE i.person = :person AND li.identifierDomain = :identifierDomain"),
 		@NamedQuery(name = "Identifier.getOrderedIdentifierByIdentifierDomain", query = "SELECT i FROM Identifier i WHERE i.identifierDomain = :identifierDomain AND i.value LIKE CONCAT(:prefix, '%') ORDER BY i.value desc") })
 public class Identifier implements Serializable
 {
@@ -173,8 +170,8 @@ public class Identifier implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((identifierDomain == null) ? 0 : identifierDomain.hashCode());
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		result = prime * result + (identifierDomain == null ? 0 : identifierDomain.hashCode());
+		result = prime * result + (value == null ? 0 : value.hashCode());
 		return result;
 	}
 
@@ -182,26 +179,40 @@ public class Identifier implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (!(obj instanceof Identifier))
+		{
 			return false;
+		}
 		Identifier other = (Identifier) obj;
 		if (identifierDomain == null)
 		{
 			if (other.identifierDomain != null)
+			{
 				return false;
+			}
 		}
 		else if (!identifierDomain.equals(other.identifierDomain))
+		{
 			return false;
+		}
 		if (value == null)
 		{
 			if (other.value != null)
+			{
 				return false;
+			}
 		}
 		else if (!value.equals(other.value))
+		{
 			return false;
+		}
 		return true;
 	}
 

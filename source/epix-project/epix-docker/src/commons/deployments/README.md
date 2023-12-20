@@ -7,6 +7,7 @@ sudo chown 1000:1000 deployments
 ```
 Weitere Details finden Sie hier: https://access.redhat.com/documentation/en-us/jboss_enterprise_application_platform/6/html/administration_and_configuration_guide/Reference_for_Deployment_Scanner_Marker_Files1
 
+
 ### License ###
 **License:** AGPLv3, https://www.gnu.org/licenses/agpl-3.0.en.html<br>
 **Copyright:** 2014 - ${build.year} University Medicine Greifswald<br>

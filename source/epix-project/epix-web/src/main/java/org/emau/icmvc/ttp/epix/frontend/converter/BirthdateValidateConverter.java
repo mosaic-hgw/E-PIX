@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -123,7 +123,7 @@ public class BirthdateValidateConverter implements Converter, Serializable
 		}
 		catch (ParseException e)
 		{
-			FacesMessage msg = new FacesMessage("invalid birthdate: " + e.getMessage());
+			FacesMessage msg = new FacesMessage("invalid birthdate");
 			msg.setSeverity(FacesMessage.SEVERITY_ERROR);
 			throw new ConverterException(msg);
 		}

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,14 +39,13 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -62,6 +61,17 @@ public class MultipleValues
 	private double penaltyOneShort = 0.1;
 	@XmlElement(name = "penalty-both-short", required = false, defaultValue = "0.2")
 	private double penaltyBothShort = 0.2;
+
+	public MultipleValues()
+	{}
+
+	public MultipleValues(char separator, double penaltyNotAPerfectMatch, double penaltyOneShort, double penaltyBothShort)
+	{
+		this.separator = Character.toString(separator);
+		this.penaltyNotAPerfectMatch = penaltyNotAPerfectMatch;
+		this.penaltyOneShort = penaltyOneShort;
+		this.penaltyBothShort = penaltyBothShort;
+	}
 
 	public char getSeparatorChar()
 	{
@@ -115,12 +125,12 @@ public class MultipleValues
 		int result = 1;
 		long temp;
 		temp = Double.doubleToLongBits(penaltyBothShort);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + (int) (temp ^ temp >>> 32);
 		temp = Double.doubleToLongBits(penaltyNotAPerfectMatch);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + (int) (temp ^ temp >>> 32);
 		temp = Double.doubleToLongBits(penaltyOneShort);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((separator == null) ? 0 : separator.hashCode());
+		result = prime * result + (int) (temp ^ temp >>> 32);
+		result = prime * result + (separator == null ? 0 : separator.hashCode());
 		return result;
 	}
 
@@ -128,25 +138,41 @@ public class MultipleValues
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		MultipleValues other = (MultipleValues) obj;
 		if (Double.doubleToLongBits(penaltyBothShort) != Double.doubleToLongBits(other.penaltyBothShort))
+		{
 			return false;
+		}
 		if (Double.doubleToLongBits(penaltyNotAPerfectMatch) != Double.doubleToLongBits(other.penaltyNotAPerfectMatch))
+		{
 			return false;
+		}
 		if (Double.doubleToLongBits(penaltyOneShort) != Double.doubleToLongBits(other.penaltyOneShort))
+		{
 			return false;
+		}
 		if (separator == null)
 		{
 			if (other.separator != null)
+			{
 				return false;
+			}
 		}
 		else if (!separator.equals(other.separator))
+		{
 			return false;
+		}
 		return true;
 	}
 

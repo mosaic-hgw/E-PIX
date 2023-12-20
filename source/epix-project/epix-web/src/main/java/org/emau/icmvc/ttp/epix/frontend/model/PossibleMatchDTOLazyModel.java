@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,15 +40,21 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  */
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityField;
+import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 import org.emau.icmvc.ttp.epix.common.utils.PaginationConfig;
 import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
 import org.emau.icmvc.ttp.epix.service.EPIXService;
@@ -61,6 +67,7 @@ import org.primefaces.model.SortMeta;
  */
 public class PossibleMatchDTOLazyModel extends AbstractLazyDataModel<PossibleMatchDTO>
 {
+	private final Set<PossibleMatchPriority> priorities = new HashSet<>();
 
 	public PossibleMatchDTOLazyModel(EPIXService service, DomainSelector domainSelector, String birthDateFormat, String creationTimeFormat)
 	{
@@ -79,50 +86,31 @@ public class PossibleMatchDTOLazyModel extends AbstractLazyDataModel<PossibleMat
 		logger.debug("load: first={}, pageSize={}, sorter={}, filter={}", first, pageSize, sortMetaMap, filterMetaMap);
 		List<PossibleMatchDTO> possibleMatches = new ArrayList<>();
 		boolean caseSensitive = false;
-		Map<IdentityField, String> filter = new EnumMap<>(IdentityField.class);
 
 		try
 		{
+			PaginationConfig pc = PaginationConfig.builder()
+					.withPagination(first, pageSize)
+					.withDateTimeFormats(birthDateFormat, creationTimeFormat)
+					.withPriorityFilter(getPriorities())
+					.build();
+
 			FilterMeta globalFilter = filterMetaMap.get(FilterMeta.GLOBAL_FILTER_KEY);
-			if (globalFilter != null)
+
+			if (globalFilter != null || filterMetaMap.isEmpty())
 			{
 				// if the global filter is set, all other filters will be ignored
-				Object filterValue = globalFilter.getFilterValue();
-				String pattern = toSQLQueryPattern(filterValue);
-				filter.put(IdentityField.NONE, pattern);
-
-				PaginationConfig pc = PaginationConfig.builder()
-						.withPagination(first, pageSize)
-						.withIdentityFilter(filter, false, caseSensitive)
-						.withDateTimeFormats(birthDateFormat, creationTimeFormat).build();
-
-				boolean sameQueryRowCount = isSameQueryWhenPagingAndSortingIsIgnored(pc);
-				if (registerQuery(pc))
-				{
-					return getLastResult();
-				}
-
-				logger.debug("load: with global filtering: {}", pc);
-				// TODO(FMM) the service interface should be simplified to take
-				//  a PaginationConfig directly instead to define a bunch of single parameters:
-				//    service.getPossibleMatchesForDomainFilteredByDefaultAndPaginated(...)
-				//    service.countPossibleMatchesForDomainFilteredByDefault(...)
-				//    service.getPossibleMatchesForDomainFilteredAndPaginated(...)
-				//    service.countPossibleMatchesForDomainFiltered(...)
-				//  See org.emau.icmvc.ttp.epix.frontend.model.IdentityHistoryPairLazyModel
-				possibleMatches.addAll(service.getPossibleMatchesForDomainFilteredByDefaultAndPaginated(
-						getDomainName(), first, pageSize, pattern, caseSensitive, birthDateFormat, creationTimeFormat));
-
-				// do not recount when only the paging parameters have changed (first, pageSize)
-				if (getRowCount() <= 0 || !sameQueryRowCount)
-				{
-					// query count of ALL filtered possible matches wrt the pattern (not only for the current page(s))
-					setRowCount((int) service.countPossibleMatchesForDomainFilteredByDefault(
-							getDomainName(), pattern, caseSensitive, birthDateFormat, creationTimeFormat));
-				}
+				String pattern = globalFilter != null ? toSQLQueryPattern(globalFilter.getFilterValue()) : null;
+				pc.setGlobalFieldFilter(pattern);
+				pc.setGlobalFieldFilterCaseSensitive(caseSensitive);
+				pc.setCreateTimestampFilter(pattern);
 			}
-			else {
-				for (FilterMeta meta : filterMetaMap.values()) {
+			else
+			{
+				Map<IdentityField, String> filter = new EnumMap<>(IdentityField.class);
+
+				for (FilterMeta meta : filterMetaMap.values())
+				{
 					IdentityField field = toIdentityField(meta.getField());
 					String pattern = toSQLQueryPattern(meta.getFilterValue());
 
@@ -131,28 +119,26 @@ public class PossibleMatchDTOLazyModel extends AbstractLazyDataModel<PossibleMat
 						filter.put(field, pattern);
 					}
 				}
+				pc.setIdentityFilter(filter);
+			}
 
-				PaginationConfig pc = PaginationConfig.builder()
-						.withPagination(first, pageSize)
-						.withIdentityFilter(filter, false, caseSensitive)
-						.withDateTimeFormats(birthDateFormat, creationTimeFormat).build();
+			boolean sameQueryRowCount = isSameQueryWhenPagingAndSortingIsIgnored(pc);
 
-				boolean sameQueryRowCount = isSameQueryWhenPagingAndSortingIsIgnored(pc);
-				if (registerQuery(pc))
-				{
-					return getLastResult();
-				}
+			if (registerQuery(pc))
+			{
+				setRowCount(getLastRowCount()); // see comment in #count()
+				return getLastResult();
+			}
 
-				logger.debug("load: with field-specific filtering: {}", pc);
-				possibleMatches.addAll(service.getPossibleMatchesForDomainFilteredAndPaginated(
-						getDomainName(), first, pageSize, IdentityField.NONE, false, filter, caseSensitive));
+			logger.debug("load: query possible matches: {}", pc);
+			possibleMatches.addAll(service.getPossibleMatchesForDomainFiltered(getDomainName(), pc));
 
-				// do not recount when only the paging parameters have changed (first, pageSize)
-				if (getRowCount() <= 0 || !sameQueryRowCount)
-				{
-					// query count of ALL filtered possible matches wrt the filters (not only for the current page(s))
-					setRowCount((int) service.countPossibleMatchesForDomainFiltered(getDomainName(), filter, caseSensitive));
-				}
+			// do not recount when only the paging parameters have changed (first, pageSize)
+			if (getRowCount() <= 0 || !sameQueryRowCount)
+			{
+				// query count of ALL filtered possible matches wrt the pattern (not only for the current page(s))
+				logger.debug("load: count possible matches: {}", pc);
+				setRowCount((int) service.countPossibleMatchesForDomainFiltered(getDomainName(), pc));
 			}
 
 			updateResult(possibleMatches);
@@ -167,5 +153,25 @@ public class PossibleMatchDTOLazyModel extends AbstractLazyDataModel<PossibleMat
 		}
 
 		return possibleMatches;
+	}
+
+	public Set<PossibleMatchPriority> getPriorities()
+	{
+		return new HashSet<>(priorities);
+	}
+
+	public void setPriorities(Set<PossibleMatchPriority> priorities)
+	{
+		this.priorities.clear();
+		if (priorities != null)
+		{
+			this.priorities.addAll(priorities.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
+		}
+		triggerDataChanged();
+	}
+
+	public void setPriority(PossibleMatchPriority priority)
+	{
+		setPriorities(Collections.singleton(priority));
 	}
 }

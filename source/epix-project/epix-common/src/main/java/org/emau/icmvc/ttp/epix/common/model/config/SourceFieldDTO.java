@@ -5,7 +5,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * E-PIX - Enterprise Patient Identifier
  * 							Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,59 +40,102 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-end###
  */
 
-import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
-
 import java.io.Serializable;
 import java.util.Objects;
 
-public class SourceFieldDTO implements Serializable {
-    private static final long serialVersionUID = -8123131531862812458L;
-    private final FieldName name;
-    private final String saltValue;
-    private final FieldName saltField;
-    private final long seed;
+import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 
-    public SourceFieldDTO(FieldName name, String saltValue, FieldName saltField, long seed) {
-        this.name = name;
-        this.saltValue = saltValue;
-        this.saltField = saltField;
-        this.seed = seed;
-    }
+public class SourceFieldDTO implements Serializable
+{
+	private static final long serialVersionUID = 6550395402361475311L;
+	private FieldName name;
+	private String saltValue;
+	private FieldName saltField;
+	private long seed;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SourceFieldDTO that = (SourceFieldDTO) o;
-        return Objects.equals(name, that.name) &&
-                Objects.equals(saltValue, that.saltValue) &&
-                Objects.equals(saltField, that.saltField) &&
-                Objects.equals(seed, that.seed);
-    }
+	public SourceFieldDTO()
+	{}
 
-    public FieldName getName() {
-        return name;
-    }
+	public SourceFieldDTO(FieldName name, String saltValue, FieldName saltField, long seed)
+	{
+		this.name = name;
+		this.saltValue = saltValue;
+		this.saltField = saltField;
+		this.seed = seed;
+	}
 
-    public String getSaltValue() {
-        return saltValue;
-    }
+	public SourceFieldDTO(SourceFieldDTO dto)
+	{
+		this(dto.getName(), dto.getSaltValue(), dto.getSaltField(), dto.getSeed());
+	}
 
-    public FieldName getSaltField() {
-        return saltField;
-    }
+	public FieldName getName()
+	{
+		return name;
+	}
 
-    public long getSeed() {
-        return seed;
-    }
+	public void setName(FieldName name)
+	{
+		this.name = name;
+	}
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, saltValue, saltField, seed);
-    }
+	public String getSaltValue()
+	{
+		return saltValue;
+	}
 
-    @Override
-    public String toString() {
-        return "SourceFieldDTO [name=" + name + ", saltValue=" + saltValue + ", saltField=" + saltField + ", seed=" + seed + "]";
-    }
+	public void setSaltValue(String saltValue)
+	{
+		this.saltValue = saltValue;
+	}
+
+	public FieldName getSaltField()
+	{
+		return saltField;
+	}
+
+	public void setSaltField(FieldName saltField)
+	{
+		this.saltField = saltField;
+	}
+
+	public long getSeed()
+	{
+		return seed;
+	}
+
+	public void setSeed(long seed)
+	{
+		this.seed = seed;
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(name, saltValue, saltField, seed);
+	}
+
+	@Override
+	public boolean equals(Object o)
+	{
+		if (this == o)
+		{
+			return true;
+		}
+		if (o == null || getClass() != o.getClass())
+		{
+			return false;
+		}
+		SourceFieldDTO that = (SourceFieldDTO) o;
+		return Objects.equals(name, that.name) &&
+				Objects.equals(saltValue, that.saltValue) &&
+				Objects.equals(saltField, that.saltField) &&
+				Objects.equals(seed, that.seed);
+	}
+
+	@Override
+	public String toString()
+	{
+		return "SourceFieldDTO [name=" + name + ", saltValue=" + saltValue + ", saltField=" + saltField + ", seed=" + seed + "]";
+	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,20 +39,19 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class IdentityInDTO extends IdentityInBaseDTO
 {
 	private static final long serialVersionUID = -7410357372877927414L;
-	private List<ContactInDTO> contacts = new ArrayList<>();
+	private final List<ContactInDTO> contacts = new ArrayList<>();
 
 	public IdentityInDTO()
 	{
@@ -62,10 +61,7 @@ public class IdentityInDTO extends IdentityInBaseDTO
 	public IdentityInDTO(IdentityInBaseDTO superDTO, List<ContactInDTO> contacts)
 	{
 		super(superDTO);
-		if (contacts != null)
-		{
-			this.contacts = contacts;
-		}
+		setContacts(contacts);
 	}
 
 	public IdentityInDTO(IdentityInDTO dto)
@@ -80,13 +76,13 @@ public class IdentityInDTO extends IdentityInBaseDTO
 
 	public void setContacts(List<ContactInDTO> contacts)
 	{
+		this.contacts.clear();
 		if (contacts != null)
 		{
-			this.contacts = contacts;
-		}
-		else
-		{
-			this.contacts.clear();
+			for (ContactInDTO cDTO : contacts)
+			{
+				this.contacts.add(new ContactInDTO(cDTO));
+			}
 		}
 	}
 
@@ -95,7 +91,7 @@ public class IdentityInDTO extends IdentityInBaseDTO
 	{
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((contacts == null) ? 0 : contacts.hashCode());
+		result = prime * result + (contacts == null ? 0 : contacts.hashCode());
 		return result;
 	}
 
@@ -103,19 +99,29 @@ public class IdentityInDTO extends IdentityInBaseDTO
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (!super.equals(obj))
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		IdentityInDTO other = (IdentityInDTO) obj;
 		if (contacts == null)
 		{
 			if (other.contacts != null)
+			{
 				return false;
+			}
 		}
 		else if (!contacts.equals(other.contacts))
+		{
 			return false;
+		}
 		return true;
 	}
 

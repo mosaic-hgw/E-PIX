@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,11 +39,10 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.util.Date;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -68,8 +67,8 @@ public class ContactOutDTO extends ContactInDTO
 		this.contactVersion = contactVersion;
 		this.identityId = identityId;
 		this.deactivated = deactivated;
-		this.contactCreated = contactCreated;
-		this.contactLastEdited = contactLastEdited;
+		setContactCreated(contactCreated);
+		setContactLastEdited(contactLastEdited);
 	}
 
 	public ContactOutDTO(ContactOutDTO dto)
@@ -125,7 +124,7 @@ public class ContactOutDTO extends ContactInDTO
 
 	public void setContactCreated(Date contactCreated)
 	{
-		this.contactCreated = contactCreated;
+		this.contactCreated = contactCreated != null ? new Date(contactCreated.getTime()) : null;
 	}
 
 	public Date getContactLastEdited()
@@ -135,7 +134,7 @@ public class ContactOutDTO extends ContactInDTO
 
 	public void setContactLastEdited(Date contactLastEdited)
 	{
-		this.contactLastEdited = contactLastEdited;
+		this.contactLastEdited = contactLastEdited != null ? new Date(contactLastEdited.getTime()) : null;
 	}
 
 	@Override
@@ -143,12 +142,12 @@ public class ContactOutDTO extends ContactInDTO
 	{
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((contactCreated == null) ? 0 : contactCreated.hashCode());
-		result = prime * result + (int) (contactId ^ (contactId >>> 32));
-		result = prime * result + ((contactLastEdited == null) ? 0 : contactLastEdited.hashCode());
-		result = prime * result + ((contactVersion == null) ? 0 : contactVersion.hashCode());
+		result = prime * result + (contactCreated == null ? 0 : contactCreated.hashCode());
+		result = prime * result + (int) (contactId ^ contactId >>> 32);
+		result = prime * result + (contactLastEdited == null ? 0 : contactLastEdited.hashCode());
+		result = prime * result + (contactVersion == null ? 0 : contactVersion.hashCode());
 		result = prime * result + (deactivated ? 1231 : 1237);
-		result = prime * result + (int) (identityId ^ (identityId >>> 32));
+		result = prime * result + (int) (identityId ^ identityId >>> 32);
 		return result;
 	}
 
@@ -156,39 +155,63 @@ public class ContactOutDTO extends ContactInDTO
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (!super.equals(obj))
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		ContactOutDTO other = (ContactOutDTO) obj;
 		if (contactCreated == null)
 		{
 			if (other.contactCreated != null)
+			{
 				return false;
+			}
 		}
 		else if (!contactCreated.equals(other.contactCreated))
+		{
 			return false;
+		}
 		if (contactId != other.contactId)
+		{
 			return false;
+		}
 		if (contactLastEdited == null)
 		{
 			if (other.contactLastEdited != null)
+			{
 				return false;
+			}
 		}
 		else if (!contactLastEdited.equals(other.contactLastEdited))
+		{
 			return false;
+		}
 		if (contactVersion == null)
 		{
 			if (other.contactVersion != null)
+			{
 				return false;
+			}
 		}
 		else if (!contactVersion.equals(other.contactVersion))
+		{
 			return false;
+		}
 		if (deactivated != other.deactivated)
+		{
 			return false;
+		}
 		if (identityId != other.identityId)
+		{
 			return false;
+		}
 		return true;
 	}
 

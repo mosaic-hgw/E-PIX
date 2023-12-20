@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.emau.icmvc.ttp.epix</groupId>
 		<artifactId>epix-project</artifactId>
-		<version>2.13.1</version>
+		<version>2023.1.2</version>
 	</parent>
 	<artifactId>epix-web</artifactId>
 	<packaging>war</packaging>
@@ -27,14 +27,14 @@
 			<artifactId>ttp-web-common</artifactId>
 			<classifier>classes</classifier>
 		</dependency>
+		<!-- for notification-service and soap/web-auth-->
+		<dependency>
+			<groupId>org.emau.icmvc.ttp</groupId>
+			<artifactId>ths-utils</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.ibm.icu</groupId>
 			<artifactId>icu4j</artifactId>
-		</dependency>
-		<!-- needed for fileupload -->
-		<dependency>
-			<groupId>commons-fileupload</groupId>
-			<artifactId>commons-fileupload</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -52,7 +52,6 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
-
 		<!-- Test -->
 		<dependency>
 			<groupId>com.sun.faces</groupId>

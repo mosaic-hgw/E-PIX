@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -60,10 +60,10 @@ public class ManagementController extends AbstractEpixWebBean
 	@PostConstruct
 	private void init()
 	{
-		domain.setDomainSelector(domainSelector);
-		domain.init(managementService);
-		source.init(managementService);
-		identifierDomain.init(managementService);
+		domain.setDomainSelector(getDomainSelector());
+		domain.init(managementService, epixHelper, text);
+		source.init(managementService, epixHelper, text);
+		identifierDomain.init(managementService, epixHelper, text);
 	}
 
 	public DomainBean getDomain()

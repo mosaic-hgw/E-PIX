@@ -2,7 +2,7 @@
 <!-- ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -46,7 +46,7 @@
 	</context-param>
 	<context-param>
 		<param-name>primefaces.UPLOADER</param-name>
-		<param-value>commons</param-value>
+		<param-value>native</param-value>
 	</context-param>
 	<context-param>
 		<param-name>primefaces.FONT_AWESOME</param-name>
@@ -56,15 +56,6 @@
 		<param-name>javax.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
 		<param-value>true</param-value>
 	</context-param>
-	<!-- PrimeFaces Fileupload -->
-	<filter>
-		<filter-name>PrimeFaces FileUpload Filter</filter-name>
-		<filter-class>org.primefaces.webapp.filter.FileUploadFilter</filter-class>
-	</filter>
-	<filter-mapping>
-		<filter-name>PrimeFaces FileUpload Filter</filter-name>
-		<servlet-name>Faces Servlet</servlet-name>
-	</filter-mapping>
 
 	<!-- JSF -->
 	<servlet>
@@ -96,27 +87,27 @@
 	<!-- Error pages -->
 	<error-page>
 		<error-code>401</error-code>
-		<location>/html/public/error.xhtml?code=401</location>
+		<location>/html/internal/error.xhtml?code=401</location>
 	</error-page>
 	<error-page>
 		<error-code>403</error-code>
-		<location>/html/public/error.xhtml?code=403</location>
+		<location>/html/internal/error.xhtml?code=403</location>
 	</error-page>
 	<error-page>
 		<error-code>404</error-code>
-		<location>/html/public/error.xhtml?code=404</location>
+		<location>/html/internal/error.xhtml?code=404</location>
 	</error-page>
 	<error-page>
 		<exception-type>javax.faces.application.ViewExpiredException</exception-type>
-		<location>/html/public/error.xhtml?code=410</location>
+		<location>/html/internal/error.xhtml?code=410</location>
 	</error-page>
 	<error-page>
 		<error-code>500</error-code>
-		<location>/html/public/error.xhtml?code=500</location>
+		<location>/html/internal/error.xhtml?code=500</location>
 	</error-page>
 	<error-page>
 		<exception-type>java.lang.Exception</exception-type>
-		<location>/html/public/error.xhtml?code=500</location>
+		<location>/html/internal/error.xhtml?code=500</location>
 	</error-page>
 
 	<!-- PrimeFaces Theme -->
@@ -133,12 +124,11 @@
 		<role-name>role.epix.user</role-name>
 	</security-role>
 
-	<!-- ${keycloak-login.enable.start}
+	<!-- ${oidc-login.enable.start}
 	<login-config>
-		<auth-method>KEYCLOAK</auth-method>
-		<realm-name>ignored</realm-name>
+		<auth-method>OIDC</auth-method>
 	</login-config>
-	${keycloak-login.enable.end} -->
+	${oidc-login.enable.end} -->
 
 	<!-- ${gras-login.enable.start}
 	<login-config>
@@ -155,23 +145,23 @@
 	<security-constraint>
 		<display-name>ttp-security-domain</display-name>
 		<web-resource-collection>
-			<web-resource-name>ttp-security-domain</web-resource-name> 
+			<web-resource-name>ttp-security-domain</web-resource-name>
 			<url-pattern>/html/internal/admin/*</url-pattern>
 		</web-resource-collection>
 		<auth-constraint>
 			<role-name>role.epix.admin</role-name>
-		</auth-constraint> 
+		</auth-constraint>
 	</security-constraint>
 	<security-constraint>
 		<display-name>ttp-security-domain</display-name>
 		<web-resource-collection>
-			<web-resource-name>ttp-security-domain</web-resource-name> 
+			<web-resource-name>ttp-security-domain</web-resource-name>
 			<url-pattern>/html/internal/*</url-pattern>
 		</web-resource-collection>
 		<auth-constraint>
 			<role-name>role.epix.user</role-name>
 		</auth-constraint>
-	</security-constraint> 
+	</security-constraint>
 	${login.enable.end} -->
 
 	<!-- Faces-Config for template -->

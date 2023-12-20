@@ -4,21 +4,21 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
- *
+ * 
  * 							concept and implementation
  * 							l.geidel,c.schack, d.langner, g.koetzschke
- *
+ * 
  * 							web client
  * 							a.blumentritt, f.m. moser
- *
+ * 
  * 							docker
  * 							r.schuldt
- *
+ * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
- *
+ * 
  * 							please cite our publications
  * 							http://dx.doi.org/10.3414/ME14-01-0133
  * 							http://dx.doi.org/10.1186/s12967-015-0545-6
@@ -28,17 +28,18 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ###license-information-end###
  */
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -51,16 +52,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.PostLoad;
 import javax.persistence.Table;
-import javax.xml.bind.JAXBException;
 
-import org.emau.icmvc.ttp.deduplication.config.model.Field;
 import org.emau.icmvc.ttp.deduplication.config.model.MatchingConfiguration;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
-import org.emau.icmvc.ttp.epix.common.exception.MPIErrorCode;
-import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.model.DomainDTO;
-import org.emau.icmvc.ttp.epix.common.model.enums.MatchingMode;
-import org.emau.icmvc.ttp.epix.common.utils.XMLBindingUtil;
+import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
 
 /**
  *
@@ -71,8 +67,9 @@ import org.emau.icmvc.ttp.epix.common.utils.XMLBindingUtil;
 @Table(name = "domain")
 public class Domain implements Serializable
 {
-	private static final long serialVersionUID = 7989060715705145085L;
-	private static final String DOMAIN_CONFIG_XSD = "matching-config-2.9.0.xsd";
+	@Serial
+	private static final long serialVersionUID = 9050935990346574799L;
+
 	@Id
 	@Column
 	private String name;
@@ -93,7 +90,7 @@ public class Domain implements Serializable
 	@Column(columnDefinition = "TEXT")
 	private String config;
 	private transient MatchingConfiguration matchingConfiguration;
-	private final static transient XMLBindingUtil BINDER = new XMLBindingUtil();
+	private transient ConfigurationContainer configurationContainer;
 	private transient long personCount;
 
 	public Domain()
@@ -105,7 +102,7 @@ public class Domain implements Serializable
 	{
 		this.name = dto.getName();
 		this.label = dto.getLabel();
-		setConfig(dto.getConfig());
+		setConfig(dto.getConfig(), dto.getConfigObjects());
 		this.description = dto.getDescription();
 		this.mpiDomain = mpiDomain;
 		this.safeSource = safeSource;
@@ -188,9 +185,19 @@ public class Domain implements Serializable
 		return config;
 	}
 
-	public void setConfig(String config) throws RuntimeException
+	public void setConfig(String config, ConfigurationContainer configObjects) throws RuntimeException
 	{
-		this.config = config;
+		if (config != null && !config.isEmpty())
+		{
+			// prefer XML config
+			this.config = config;
+		}
+		else
+		{
+			// create XML config from config objects
+			this.config = new MatchingConfiguration(configObjects, name).toXml(name);
+		}
+
 		parseConfig();
 	}
 
@@ -206,34 +213,9 @@ public class Domain implements Serializable
 		{
 			throw new RuntimeException(new InvalidParameterException("domain.config", "matching configuration missing for domain: " + name));
 		}
-		try
-		{
-			matchingConfiguration = BINDER.parse(MatchingConfiguration.class, config, DOMAIN_CONFIG_XSD);
-		}
-		catch (JAXBException e)
-		{
-			throw new RuntimeException(new MPIException(MPIErrorCode.INTERNAL_ERROR,
-					"exception while parsing matching configuration for domain '" + name + "': " + e.getMessage(), e));
-		}
-		if (matchingConfiguration.getMatching() == null)
-		{
-			throw new RuntimeException(
-					new InvalidParameterException("domain.config", "matching configuration <matching> not set for domain: " + name));
-		}
-		else if (matchingConfiguration.getMatchingMode().equals(MatchingMode.MATCHING_IDENTITIES)
-				&& (matchingConfiguration.getMatching().getFields() == null || matchingConfiguration.getMatching().getFields().isEmpty()))
-		{
-			throw new RuntimeException(
-					new InvalidParameterException("domain.config", "matching configuration <matching> contains no fields for domain: " + name));
-		}
-		for (Field field : matchingConfiguration.getMatching().getFields())
-		{
-			if (field.getBlockingThreshold() == 0. && field.getMatchingThreshold() == 0.)
-			{
-				throw new RuntimeException(new InvalidParameterException("domain.config",
-						"matching configuration <matching> for domain: " + name + " contains no threshold for field " + field.getName()));
-			}
-		}
+
+		matchingConfiguration = MatchingConfiguration.fromXml(config, name);
+		configurationContainer = matchingConfiguration.toConfigurationContainer();
 	}
 
 	public MatchingConfiguration getMatchingConfiguration()
@@ -241,9 +223,9 @@ public class Domain implements Serializable
 		return matchingConfiguration;
 	}
 
-	public void setMatchingConfiguration(MatchingConfiguration matchingConfiguration)
+	public ConfigurationContainer getConfigurationContainer()
 	{
-		this.matchingConfiguration = matchingConfiguration;
+		return configurationContainer;
 	}
 
 	public boolean isInUse()
@@ -264,7 +246,7 @@ public class Domain implements Serializable
 	public void update(DomainDTO domainDTO, IdentifierDomain mpiDomain, Source safeSource) throws RuntimeException
 	{
 		this.label = domainDTO.getLabel();
-		setConfig(domainDTO.getConfig());
+		setConfig(domainDTO.getConfig(), domainDTO.getConfigObjects());
 		this.description = domainDTO.getDescription();
 		this.mpiDomain = mpiDomain;
 		this.safeSource = safeSource;
@@ -292,6 +274,7 @@ public class Domain implements Serializable
 		result.setMatchingMode(matchingConfiguration.getMatchingMode());
 		result.setInUse(personCount > 0);
 		result.setPersonCount(personCount);
+		result.setConfigObjects(new ConfigurationContainer(configurationContainer));
 		return result;
 	}
 

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,17 +39,16 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class MPIIdentityDTO implements Serializable
 {
-	private static final long serialVersionUID = 7071382699932081284L;
+	private static final long serialVersionUID = 7777641498701900273L;
 	private IdentifierDTO mpiId;
 	private IdentityOutDTO identity;
 
@@ -59,8 +58,13 @@ public class MPIIdentityDTO implements Serializable
 	public MPIIdentityDTO(IdentifierDTO mpiId, IdentityOutDTO identity)
 	{
 		super();
-		this.mpiId = mpiId;
-		this.identity = identity;
+		setMpiId(mpiId);
+		setIdentity(identity);
+	}
+
+	public MPIIdentityDTO(MPIIdentityDTO dto)
+	{
+		this(dto.getMpiId(), dto.getIdentity());
 	}
 
 	public IdentifierDTO getMpiId()
@@ -70,7 +74,7 @@ public class MPIIdentityDTO implements Serializable
 
 	public void setMpiId(IdentifierDTO mpiId)
 	{
-		this.mpiId = mpiId;
+		this.mpiId = mpiId != null ? new IdentifierDTO(mpiId) : null;
 	}
 
 	public IdentityOutDTO getIdentity()
@@ -80,7 +84,7 @@ public class MPIIdentityDTO implements Serializable
 
 	public void setIdentity(IdentityOutDTO identity)
 	{
-		this.identity = identity;
+		this.identity = identity != null ? new IdentityOutDTO(identity) : null;
 	}
 
 	@Override
@@ -88,8 +92,8 @@ public class MPIIdentityDTO implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((identity == null) ? 0 : identity.hashCode());
-		result = prime * result + ((mpiId == null) ? 0 : mpiId.hashCode());
+		result = prime * result + (identity == null ? 0 : identity.hashCode());
+		result = prime * result + (mpiId == null ? 0 : mpiId.hashCode());
 		return result;
 	}
 
@@ -97,26 +101,40 @@ public class MPIIdentityDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		MPIIdentityDTO other = (MPIIdentityDTO) obj;
 		if (identity == null)
 		{
 			if (other.identity != null)
+			{
 				return false;
+			}
 		}
 		else if (!identity.equals(other.identity))
+		{
 			return false;
+		}
 		if (mpiId == null)
 		{
 			if (other.mpiId != null)
+			{
 				return false;
+			}
 		}
 		else if (!mpiId.equals(other.mpiId))
+		{
 			return false;
+		}
 		return true;
 	}
 

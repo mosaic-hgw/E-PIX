@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-end###
  */
 
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -336,6 +336,7 @@ import org.slf4j.LoggerFactory;
 
 public class PersonDTOLazyModel extends LazyDataModel<PersonDTO>
 {
+	@Serial
 	private static final long serialVersionUID = 1104825405795685955L;
 
 	protected transient final Logger logger = LoggerFactory.getLogger(getClass());
@@ -380,7 +381,7 @@ public class PersonDTOLazyModel extends LazyDataModel<PersonDTO>
 		{
 			try
 			{
-				result.add(service.getPersonByMPI(domainName, mpis.get(i)));
+				result.add(service.getPersonByFirstMPI(domainName, mpis.get(i)));
 			}
 			catch (InvalidParameterException | UnknownObjectException e)
 			{
@@ -388,6 +389,7 @@ public class PersonDTOLazyModel extends LazyDataModel<PersonDTO>
 			}
 		}
 		data.addAll(result);
+		setRowCount(mpis.size());
 		return result;
 	}
 
@@ -418,11 +420,13 @@ public class PersonDTOLazyModel extends LazyDataModel<PersonDTO>
 	 * @see <a href="https://primefaces.github.io/primefaces/11_0_0/#/../migrationguide/11_0_0?id=datatable-dataview-datagrid-datalist">DataTable section in PF Migration guide 10 -> 11</a>
 	 * @see <a href="https://primefaces.github.io/primefaces/11_0_0/#/components/datatable?id=lazy-loading">Lazy Loading in DataTable part of PF Documentation</a>
 	 *
-	 * @param filterBy the filter map
+	 * @param filterBy
+	 *            the filter map
 	 * @return the number of items in the database wrt. the filter configuration or any arbitrary value, when {@link #setRowCount(int)} is used correctly
 	 */
-	//@Override // TODO(PF11): uncomment after updating to PF11
-	public int count(Map<String, FilterMeta> filterBy) {
+	@Override
+	public int count(Map<String, FilterMeta> filterBy)
+	{
 		return 0;
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,6 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -70,7 +69,7 @@ import org.emau.icmvc.ttp.epix.common.model.PersonBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -79,8 +78,7 @@ import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 @TableGenerator(name = "person_index", table = "sequence", initialValue = 0, allocationSize = 50)
 @Cacheable(false)
 @NamedQueries({
-		@NamedQuery(name = "Person.findByFirstMPIForDomain", query = "SELECT p FROM Person p WHERE p.domain = :domain AND p.deactivated = false AND p.firstMPI = :mpi"),
-		@NamedQuery(name = "Person.findByFirstMPIForDomainEvenIfDeactivated", query = "SELECT p FROM Person p WHERE p.domain = :domain AND p.firstMPI = :mpi"),
+		@NamedQuery(name = "Person.findByFirstMPIForDomain", query = "SELECT p FROM Person p WHERE p.domain = :domain AND p.firstMPI = :mpi"),
 		@NamedQuery(name = "Person.findByLocalIdentifierForDomain", query = "SELECT DISTINCT p FROM Person p JOIN p.identities i JOIN i.identifiers idf WHERE p.domain = :domain AND p.deactivated = false AND idf = :identifier"),
 		@NamedQuery(name = "Person.findDeactivatedByDomain", query = "SELECT p FROM Person p WHERE p.domain = :domain AND p.deactivated = true") })
 public class Person implements Serializable
@@ -99,7 +97,7 @@ public class Person implements Serializable
 	// this person's firstMPI will persist in the 'identifier_identity' table associated with the reassigned identity
 	// to allow finding the new identity (and the associated person) by querying the old mpi.
 	// So after deleting a person, deleting its first mpi must be handled manually!
-	@OneToOne(cascade = { CascadeType.PERSIST , CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH}, optional = false)
+	@OneToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH }, optional = false)
 	@JoinColumns({ @JoinColumn(name = "first_mpi_identifier_domain_name", referencedColumnName = "identifier_domain_name"),
 			@JoinColumn(name = "first_mpi_value", referencedColumnName = "value") })
 	private Identifier firstMPI;
@@ -118,7 +116,6 @@ public class Person implements Serializable
 
 	public Person(boolean deactivated, Identifier firstMPI, Domain domain, List<Identity> identities, Timestamp timestamp)
 	{
-		super();
 		this.deactivated = deactivated;
 		this.firstMPI = firstMPI;
 		this.domain = domain;
@@ -210,10 +207,10 @@ public class Person implements Serializable
 			{
 				referenceIdentity = identity;
 			}
-			else if ((!referenceIdentity.isPossibleReference()
-					&& (identity.isPossibleReference() || identity.getTimestamp().after(referenceIdentity.getTimestamp())))
-					|| (referenceIdentity.isPossibleReference() && identity.isPossibleReference()
-							&& identity.getTimestamp().after(referenceIdentity.getTimestamp())))
+			else if (!referenceIdentity.isPossibleReference()
+					&& (identity.isPossibleReference() || identity.getTimestamp().after(referenceIdentity.getTimestamp()))
+					|| referenceIdentity.isPossibleReference() && identity.isPossibleReference()
+							&& identity.getTimestamp().after(referenceIdentity.getTimestamp()))
 			{
 				referenceIdentity = identity;
 			}
@@ -235,10 +232,10 @@ public class Person implements Serializable
 			{
 				referenceIdentity = identity;
 			}
-			else if ((!referenceIdentity.isPossibleReference()
-					&& (identity.isPossibleReference() || identity.getTimestamp().after(referenceIdentity.getTimestamp())))
-					|| (referenceIdentity.isPossibleReference() && identity.isPossibleReference()
-							&& identity.getTimestamp().after(referenceIdentity.getTimestamp())))
+			else if (!referenceIdentity.isPossibleReference()
+					&& (identity.isPossibleReference() || identity.getTimestamp().after(referenceIdentity.getTimestamp()))
+					|| referenceIdentity.isPossibleReference() && identity.isPossibleReference()
+							&& identity.getTimestamp().after(referenceIdentity.getTimestamp()))
 			{
 				identDTOs.add(referenceIdentity.toDTO());
 				referenceIdentity = identity;
@@ -249,7 +246,7 @@ public class Person implements Serializable
 			}
 		}
 		PersonBaseDTO personBase = new PersonBaseDTO(id, deactivated, new Date(createTimestamp.getTime()), new Date(timestamp.getTime()),
-				firstMPI.toDTO());
+				firstMPI.toDTO(), domain.getName());
 		return new PersonDTO(personBase, referenceIdentity != null ? referenceIdentity.toDTO() : null, identDTOs);
 	}
 
@@ -258,8 +255,8 @@ public class Person implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((domain == null) ? 0 : domain.hashCode());
-		result = prime * result + ((firstMPI == null) ? 0 : firstMPI.hashCode());
+		result = prime * result + (domain == null ? 0 : domain.hashCode());
+		result = prime * result + (firstMPI == null ? 0 : firstMPI.hashCode());
 		return result;
 	}
 
@@ -267,26 +264,40 @@ public class Person implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		Person other = (Person) obj;
 		if (domain == null)
 		{
 			if (other.domain != null)
+			{
 				return false;
+			}
 		}
 		else if (!domain.equals(other.domain))
+		{
 			return false;
+		}
 		if (firstMPI == null)
 		{
 			if (other.firstMPI != null)
+			{
 				return false;
+			}
 		}
 		else if (!firstMPI.equals(other.firstMPI))
+		{
 			return false;
+		}
 		return true;
 	}
 

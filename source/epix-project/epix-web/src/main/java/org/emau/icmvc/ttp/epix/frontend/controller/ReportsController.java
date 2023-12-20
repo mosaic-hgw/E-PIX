@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -43,10 +43,12 @@ import java.util.Date;
 
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.ViewScoped;
 
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 import org.emau.icmvc.ttp.epix.frontend.model.IdentityHistoryPairLazyModel;
+import org.emau.icmvc.ttp.epix.frontend.util.HistoryHelper;
 
 /**
  * @author Arne Blumentritt
@@ -57,7 +59,9 @@ public class ReportsController extends AbstractEpixWebBean
 {
 	private IdentityHistoryPairLazyModel identityHistoryPairsLazyModel;
 
-
+	@ManagedProperty(value = "#{historyHelper}")
+	protected HistoryHelper historyHelper;
+	
 	/**
 	 * Method called when loading the page.
 	 */
@@ -71,7 +75,7 @@ public class ReportsController extends AbstractEpixWebBean
 		String fileName = "E-PIX";
 		fileName += " " + dateToString(new Date(), "date");
 		fileName += " " + getBundle().getString("reports.label.identityHistory");
-		fileName += " " + domainSelector.getSelectedDomainName();
+		fileName += " " + getDomainSelector().getSelectedDomainName();
 		return fileName;
 	}
 
@@ -79,10 +83,15 @@ public class ReportsController extends AbstractEpixWebBean
 	{
 		if (identityHistoryPairsLazyModel == null)
 		{
-			identityHistoryPairsLazyModel = new IdentityHistoryPairLazyModel(managementService, domainSelector,
+			identityHistoryPairsLazyModel = new IdentityHistoryPairLazyModel(managementService, historyHelper, getDomainSelector(),
 					getSimpleDateFormat("date").toPattern(), getSimpleDateFormat("datetime").toPattern());
 		}
 
 		return identityHistoryPairsLazyModel;
+	}
+
+	public void setHistoryHelper(HistoryHelper historyHelper)
+	{
+		this.historyHelper = historyHelper;
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -41,7 +41,6 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
 
 import java.util.List;
 
-import javax.ejb.EJB;
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
@@ -51,16 +50,13 @@ import javax.faces.convert.Converter;
 import javax.faces.convert.ConverterException;
 
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
-import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
+import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixServiceBean;
 
 // Cannot use @FacesConverter with @EJB until JSF 2.3
 @ManagedBean
 @RequestScoped
-public class IdentifierDomainDTOConverter implements Converter
+public class IdentifierDomainDTOConverter extends AbstractEpixServiceBean implements Converter
 {
-	@EJB(lookup = "java:global/epix/epix-ejb/EPIXManagementServiceImpl!org.emau.icmvc.ttp.epix.service.EPIXManagementService")
-	protected EPIXManagementService managementService;
-
 	@Override
 	public String getAsString(FacesContext context, UIComponent component, Object modelValue)
 	{
@@ -75,7 +71,7 @@ public class IdentifierDomainDTOConverter implements Converter
 		}
 		else
 		{
-			throw new ConverterException(new FacesMessage(modelValue + " is not a valid IdentifierDomainDTO"));
+			throw new ConverterException(new FacesMessage(text.sanitize(modelValue + " is not a valid IdentifierDomainDTO")));
 		}
 	}
 
@@ -98,11 +94,11 @@ public class IdentifierDomainDTOConverter implements Converter
 					return identifierDomain;
 				}
 			}
-			throw new ConverterException(new FacesMessage("Cannot find IdentifierDomainDTO with ID: " + submittedValue));
+			throw new ConverterException(new FacesMessage("Cannot find IdentifierDomainDTO with ID: " + text.sanitize(submittedValue)));
 		}
 		catch (NumberFormatException e)
 		{
-			throw new ConverterException(new FacesMessage(submittedValue + " is not a valid IdentifierDomainDTO ID"), e);
+			throw new ConverterException(new FacesMessage(text.sanitize(submittedValue) + " is not a valid IdentifierDomainDTO ID"), e);
 		}
 	}
 }

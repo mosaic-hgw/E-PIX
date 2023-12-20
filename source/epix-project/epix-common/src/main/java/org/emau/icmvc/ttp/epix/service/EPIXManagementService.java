@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -54,6 +54,7 @@ import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.model.ContactHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.DomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
+import org.emau.icmvc.ttp.epix.common.model.IdentifierHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
@@ -111,9 +112,11 @@ public interface EPIXManagementService
 			@XmlElement(required = true) @WebParam(name = "description") String description)
 			throws InvalidParameterException, MPIException, UnknownObjectException;
 
-	void deleteDomain(@XmlElement(required = true) @WebParam(name = "domainName") String domainName,
+	void deleteDomain(
+			@XmlElement(required = true) @WebParam(name = "domainName") String domainName,
 			@XmlElement(required = true) @WebParam(name = "force") boolean force)
 			throws InvalidParameterException, MPIException, ObjectInUseException, UnknownObjectException;
+
 
 	// ***********************************
 	// source
@@ -165,7 +168,6 @@ public interface EPIXManagementService
 
 	/**
 	 * Returns matching {@link IdentityHistoryDTO} entries.
-	 *
 	 * If {@link IdentityField#NONE} is the only key in the filter map, then search for the corresponding
 	 * pattern in all required fields (as defined in the configuration container) linked by OR (disjunction),
 	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
@@ -182,7 +184,6 @@ public interface EPIXManagementService
 
 	/**
 	 * Counts matching {@link IdentityHistoryDTO} entries.
-	 *
 	 * If {@link IdentityField#NONE} is the only key in the filter map, then search for the corresponding
 	 * pattern in all required fields (as defined in the configuration container) linked by OR (disjunction),
 	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
@@ -219,10 +220,17 @@ public interface EPIXManagementService
 
 	List<ContactHistoryDTO> getHistoryForContact(@XmlElement(required = true) @WebParam(name = "contactId") long contactId) throws UnknownObjectException;
 
+	List<IdentifierHistoryDTO> getHistoryForIdentifier(
+			@XmlElement(required = true) @WebParam(name = "identifierDomainName") String identifierDomainName,
+			@XmlElement(required = true) @WebParam(name = "identifierValue") String value) throws UnknownObjectException;
+
 	List<PossibleMatchHistoryDTO> getPossibleMatchHistoryForPerson(@XmlElement(required = true) @WebParam(name = "domainName") String domainName,
 			@XmlElement(required = true) @WebParam(name = "mpiId") String mpiId) throws InvalidParameterException, UnknownObjectException;
 
 	List<PossibleMatchHistoryDTO> getPossibleMatchHistoryForUpdatedIdentity(@XmlElement(required = true) @WebParam(name = "updatedIdentityId") long updatedIdentityId)
+			throws InvalidParameterException, UnknownObjectException;
+
+	List<PossibleMatchHistoryDTO> getPossibleMatchHistoryByIdentity(@XmlElement(required = true) @WebParam(name = "identityId") long identityId)
 			throws InvalidParameterException, UnknownObjectException;
 
 	// ***********************************
@@ -237,4 +245,26 @@ public interface EPIXManagementService
 
 	List<ReasonDTO> getDefinedDeduplicationReasons(@XmlElement(required = true) @WebParam(name = "domainName") String domainName)
 			throws InvalidParameterException, UnknownObjectException;
+
+	/**
+	 * Parses a matching configuration encoded as XML into a {@link ConfigurationContainer}.
+	 * @param xml the configuration XML
+	 * @return a {@link ConfigurationContainer} describing the configuration
+	 * @throws InvalidParameterException if the XML is null or empty
+	 * @throws MPIException if parsing failed
+	 */
+	ConfigurationContainer parseMatchingConfiguration(
+			@XmlElement(required = true) @WebParam(name = "xml") String xml)
+			throws InvalidParameterException, MPIException;
+
+	/**
+	 * Parses a matching configuration encoded as XML into a {@link ConfigurationContainer}.
+	 * @param config a {@link ConfigurationContainer} describing the configuration
+	 * @return the configuration as XML
+	 * @throws InvalidParameterException if the config is null
+	 * @throws MPIException if encoding failed
+	 */
+	String encodeMatchingConfiguration(
+			@XmlElement(required = true) @WebParam(name = "config") ConfigurationContainer config)
+			throws InvalidParameterException, MPIException;
 }

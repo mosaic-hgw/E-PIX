@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -37,8 +37,13 @@
   ###license-information-end###
   -->
 
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:components="http://java.sun.com/jsf/composite/components" xmlns:f="http://java.sun.com/jsf/core"
-	  xmlns:file="http://java.sun.com/jsf/composite/components/file" xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui"
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:components="http://java.sun.com/jsf/composite/components"
+	  xmlns:idat-display="http://java.sun.com/jsf/composite/components/idat/display"
+	  xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:file="http://java.sun.com/jsf/composite/components/file"
+	  xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:p="http://primefaces.org/ui"
 	  xmlns:ui="http://java.sun.com/jsf/facelets">
 
 <!-- author: Arne Blumentritt -->
@@ -67,7 +72,7 @@
 							<h:outputText value="#{msg['import.label.step1']}" />
 						</h4>
 
-						<file:upload webFile="#{importController.webFile}" rendered="#{empty importController.webFile.uploadFile}" />
+						<file:upload webFile="#{importController.webFile}" rendered="#{empty importController.webFile.uploadFile}" update=":progress:size" />
 						<file:details onNewUpload="#{importController.onNewUpload}" rendered="#{not empty importController.webFile.uploadFile}"
 									  webFile="#{importController.webFile}" />
 					</p:panel>
@@ -141,7 +146,7 @@
 								<p:outputLabel value="#{msg['import.label.preview']}" escape="false" />
 							</h:panelGroup>
 							<p:selectBooleanCheckbox value="#{importController.preview}">
-								<p:ajax process="@this" update="dontSaveOnPerfectMatch, startButton" />
+								<p:ajax process="@this" update="dontSaveOnPerfectMatch, startButton, :progress:size" />
 							</p:selectBooleanCheckbox>
 						</p:panelGrid>
 
@@ -164,7 +169,7 @@
 								<p:ajax process="@this" />
 							</p:selectBooleanCheckbox>
 
-							<p:commandButton id="startButton" value="#{msg['import.label.startProcess']}" onclick="PF('progressDialog').show();PF('progressBar').start();"
+							<p:commandButton id="startButton" value="#{msg['import.label.startProcess']}" onstart="PF('progressDialog').show();PF('progressBar').start();"
 											 actionListener="#{importController.onImport}" update="msg, @form" oncomplete="PF('progressDialog').hide();PF('progressBar').cancel();">
 								<p:confirm header="#{msg['common.confirmation']}" message="#{msg['import.label.confirmImport']}" disabled="#{importController.preview}" icon="mdi mdi-alert-outline" />
 							</p:commandButton>
@@ -174,11 +179,14 @@
 
 				<p:panel rendered="#{!empty importController.successfulImports}" style="margin-top: 15px;">
 					<h4>
-						<h:outputFormat value="#{msg['import.label.successfulImports']}">
+						<h:outputFormat value="#{importController.preview ? msg['import.label.successfulImportsPreview'] : msg['import.label.successfulImports']}">
 							<f:param value="#{importController.successfulImports.size()}" />
 						</h:outputFormat>
 					</h4>
-					<components:persons_table controller="#{importController}" downloadCSV="true" downloadFilename="successful_imports" webPersonList="#{importController.successfulImports}" />
+					<idat-display:persons_table id="successful_imports" webPersonList="#{importController.successfulImports}" />
+					<p:commandButton ajax="false" icon="mdi mdi-download" immediate="true" value="#{cmsg['ui.button.download.csv']}">
+						<p:dataExporter fileName="successful_imports" target="successful_imports:persons_list" type="csv" />
+					</p:commandButton>
 				</p:panel>
 				<p:panel rendered="#{!empty importController.failedImports}" style="margin-top: 15px;">
 					<h4>
@@ -186,7 +194,10 @@
 							<f:param value="#{importController.failedImports.size()}" />
 						</h:outputFormat>
 					</h4>
-					<components:persons_table controller="#{importController}" downloadCSV="true" downloadFilename="failed_imports" webPersonList="#{importController.failedImports}" />
+					<idat-display:persons_table id="failed_imports" webPersonList="#{importController.failedImports}" />
+					<p:commandButton ajax="false" icon="mdi mdi-download" immediate="true" value="#{cmsg['ui.button.download.csv']}">
+						<p:dataExporter fileName="failed_imports" target="failed_imports:persons_list" type="csv" />
+					</p:commandButton>
 				</p:panel>
 
 				<p:panel rendered="#{not empty importController.successfulImports or not empty importController.failedImports}" style="margin-top: 15px;">
@@ -200,7 +211,7 @@
 				<p:commandButton icon="mdi mdi-close" value="#{msg['common.button.no']}" type="button" styleClass="ui-confirmdialog-no" />
 			</p:confirmDialog>
 
-			<file:progress message="#{msg['import.label.processingEntries']}" progress="#{importController.progress}" webFile="#{importController.webFile}" />
+			<file:progress id="progress" message="#{importController.preview ? msg['import.label.processingEntriesPreview'] : msg['import.label.processingEntries']}" progress="#{importController.progress}" size="#{importController.webFile.getElements().size()}" />
 		</ui:define>
 
 	</ui:composition>

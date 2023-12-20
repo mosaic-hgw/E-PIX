@@ -4,21 +4,21 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
- *
+ * 
  * 							concept and implementation
  * 							l.geidel,c.schack, d.langner, g.koetzschke
- *
+ * 
  * 							web client
  * 							a.blumentritt, f.m. moser
- *
+ * 
  * 							docker
  * 							r.schuldt
- *
+ * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
- *
+ * 
  * 							please cite our publications
  * 							http://dx.doi.org/10.3414/ME14-01-0133
  * 							http://dx.doi.org/10.1186/s12967-015-0545-6
@@ -28,12 +28,12 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ###license-information-end###
@@ -71,7 +71,7 @@ public class DomainSelector extends AbstractEpixBean
 	 * Init domains.
 	 */
 	@PostConstruct
-	private void init()
+	private void initialize()
 	{
 		loadDomains();
 		if (domains.size() > 0)
@@ -92,17 +92,28 @@ public class DomainSelector extends AbstractEpixBean
 
 	public List<DomainDTO> getDomains()
 	{
+		// We are @SessionScoped but login via OIDC does not invalidate the session.
+		// So we need to manually check if the auth type has changed and then reload domains.
+		if (hasAuthTypeChanged()) {
+			loadDomains();
+		}
 		return domains;
 	}
 
 	public DomainDTO getSelectedDomain()
 	{
+		List<DomainDTO> domains = getDomains();
 		DomainDTO temp = domains.stream().filter(d -> d.getName().equals(getSelectedDomainName())).findFirst().orElse(null);
 
 		// Domain does not exist
 		if (temp == null)
 		{
 			selectedDomain = domains.size() > 0 ? domains.get(0) : null;
+			// selectedDomain can be null
+			if (selectedDomain != null)
+			{
+				loadDomainData();
+			}
 		}
 		// Domain does exist
 		else
@@ -111,8 +122,10 @@ public class DomainSelector extends AbstractEpixBean
 			if (!temp.equals(selectedDomain))
 			{
 				loadDomains();
+				selectedDomain = temp;
+				// selectedDomain can not be null
+				loadDomainData();
 			}
-			selectedDomain = temp;
 		}
 		return selectedDomain;
 	}
@@ -135,7 +148,7 @@ public class DomainSelector extends AbstractEpixBean
 
 	public void setSelectedDomain(String name)
 	{
-		for (DomainDTO domain : domains)
+		for (DomainDTO domain : getDomains())
 		{
 			if (domain.getName().equals(name))
 			{
@@ -147,7 +160,7 @@ public class DomainSelector extends AbstractEpixBean
 
 	public boolean isMindConcept()
 	{
-		for (DomainDTO domain : domains)
+		for (DomainDTO domain : getDomains())
 		{
 			if (domain.getMatchingMode().equals(MatchingMode.NO_DECISION))
 			{
@@ -161,6 +174,16 @@ public class DomainSelector extends AbstractEpixBean
 	{
 		try
 		{
+			if (configurationContainer == null)
+			{
+				if (selectedDomain != null)
+				{
+					loadDomains();
+				}
+				else {
+					getSelectedDomain(); // using side-effects
+				}
+			}
 			configurationContainer = managementService.getConfigurationForDomain(selectedDomain.getName());
 		}
 		catch (InvalidParameterException | UnknownObjectException e)
@@ -171,7 +194,7 @@ public class DomainSelector extends AbstractEpixBean
 
 	private boolean containsDomain(DomainDTO domain)
 	{
-		for (DomainDTO d : domains)
+		for (DomainDTO d : getDomains())
 		{
 			if (d.getName().equals(domain.getName()))
 			{

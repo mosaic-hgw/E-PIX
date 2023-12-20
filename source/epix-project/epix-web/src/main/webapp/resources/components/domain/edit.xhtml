@@ -1,0 +1,1001 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+		"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:composite="http://java.sun.com/jsf/composite"
+	  xmlns:components="http://java.sun.com/jsf/composite/components"
+	  xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:p="http://primefaces.org/ui"
+	  xmlns:ui="http://java.sun.com/jsf/facelets"
+>
+
+<!-- INTERFACE -->
+<composite:interface>
+	<composite:attribute name="domain" type="org.emau.icmvc.ttp.epix.frontend.controller.management.DomainBean" />
+	<composite:attribute name="update" type="java.lang.String" required="false" default="" />
+	<composite:attribute name="onSubmitFunction" type="java.lang.String" required="false" default="" />
+</composite:interface>
+
+<!-- IMPLEMENTATION -->
+<composite:implementation>
+	<h:form id="form">
+		<p:tabView id="tabs" widgetVar="tabs" rendered="#{managementController.domain.pageMode != 'READ'}">
+			<p:tab id="settings">
+				<f:facet name="title">
+					<i class="mdi mdi-cog" style="position: absolute;top: 3px;left: 10px"></i>
+					<h:outputText value="#{msg['page.management.domain.settings']}" style="margin-left: 25px" />
+				</f:facet>
+				<p:focus context="tabs" />
+				<p:panel style="margin-top: 3px;">
+					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+						<!-- Label -->
+						<p:outputLabel for="label" value="#{msg['model.domain.label']}" />
+						<p:inputText id="label" value="#{cc.attrs.domain.selected.label}" required="true" />
+
+						<!-- Name -->
+						<p:outputLabel for="name" value="#{msg['model.domain.name']}" />
+						<p:inputText id="name" disabled="#{!cc.attrs.domain.new}" value="#{cc.attrs.domain.selected.name}" />
+
+						<!-- Description -->
+						<p:outputLabel for="description" value="#{msg['model.domain.description']}" />
+						<p:inputTextarea id="description" value="#{cc.attrs.domain.selected.description}" maxlength="255" counter="description_counter"
+										 counterTemplate="#{cmsg['ui.text.charsRemaining']}" />
+						<p:column />
+						<h:outputText id="description_counter" styleClass="textCounter" />
+
+						<!-- Safe Source -->
+						<p:outputLabel for="safeSource"
+									   value="#{msg['model.domain.safeSource']}" />
+						<p:selectOneMenu id="safeSource" converter="#{sourceDTOConverter}"
+										 disabled="#{cc.attrs.domain.selected.inUse}"
+										 filter="true" filterMatchMode="contains"
+										 value="#{cc.attrs.domain.selected.safeSource}">
+							<f:selectItems itemLabel="#{_source.labelOrName}" value="#{managementController.source.all}" var="_source" />
+						</p:selectOneMenu>
+
+						<!-- Use Notifications -->
+						<h:panelGroup layout="block">
+							<p:outputLabel for="useNotifications" value="#{msg['model.domain.useNotifications']}" />
+							<components:tooltip value="#{msg['model.domain.useNotifications.hint']}" />
+						</h:panelGroup>
+						<p:selectBooleanCheckbox id="useNotifications" disabled="#{cc.attrs.domain.selected.inUse}"
+												 value="#{cc.attrs.domain.config.useNotifications}" />
+					</p:panelGrid>
+
+					<h4>
+						<h:outputText value="#{msg['page.management.domain.mpi']}" />
+					</h4>
+					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+						<!-- MPI Generator -->
+						<p:outputLabel for="mpiGenerator"
+									   value="#{msg['model.domain.mpi.generator']}" />
+						<p:selectOneMenu id="mpiGenerator" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.mpiGenerator}">
+							<f:selectItems value="#{cc.attrs.domain.mpiGeneratorOptions}" itemLabel="#{managementController.domain.getClassNameFromFullPath(_generator)}" var="_generator" />
+						</p:selectOneMenu>
+
+						<!-- Prefix -->
+						<p:outputLabel for="prefix" value="#{msg['model.domain.mpi.prefix']}" />
+						<p:inputNumber id="prefix" disabled="#{cc.attrs.domain.selected.inUse}" required="true" decimalPlaces="0" minValue="0" value="#{cc.attrs.domain.config.mpiPrefix}"
+									   thousandSeparator="" />
+
+						<!-- MPI Identifier Domain -->
+						<p:outputLabel for="mpiIdentifierDomain"
+									   value="#{msg['model.domain.mpi.identifierDomain']}" />
+						<p:selectOneMenu id="mpiIdentifierDomain" converter="#{identifierDomainDTOConverter}"
+										 disabled="#{cc.attrs.domain.selected.inUse}"
+										 filter="true" filterMatchMode="contains"
+										 value="#{cc.attrs.domain.selected.mpiDomain}">
+							<f:selectItems itemLabel="#{_identifierDomain.labelOrName}" value="#{managementController.identifierDomain.all}" var="_identifierDomain" />
+						</p:selectOneMenu>
+					</p:panelGrid>
+
+					<h4>
+						<h:outputText value="#{msg['page.management.domain.performance']}" />
+					</h4>
+					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+
+						<!-- parallelMatchingAfter -->
+						<p:outputLabel for="parallelMatchingAfter" value="#{msg['model.domain.matching.parallelMatchingAfter']}" />
+						<h:panelGroup class="ui-inputgroup" layout="block">
+							<p:inputNumber id="parallelMatchingAfter" disabled="#{cc.attrs.domain.selected.inUse}" decimalPlaces="0" minValue="0"
+										   value="#{cc.attrs.domain.config.matchingConfig.parallelMatchingAfter}" />
+							<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.identity.identities']}" /></div>
+						</h:panelGroup>
+
+						<!-- Limit Search -->
+						<p:outputLabel for="limitSearchForLowMemory" value="#{msg['model.domain.limitSearchForLowMemory']}" />
+						<p:selectBooleanCheckbox id="limitSearchForLowMemory" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.limitSearchForLowMemory}" />
+					</p:panelGrid>
+				</p:panel>
+			</p:tab>
+
+			<p:tab id="fields">
+				<f:facet name="title">
+					<i class="mdi mdi-card-account-details" style="position: absolute;top: 3px;left: 10px"></i>
+					<h:outputText value="#{msg['page.management.domain.fields']}" style="margin-left: 25px" />
+				</f:facet>
+				<p:panel style="margin-top: 3px;">
+					<h4>
+						<h:outputText value="#{msg['page.management.domain.fields.mandatory']}" />
+					</h4>
+					<p:selectCheckboxMenu id="multiple" disabled="#{cc.attrs.domain.selected.inUse}"
+										  value="#{cc.attrs.domain.config.requiredFields}"
+										  multiple="true" filter="true" filterMatchMode="contains"
+										  emptyLabel=""
+										  updateLabel="true">
+						<f:selectItems value="#{cc.attrs.domain.fieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
+					</p:selectCheckboxMenu>
+
+					<!-- Value Fields -->
+					<h4 style="margin-top: 20px">
+						<h:outputText value="#{msg['page.management.domain.fields.value']}" />
+					</h4>
+					<p:dataTable id="valueFields" value="#{cc.attrs.domain.valueFieldKeysSorted}"
+								 var="_valueFieldKey">
+						<p:column headerText="#{msg['model.domain.valueField.field']}">
+							<h:outputText value="#{msg['model.domain.valueField.'.concat(_valueFieldKey)]}" />
+						</p:column>
+						<p:column headerText="#{msg['model.domain.valueField.label']}">
+							<h:outputText value="#{cc.attrs.domain.config.valueFieldMapping.get(_valueFieldKey)}" />
+						</p:column>
+						<p:column styleClass="icons">
+							<p:commandButton actionListener="#{cc.attrs.domain.onRemoveValueField(_valueFieldKey)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-delete-empty"
+											 process="@this" partialSubmit="true"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.remove']}"
+											 update="@form:tabs:valueFields" />
+						</p:column>
+					</p:dataTable>
+					<p:commandButton actionListener="#{cc.attrs.domain.onNewValueField}"
+									 disabled="#{cc.attrs.domain.selected.inUse}"
+									 icon="mdi mdi-plus"
+									 process="@this" partialSubmit="true"
+									 oncomplete="PF('valueField_dialog').show();"
+									 style="margin-bottom: 10px;"
+									 styleClass="secondary"
+									 update="#{cc.attrs.id}:valueField_dialog"
+									 value="#{msg['page.management.domain.fields.value.add']}" />
+				</p:panel>
+			</p:tab>
+
+			<p:tab id="preprocessing">
+				<f:facet name="title">
+					<i class="mdi mdi-filter-cog" style="position: absolute;top: 3px;left: 10px"></i>
+					<h:outputText value="#{msg['page.management.domain.preprocessing']}" style="margin-left: 25px" />
+				</f:facet>
+				<p:panel style="margin-top: 3px;">
+					<!-- Preprocessing Fields -->
+					<h4 style="margin-top: 25px;">
+						<h:outputText value="#{msg['model.domain.preprocessing.fields']}" />
+					</h4>
+					<p:dataTable id="preprocessingFields" value="#{cc.attrs.domain.config.preprocessingFields}"
+								 var="_field">
+						<p:column headerText="#{msg['model.domain.matching.field.name']}">
+							<h:outputText value="#{msg['common.person.'.concat(_field.fieldName.name())]}" />
+						</p:column>
+						<p:column headerText="#{msg['model.domain.preprocessing.simpleTransformations']}">
+							<h:outputText value="#{_field.simpleTransformationTypes.size()}" />
+						</p:column>
+						<p:column headerText="#{msg['model.domain.preprocessing.complexTransformations']}">
+							<h:outputText value="#{_field.complexTransformationClasses.size()}" />
+						</p:column>
+						<p:column headerText="#{msg['model.domain.preprocessing.simpleFilters']}">
+							<h:outputText value="#{_field.simpleFilterTypes.size()}" />
+						</p:column>
+						<p:column styleClass="icons">
+							<p:commandButton actionListener="#{cc.attrs.domain.onEditPreprocessingField(_field)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-pencil"
+											 oncomplete="PF('preprocessingField_dialog').show();"
+											 process="@this" partialSubmit="true"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.edit']}"
+											 update="#{cc.attrs.id}:preprocessingField_dialog" />
+							<p:commandButton actionListener="#{cc.attrs.domain.onRemovePreprocessingField(_field)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-delete-empty"
+											 process="@this" partialSubmit="true"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.remove']}"
+											 update="@form:tabs:preprocessingFields" />
+						</p:column>
+					</p:dataTable>
+					<p:commandButton actionListener="#{cc.attrs.domain.onNewPreprocessingField}"
+									 disabled="#{cc.attrs.domain.selected.inUse}"
+									 icon="mdi mdi-plus"
+									 oncomplete="PF('preprocessingField_dialog').show();"
+									 process="@this" partialSubmit="true"
+									 style="margin-bottom: 10px;"
+									 styleClass="secondary"
+									 update="#{cc.attrs.id}:preprocessingField_dialog"
+									 value="#{msg['page.management.domain.preprocessing.field.add']}" />
+				</p:panel>
+			</p:tab>
+
+			<p:tab id="matching">
+				<f:facet name="title">
+					<i class="mdi mdi-account-multiple-outline" style="position: absolute;top: 3px;left: 10px"></i>
+					<h:outputText value="#{msg['page.management.domain.matching']}" style="margin-left: 25px" />
+				</f:facet>
+				<p:panel style="margin-top: 3px;">
+					<h4>
+						<h:outputText value="#{msg['page.management.domain.matching']}" />
+					</h4>
+					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+						<!-- MatchingMode -->
+						<p:outputLabel for="matchingMode" value="#{msg['model.domain.matchingMode']}" />
+						<p:selectOneButton id="matchingMode" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.matchingMode}">
+							<f:selectItems value="#{cc.attrs.domain.matchingModeOptions}" var="_mode" itemLabel="#{msg['model.domain.matchingMode.'.concat(_mode.name())]}" />
+							<p:ajax process="@this" partialSubmit="true" update="matchingConfig" />
+						</p:selectOneButton>
+					</p:panelGrid>
+
+					<h:panelGroup id="matchingConfig" layout="block">
+						<!--						<ui:fragment rendered="#{cc.attrs.domain.config.matchingMode == 'MATCHING_IDENTITIES'}">-->
+						<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+
+							<!-- Use CEMFIM -->
+							<h:panelGroup layout="block">
+								<p:outputLabel for="useCEMFIM" value="#{msg['model.domain.matching.useCEMFIM']}" />
+								<components:tooltip value="#{msg['model.domain.matching.useCEMFIM.hint']}" />
+							</h:panelGroup>
+							<p:selectBooleanCheckbox id="useCEMFIM" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.matchingConfig.useCEMFIM}" />
+
+							<!-- Threshold Possible Match -->
+							<p:outputLabel for="thresholdPossibleMatch" value="#{msg['model.domain.matching.thresholdPossibleMatch']}" />
+							<h:panelGroup layout="block" style="width: fit-content">
+								<h:panelGroup class="ui-inputgroup" layout="block">
+									<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.min']}" /></div>
+									<p:inputText id="thresholdPossibleMatch" required="true" value="#{cc.attrs.domain.config.matchingConfig.thresholdPossibleMatch}" />
+									<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.max']}" /></div>
+								</h:panelGroup>
+								<p:slider for="thresholdPossibleMatch" disabled="#{cc.attrs.domain.selected.inUse}" range="max" step="0.1" minValue="0.1" maxValue="30"
+										  style="margin: 10px auto 15px auto" />
+							</h:panelGroup>
+
+							<!-- Threshold Automatic Match -->
+							<p:outputLabel for="thresholdAutomaticMatch" value="#{msg['model.domain.matching.thresholdAutomaticMatch']}" />
+							<h:panelGroup id="thresholdAutomaticMatchGroup" layout="block" styleClass="flex">
+								<div>
+									<h:panelGroup class="ui-inputgroup" layout="block">
+										<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.min']}" /></div>
+										<p:inputText id="thresholdAutomaticMatch" disabled="#{cc.attrs.domain.disableAutomaticMatch}" required="true"
+													 value="#{cc.attrs.domain.config.matchingConfig.thresholdAutomaticMatch}" />
+										<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.max']}" /></div>
+									</h:panelGroup>
+									<p:slider for="thresholdAutomaticMatch" disabled="#{cc.attrs.domain.disableAutomaticMatch or cc.attrs.domain.selected.inUse}" range="max" step="0.1"
+											  minValue="#{cc.attrs.domain.config.matchingConfig.thresholdPossibleMatch}" maxValue="30"
+											  style="margin: 10px auto 15px auto">
+									</p:slider>
+								</div>
+
+								<div class="ml-3" style="padding-top: 2px">
+									<p:selectBooleanCheckbox id="thresholdAutomaticMatchNever" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.disableAutomaticMatch}">
+										<p:ajax process="@this" partialSubmit="true" resetValues="true" update="thresholdAutomaticMatchGroup" />
+									</p:selectBooleanCheckbox>
+									<h:outputText value="#{msg['model.domain.matching.threshold.never']}" style="position: relative; top: -2px;" />
+								</div>
+							</h:panelGroup>
+						</p:panelGrid>
+
+						<!-- Matching Fields -->
+						<h4 style="margin-top: 25px;">
+							<h:outputText value="#{msg['model.domain.matching.fields']}" />
+						</h4>
+						<p:dataTable id="matchingFields" value="#{cc.attrs.domain.config.matchingConfig.fields}"
+									 var="_field">
+							<p:column headerText="#{msg['model.domain.matching.field.name']}">
+								<h:outputText value="#{msg['common.person.'.concat(_field.name.name())]}" />
+							</p:column>
+							<p:column headerText="#{msg['model.domain.matching.field.algorithm']}">
+								<h:outputText value="#{cc.attrs.domain.getClassNameFromFullPath(_field.algorithm)}" />
+							</p:column>
+							<p:column headerText="#{msg['model.domain.matching.field.blockingMode']}">
+								<h:outputText value="#{msg['model.domain.matching.field.blockingMode.'.concat(_field.blockingMode.name())]}" />
+							</p:column>
+							<p:column headerText="#{msg['model.domain.matching.field.blockingThreshold']}">
+								<h:outputText value="#{_field.blockingThreshold}">
+									<f:convertNumber maxFractionDigits="0" type="percent" />
+								</h:outputText>
+							</p:column>
+							<p:column headerText="#{msg['model.domain.matching.field.matchingThreshold']}">
+								<h:outputText value="#{_field.matchingThreshold}">
+									<f:convertNumber maxFractionDigits="0" type="percent" />
+								</h:outputText>
+							</p:column>
+							<p:column headerText="#{msg['model.domain.matching.field.weight']}">
+								<h:outputText value="#{_field.weight}" />
+							</p:column>
+							<p:column styleClass="icons">
+								<p:commandButton actionListener="#{cc.attrs.domain.onEditMatchingField(_field)}"
+												 disabled="#{cc.attrs.domain.selected.inUse}"
+												 icon="mdi mdi-pencil"
+												 oncomplete="PF('matchingField_dialog').show();"
+												 process="@this" partialSubmit="true"
+												 styleClass="secondary"
+												 title="#{cmsg['ui.button.edit']}"
+												 update="#{cc.attrs.id}:matchingField_dialog" />
+								<p:commandButton actionListener="#{cc.attrs.domain.onRemoveMatchingField(_field)}"
+												 disabled="#{cc.attrs.domain.selected.inUse}"
+												 icon="mdi mdi-delete-empty"
+												 process="@this" partialSubmit="true"
+												 styleClass="secondary"
+												 title="#{cmsg['ui.button.remove']}"
+												 update="@form:tabs:matchingFields" />
+							</p:column>
+						</p:dataTable>
+						<p:commandButton actionListener="#{cc.attrs.domain.onNewMatchingField}"
+										 disabled="#{cc.attrs.domain.selected.inUse}"
+										 icon="mdi mdi-plus"
+										 oncomplete="PF('matchingField_dialog').show();"
+										 process="@this" partialSubmit="true"
+										 style="margin-bottom: 10px;"
+										 styleClass="secondary"
+										 update="#{cc.attrs.id}:matchingField_dialog"
+										 value="#{msg['page.management.domain.matching.field.add']}" />
+
+						<!-- Deduplication Reasons -->
+						<h4 style="margin-top: 25px;">
+							<h:outputText value="#{msg['page.management.domain.deduplicationReasons']}" />
+						</h4>
+						<p:dataTable id="reasons" value="#{cc.attrs.domain.config.deduplication.reasons}"
+									 var="_reason">
+							<p:column headerText="#{msg['model.domain.deduplication.reason.name']}">
+								<h:outputText value="#{managementController.getDeduplicationReasonLabel(_reason.name)}" />
+							</p:column>
+							<p:column headerText="#{msg['model.domain.deduplication.reason.description']}">
+								<h:outputText value="#{managementController.getDeduplicationReasonLabel(_reason.description)}" />
+							</p:column>
+							<p:column styleClass="icons">
+								<p:commandButton actionListener="#{cc.attrs.domain.onRemoveReason(_reason)}"
+												 disabled="#{cc.attrs.domain.selected.inUse}"
+												 icon="mdi mdi-delete-empty"
+												 process="@this" partialSubmit="true"
+												 styleClass="secondary"
+												 title="#{cmsg['ui.button.remove']}"
+												 update="@form:tabs:reasons" />
+							</p:column>
+						</p:dataTable>
+						<p:commandButton actionListener="#{cc.attrs.domain.onNewReason}"
+										 disabled="#{cc.attrs.domain.selected.inUse}"
+										 icon="mdi mdi-plus"
+										 oncomplete="PF('reason_dialog').show();"
+										 process="@this" partialSubmit="true"
+										 style="margin-bottom: 10px;"
+										 styleClass="secondary"
+										 update="#{cc.attrs.id}:reason_dialog"
+										 value="#{msg['page.management.domain.deduplication.reason.add']}" />
+						<!--						</ui:fragment>-->
+					</h:panelGroup>
+				</p:panel>
+			</p:tab>
+
+			<p:tab id="privacy">
+				<f:facet name="title">
+					<i class="mdi mdi-sunglasses" style="position: absolute;top: 3px;left: 10px"></i>
+					<h:outputText value="#{msg['page.management.domain.privacy']}" style="margin-left: 25px" />
+				</f:facet>
+				<p:panel style="margin-top: 3px;">
+					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+
+						<!-- PersistMode -->
+						<p:outputLabel for="persistMode" value="#{msg['model.domain.persistMode']}" />
+						<p:selectOneMenu id="persistMode" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.persistMode}" styleClass="fit-content">
+							<f:selectItems value="#{cc.attrs.domain.persistModeOptions}" var="_option" itemLabel="#{msg['model.domain.persistMode.'.concat(_option.name())]}" />
+						</p:selectOneMenu>
+					</p:panelGrid>
+
+					<!-- Bloom Filters -->
+					<h4 style="margin-top: 25px;">
+						<h:outputText value="#{msg['model.domain.privacy.bloomFilters']}" />
+					</h4>
+					<p:dataTable id="bloomFilters" value="#{cc.attrs.domain.config.privacy.bloomFilterConfigs}"
+								 var="_bf">
+						<p:column headerText="#{msg['model.domain.privacy.bloomFilter.algorithm']}">
+							<h:outputText value="#{cc.attrs.domain.getClassNameFromFullPath(_bf.algorithm)}" />
+						</p:column>
+						<p:column headerText="#{msg['model.domain.privacy.bloomFilter.sourceFields']}">
+							<p:repeat value="#{_bf.sourceFields}" var="_sf">
+								#{msg['common.person.'.concat(_sf.name.name())]}
+							</p:repeat>
+						</p:column>
+						<p:column headerText="#{msg['model.domain.privacy.bloomFilter.field']}">
+							#{msg['common.person.'.concat(_bf.field.name())]}
+						</p:column>
+						<p:column styleClass="icons">
+							<p:commandButton actionListener="#{cc.attrs.domain.onEditBloomFilter(_bf)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-pencil"
+											 oncomplete="PF('bloomFilter_dialog').show();"
+											 process="@this" partialSubmit="true"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.edit']}"
+											 update="#{cc.attrs.id}:bloomFilter_dialog" />
+							<p:commandButton actionListener="#{cc.attrs.domain.onRemoveBloomFilter(_bf)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-delete-empty"
+											 process="@this" partialSubmit="true"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.remove']}"
+											 update="@form:tabs:bloomFilters" />
+						</p:column>
+					</p:dataTable>
+					<p:commandButton actionListener="#{cc.attrs.domain.onNewBloomFilter}"
+									 disabled="#{cc.attrs.domain.selected.inUse}"
+									 icon="mdi mdi-plus"
+									 oncomplete="PF('bloomFilter_dialog').show();"
+									 process="@this" partialSubmit="true"
+									 style="margin-bottom: 10px;"
+									 styleClass="secondary"
+									 update="#{cc.attrs.id}:bloomFilter_dialog"
+									 value="#{msg['page.management.domain.privacy.bloomFilter.add']}" />
+				</p:panel>
+			</p:tab>
+		</p:tabView>
+
+		<p:panel rendered="#{managementController.domain.pageMode != 'READ'}">
+			<p:commandButton actionListener="#{managementController.domain.onSaveCurrent}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; args.validationFailed) PF('tabs').select(0); #{cc.attrs.onSubmitFunction}"
+							 update="#{cc.attrs.update}, @form"
+							 value="#{cmsg['ui.button.save.'.concat(managementController.domain.pageMode)]}" />
+
+			<p:commandButton id="cancel" actionListener="#{managementController.domain.onCancel}"
+							 icon="mdi mdi-close" styleClass="secondary"
+							 ignoreAutoUpdate="#{cc.attrs.dialog}"
+							 onclick="#{cc.attrs.onCancelFunction}"
+							 process="@this" update="#{cc.attrs.update}, @form"
+							 value="#{cmsg['ui.button.cancel']}" />
+		</p:panel>
+	</h:form>
+
+	<p:dialog id="valueField_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.valueField']}"
+			  modal="true" responsive="true" widgetVar="valueField_dialog">
+		<h:form rendered="#{not empty cc.attrs.domain.config}">
+			<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+				<p:outputLabel for="valueFieldField" value="#{msg['model.domain.valueField.field']}" />
+				<p:selectOneMenu id="valueFieldField" value="#{cc.attrs.domain.selectedValueFieldField}">
+					<f:selectItems itemLabel="#{msg['model.domain.valueField.'.concat(_field)]}" value="#{cc.attrs.domain.availableValueFieldOptions}" var="_field" />
+				</p:selectOneMenu>
+
+				<p:outputLabel for="valueFieldLabel" value="#{msg['model.domain.valueField.label']}" />
+				<p:inputText id="valueFieldLabel" value="#{cc.attrs.domain.selectedValueFieldLabel}" required="true" />
+			</p:panelGrid>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddValueField}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('valueField_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:form:tabs:valueFields"
+							 value="#{cmsg['ui.button.add']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('valueField_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="reason_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.deduplication.reason']}"
+			  modal="true" responsive="true" widgetVar="reason_dialog">
+		<h:form rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedReason}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+				<p:outputLabel for="reasonName" value="#{msg['model.domain.deduplication.reason.name']}" />
+				<p:inputText id="reasonName" required="true" value="#{cc.attrs.domain.selectedReason.name}" />
+
+				<p:outputLabel for="reasonDescription" value="#{msg['model.domain.deduplication.reason.description']}" />
+				<p:inputText id="reasonDescription" value="#{cc.attrs.domain.selectedReason.description}" />
+			</p:panelGrid>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddReason}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('reason_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:form:tabs:reasons"
+							 value="#{cmsg['ui.button.add']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('reason_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="preprocessingField_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.preprocessing.field']}"
+			  modal="true" responsive="true" widgetVar="preprocessingField_dialog"
+			  style="min-width: 700px">
+		<h:form id="preprocessingFieldForm" rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedPreprocessingField}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid">
+				<!-- Name -->
+				<p:outputLabel for="preprocessingField" value="#{msg['model.domain.matching.field.name']}" />
+				<p:selectOneMenu id="preprocessingField" disabled="#{!cc.attrs.domain.selectedPreprocessingFieldIsNew}" value="#{cc.attrs.domain.selectedPreprocessingField.fieldName}"
+								 filter="true" filterMatchMode="contains">
+					<f:selectItems value="#{cc.attrs.domain.availablePreprocessingFieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
+				</p:selectOneMenu>
+			</p:panelGrid>
+
+			<!-- Simple Transformations -->
+			<h4 style="margin-top: 25px;">
+				<h:outputText value="#{msg['model.domain.preprocessing.simpleTransformations']}" />
+			</h4>
+			<p:dataTable id="simpleTransformations" value="#{cc.attrs.domain.selectedPreprocessingField.simpleTransformationTypes.entrySet()}"
+						 var="_st">
+				<p:column headerText="#{msg['model.domain.preprocessing.simpleTransformation.inputPattern']}">
+					#{_st.key}
+				</p:column>
+				<p:column headerText="#{msg['model.domain.preprocessing.simpleTransformation.outputPattern']}">
+					#{_st.value}
+				</p:column>
+				<p:column styleClass="icons">
+					<p:commandButton actionListener="#{cc.attrs.domain.onRemoveSimpleTransformation(_st.key)}"
+									 icon="mdi mdi-delete-empty"
+									 styleClass="secondary"
+									 title="#{cmsg['ui.button.remove']}"
+									 update="@parent:@parent" />
+				</p:column>
+			</p:dataTable>
+			<p:commandButton actionListener="#{cc.attrs.domain.onNewSimpleTransformation}" icon="mdi mdi-plus"
+							 immediate="true"
+							 oncomplete="PF('simpleTransformation_dialog').show();"
+							 style="margin-bottom: 10px;"
+							 styleClass="secondary"
+							 update="#{cc.attrs.id}:simpleTransformation_dialog"
+							 value="#{msg['page.management.domain.preprocessing.simpleTransformation.add']}" />
+
+			<!-- Complex Transformations -->
+			<h4 style="margin-top: 25px;">
+				<h:outputText value="#{msg['model.domain.preprocessing.complexTransformations']}" />
+			</h4>
+			<p:dataTable id="complexTransformations" value="#{cc.attrs.domain.selectedPreprocessingField.complexTransformationClasses}"
+						 var="_ct">
+				<p:column headerText="#{msg['model.domain.preprocessing.complexTransformation.className']}">
+					#{cc.attrs.domain.getClassNameFromFullPath(_ct)}
+				</p:column>
+				<p:column styleClass="icons">
+					<p:commandButton actionListener="#{cc.attrs.domain.onRemoveComplexTransformation(_ct)}"
+									 icon="mdi mdi-delete-empty"
+									 styleClass="secondary"
+									 title="#{cmsg['ui.button.remove']}"
+									 update="@parent:@parent" />
+				</p:column>
+			</p:dataTable>
+			<p:commandButton actionListener="#{cc.attrs.domain.onNewComplexTransformation}" icon="mdi mdi-plus"
+							 immediate="true"
+							 oncomplete="PF('complexTransformation_dialog').show();"
+							 style="margin-bottom: 10px;"
+							 styleClass="secondary"
+							 update="#{cc.attrs.id}:complexTransformation_dialog"
+							 value="#{msg['page.management.domain.preprocessing.complexTransformation.add']}" />
+
+			<!-- Simple Filters -->
+			<h4 style="margin-top: 25px;">
+				<h:outputText value="#{msg['model.domain.preprocessing.simpleFilters']}" />
+			</h4>
+			<p:dataTable id="simpleFilters" value="#{cc.attrs.domain.selectedPreprocessingField.simpleFilterTypes.entrySet()}"
+						 var="_sf">
+				<p:column headerText="#{msg['model.domain.preprocessing.simpleFilter.passAlphabet']}">
+					#{_sf.key}
+				</p:column>
+				<p:column headerText="#{msg['model.domain.preprocessing.simpleFilter.replaceCharacter']}">
+					#{_sf.value}
+				</p:column>
+				<p:column styleClass="icons">
+					<p:commandButton actionListener="#{cc.attrs.domain.onRemoveSimpleFilter(_sf.key)}"
+									 icon="mdi mdi-delete-empty"
+									 styleClass="secondary"
+									 title="#{cmsg['ui.button.remove']}"
+									 update="@parent:@parent" />
+				</p:column>
+			</p:dataTable>
+			<p:commandButton actionListener="#{cc.attrs.domain.onNewSimpleFilter}" icon="mdi mdi-plus"
+							 immediate="true"
+							 oncomplete="PF('simpleFilter_dialog').show();"
+							 style="margin-bottom: 10px;"
+							 styleClass="secondary"
+							 update="#{cc.attrs.id}:simpleFilter_dialog"
+							 value="#{msg['page.management.domain.preprocessing.simpleFilter.add']}" />
+			<br /> <br />
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddPreprocessingField}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('preprocessingField_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:form:tabs:preprocessingFields"
+							 value="#{cmsg['ui.button.save']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('preprocessingField_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="simpleTransformation_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.preprocessing.simpleTransformation']}"
+			  modal="true" responsive="true" widgetVar="simpleTransformation_dialog">
+		<h:form rendered="#{not empty cc.attrs.domain.config}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+				<p:outputLabel for="inputPattern" value="#{msg['model.domain.preprocessing.simpleTransformation.inputPattern']}" />
+				<p:inputText id="inputPattern" required="true" value="#{cc.attrs.domain.selectedSimpleTransformationInput}" />
+
+				<p:outputLabel for="outputPattern" value="#{msg['model.domain.preprocessing.simpleTransformation.outputPattern']}" />
+				<p:inputText id="outputPattern" value="#{cc.attrs.domain.selectedSimpleTransformationOutput}" />
+			</p:panelGrid>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddSimpleTransformation}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('simpleTransformation_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:preprocessingFieldForm:simpleTransformations"
+							 value="#{cmsg['ui.button.add']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('simpleTransformation_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="complexTransformation_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.preprocessing.complexTransformation']}"
+			  modal="true" responsive="true" widgetVar="complexTransformation_dialog">
+		<h:form rendered="#{not empty cc.attrs.domain.config}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+				<p:outputLabel for="className" value="#{msg['model.domain.preprocessing.complexTransformation.className']}" />
+				<p:selectOneMenu id="className" value="#{cc.attrs.domain.selectedComplexTransformationClass}">
+					<f:selectItems value="#{cc.attrs.domain.complexTransformationOptions}" itemLabel="#{cc.attrs.domain.getClassNameFromFullPath(_algorithm)}" var="_algorithm" />
+				</p:selectOneMenu>
+			</p:panelGrid>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddComplexTransformation}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('complexTransformation_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:preprocessingFieldForm:complexTransformations"
+							 value="#{cmsg['ui.button.add']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('complexTransformation_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="simpleFilter_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.preprocessing.simpleFilter']}"
+			  modal="true" responsive="true" widgetVar="simpleFilter_dialog">
+		<h:form rendered="#{not empty cc.attrs.domain.config}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
+				<p:outputLabel for="passAlphabet" value="#{msg['model.domain.preprocessing.simpleFilter.passAlphabet']}" />
+				<p:inputText id="passAlphabet" required="true" value="#{cc.attrs.domain.selectedSimpleFilterPassAlphabet}" />
+
+				<p:outputLabel for="replaceCharacter" value="#{msg['model.domain.preprocessing.simpleFilter.replaceCharacter']}" />
+				<p:inputText id="replaceCharacter" value="#{cc.attrs.domain.selectedSimpleFilterReplaceCharacter}" maxlength="1" />
+			</p:panelGrid>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddSimpleFilter}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('simpleFilter_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:preprocessingFieldForm:simpleFilters"
+							 value="#{cmsg['ui.button.add']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('simpleFilter_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="matchingField_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.matching.field']}"
+			  modal="true" responsive="true" widgetVar="matchingField_dialog"
+			  style="min-width: 700px">
+		<h:form rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedMatchingField}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid">
+				<!-- Name -->
+				<p:outputLabel for="matchingField" value="#{msg['model.domain.matching.field.name']}" />
+				<p:selectOneMenu id="matchingField" value="#{cc.attrs.domain.selectedMatchingField.name}"
+								 filter="true" filterMatchMode="contains">
+					<f:selectItems value="#{cc.attrs.domain.availableMatchingFieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
+				</p:selectOneMenu>
+
+				<!-- Algorithm -->
+				<p:outputLabel for="matchingAlgorithm" value="#{msg['model.domain.matching.field.algorithm']}" />
+				<p:selectOneMenu id="matchingAlgorithm" value="#{cc.attrs.domain.selectedMatchingField.algorithm}">
+					<f:selectItems value="#{cc.attrs.domain.matchingAlgorithmOptions}" itemLabel="#{cc.attrs.domain.getClassNameFromFullPath(_algorithm)}" var="_algorithm" />
+				</p:selectOneMenu>
+
+				<!-- Blocking Mode -->
+				<p:outputLabel for="blockingMode" value="#{msg['model.domain.matching.field.blockingMode']}" />
+				<p:selectOneMenu id="blockingMode" value="#{cc.attrs.domain.selectedMatchingField.blockingMode}">
+					<f:selectItems value="#{cc.attrs.domain.blockingModeOptions}" itemLabel="#{msg['model.domain.matching.field.blockingMode.'.concat(_mode.name())]}" var="_mode" />
+				</p:selectOneMenu>
+
+				<!-- Blocking Threshold -->
+				<p:outputLabel for="blockingThreshold" value="#{msg['model.domain.matching.field.blockingThreshold']}" />
+				<h:panelGroup layout="block" style="width: fit-content">
+					<h:panelGroup class="ui-inputgroup" layout="block">
+						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.min']}" /></div>
+						<p:inputNumber id="blockingThreshold" required="true" value="#{cc.attrs.domain.selectedBlockingFieldThreshold}" symbol=" %" symbolPosition="s" decimalPlaces="0" />
+						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.max']}" /></div>
+					</h:panelGroup>
+					<p:slider for="blockingThreshold" range="max" step="1" minValue="0" maxValue="100"
+							  style="margin: 10px auto 15px auto" />
+				</h:panelGroup>
+
+				<!-- Matching Threshold -->
+				<p:outputLabel for="matchingThreshold" value="#{msg['model.domain.matching.field.matchingThreshold']}" />
+				<h:panelGroup layout="block" style="width: fit-content">
+					<h:panelGroup class="ui-inputgroup" layout="block">
+						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.min']}" /></div>
+						<p:inputNumber id="matchingThreshold" required="true" value="#{cc.attrs.domain.selectedMatchingFieldThreshold}" symbol=" %" symbolPosition="s" decimalPlaces="0" />
+						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.max']}" /></div>
+					</h:panelGroup>
+					<p:slider for="matchingThreshold" range="max" step="1" minValue="0" maxValue="100"
+							  style="margin: 10px auto 15px auto" />
+				</h:panelGroup>
+
+				<!-- Weight -->
+				<p:outputLabel for="weight" value="#{msg['model.domain.matching.field.weight']}" />
+				<h:panelGroup layout="block" style="width: fit-content">
+					<h:panelGroup class="ui-inputgroup" layout="block">
+						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.weight.min']}" /></div>
+						<p:inputText id="weight" required="true" value="#{cc.attrs.domain.selectedMatchingField.weight}" />
+						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.weight.max']}" /></div>
+					</h:panelGroup>
+					<p:slider for="weight" step="0.1" minValue="0.1" maxValue="10"
+							  style="margin: 10px auto 15px auto" />
+				</h:panelGroup>
+			</p:panelGrid>
+
+			<p:accordionPanel activeIndex="-1">
+				<p:tab title="#{msg['page.management.domain.matching.multipleValues']}">
+					<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid">
+						<!-- multipleValuesSeparator -->
+						<p:outputLabel for="multipleValuesSeparator" value="#{msg['model.domain.matching.field.multipleValuesSeparator']}" />
+						<p:inputText id="multipleValuesSeparator" value="#{cc.attrs.domain.selectedMatchingField.multipleValuesSeparator}" maxlength="1" />
+
+						<!-- penaltyNotAPerfectMatch -->
+						<p:outputLabel for="penaltyNotAPerfectMatch" value="#{msg['model.domain.matching.field.penaltyNotAPerfectMatch']}" />
+						<h:panelGroup layout="block">
+							<p:inputNumber id="penaltyNotAPerfectMatch" value="#{cc.attrs.domain.penaltyNotAPerfectMatch}" symbol=" %" symbolPosition="s" decimalPlaces="0" />
+							<p:slider for="penaltyNotAPerfectMatch" range="max" step="1" minValue="-100" maxValue="0" style="margin-bottom: 15px" />
+						</h:panelGroup>
+
+						<!-- penaltyOneShort -->
+						<p:outputLabel for="penaltyOneShort" value="#{msg['model.domain.matching.field.penaltyOneShort']}" />
+						<h:panelGroup layout="block">
+							<p:inputNumber id="penaltyOneShort" value="#{cc.attrs.domain.penaltyOneShort}" symbol=" %" symbolPosition="s" decimalPlaces="0" />
+							<p:slider for="penaltyOneShort" range="max" step="1" minValue="-100" maxValue="0" style="margin-bottom: 15px" />
+						</h:panelGroup>
+
+						<!-- penaltyNotAPerfectMatch -->
+						<p:outputLabel for="penaltyBothShort" value="#{msg['model.domain.matching.field.penaltyBothShort']}" />
+						<h:panelGroup layout="block">
+							<p:inputNumber id="penaltyBothShort" value="#{cc.attrs.domain.penaltyBothShort}" symbol=" %" symbolPosition="s" decimalPlaces="0" />
+							<p:slider for="penaltyBothShort" range="max" step="1" minValue="-100" maxValue="0" style="margin-bottom: 15px" />
+						</h:panelGroup>
+					</p:panelGrid>
+				</p:tab>
+			</p:accordionPanel>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddMatchingField}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('matchingField_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:form:tabs:matchingFields"
+							 value="#{cmsg['ui.button.save']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('matchingField_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="bloomFilter_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.privacy.bloomFilter']}"
+			  modal="true" responsive="true" widgetVar="bloomFilter_dialog"
+			  style="min-width: 700px">
+		<h:form id="bloomFilterForm" rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedBloomFilter}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid" style="margin-bottom: 0">
+				<!-- Algorithm -->
+				<p:outputLabel for="bloomFilterAlgorithm" value="#{msg['model.domain.privacy.bloomFilter.algorithm']}" />
+				<p:selectOneMenu id="bloomFilterAlgorithm" value="#{cc.attrs.domain.selectedBloomFilter.algorithm}">
+					<f:selectItems value="#{cc.attrs.domain.bloomFilterAlgorithmOptions}" itemLabel="#{cc.attrs.domain.getClassNameFromFullPath(_algorithm)}" var="_algorithm" />
+					<p:ajax process="@this" partialSubmit="true" update="alphabetPanelGroup, sourceFields" />
+				</p:selectOneMenu>
+			</p:panelGrid>
+
+			<h:panelGroup id="alphabetPanelGroup" layout="block">
+				<ui:fragment rendered="#{cc.attrs.domain.selectedBloomFilter.algorithm == 'org.emau.icmvc.ttp.deduplication.impl.bloomfilter.RandomHashingStrategy'}">
+					<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid" style="margin-bottom: 0">
+						<!-- alphabet -->
+						<p:outputLabel for="alphabet" value="#{msg['model.domain.privacy.bloomFilter.alphabet']}" />
+						<p:inputText id="alphabet" required="true" value="#{cc.attrs.domain.selectedBloomFilter.alphabet}" styleClass="long" />
+					</p:panelGrid>
+				</ui:fragment>
+			</h:panelGroup>
+
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid" style="margin-bottom: 0;">
+				<!-- length -->
+				<p:outputLabel for="length" value="#{msg['model.domain.privacy.bloomFilter.length']}" />
+				<h:panelGroup class="ui-inputgroup" layout="block">
+					<p:inputNumber id="length" decimalPlaces="0" minValue="1" required="true" value="#{cc.attrs.domain.selectedBloomFilter.length}" />
+					<div class="ui-inputgroup-addon"><h:outputText value="#{cmsg['unit.math.bits']}" /></div>
+				</h:panelGroup>
+
+				<!-- ngrams -->
+				<p:outputLabel for="ngrams" value="#{msg['model.domain.privacy.bloomFilter.ngrams']}" />
+				<p:inputNumber id="ngrams" decimalPlaces="0" minValue="0" required="true" value="#{cc.attrs.domain.selectedBloomFilter.ngrams}" />
+
+				<!-- bitsPerNgram -->
+				<p:outputLabel for="bitsPerNgram" value="#{msg['model.domain.privacy.bloomFilter.bitsPerNgram']}" />
+				<h:panelGroup class="ui-inputgroup" layout="block">
+					<p:inputNumber id="bitsPerNgram" decimalPlaces="0" minValue="1" required="true" value="#{cc.attrs.domain.selectedBloomFilter.bitsPerNgram}" />
+					<div class="ui-inputgroup-addon"><h:outputText value="#{cmsg['unit.math.bits']}" /></div>
+				</h:panelGroup>
+
+				<!-- fold -->
+				<p:outputLabel for="fold" value="#{msg['model.domain.privacy.bloomFilter.fold']}" />
+				<p:inputNumber id="fold" decimalPlaces="0" minValue="0" required="true" value="#{cc.attrs.domain.selectedBloomFilter.fold}" />
+
+				<!-- Balanced -->
+				<p:outputLabel for="balanced" value="#{msg['model.domain.privacy.bloomFilter.balanced']}" />
+				<p:selectBooleanCheckbox id="balanced" value="#{cc.attrs.domain.balanced}">
+					<p:ajax process="@this" partialSubmit="true" update="balancedPanelGroup" />
+				</p:selectBooleanCheckbox>
+			</p:panelGrid>
+
+			<h:panelGroup id="balancedPanelGroup" layout="block">
+				<ui:fragment rendered="#{cc.attrs.domain.balanced}">
+					<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid" style="margin-bottom: 0">
+						<!-- seed -->
+						<p:outputLabel for="seed" value="#{msg['model.domain.privacy.bloomFilter.balanced.seed']}" />
+						<p:inputNumber id="seed" decimalPlaces="0" minValue="0" required="true" value="#{cc.attrs.domain.selectedBloomFilter.balanced.seed}" />
+					</p:panelGrid>
+				</ui:fragment>
+			</h:panelGroup>
+
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid">
+				<!-- Field -->
+				<p:outputLabel for="bloomFilterField" value="#{msg['model.domain.privacy.bloomFilter.field']}" />
+				<p:selectOneMenu id="bloomFilterField" required="true" value="#{cc.attrs.domain.selectedBloomFilter.field}"
+								 filter="true" filterMatchMode="contains">
+					<f:selectItem noSelectionOption="true" itemLabel="#{cmsg['ui.select.pleaseSelect']}" itemDisabled="true" />
+					<f:selectItems value="#{cc.attrs.domain.availableBloomFilterFieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
+				</p:selectOneMenu>
+			</p:panelGrid>
+
+			<!-- SourceFields -->
+			<h4 style="margin-top: 25px;">
+				<h:outputText value="#{msg['model.domain.privacy.bloomFilter.sourceFields']}" />
+			</h4>
+			<p:dataTable id="sourceFields" value="#{cc.attrs.domain.selectedBloomFilter.sourceFields}"
+						 var="_sf">
+				<p:column headerText="#{msg['model.domain.privacy.bloomFilter.sourceField.name']}">
+					#{msg['common.person.'.concat(_sf.name.name())]}
+				</p:column>
+				<p:column headerText="#{msg['model.domain.privacy.bloomFilter.sourceField.seed']}"
+						  rendered="#{cc.attrs.domain.selectedBloomFilter.algorithm == 'org.emau.icmvc.ttp.deduplication.impl.bloomfilter.RandomHashingStrategy'}">
+					#{_sf.seed}
+				</p:column>
+				<p:column headerText="#{msg['model.domain.privacy.bloomFilter.sourceField.salt']}"
+						  rendered="#{cc.attrs.domain.selectedBloomFilter.algorithm == 'org.emau.icmvc.ttp.deduplication.impl.bloomfilter.DoubleHashingStrategy' or cc.attrs.domain.selectedBloomFilter.algorithm == 'org.emau.icmvc.ttp.deduplication.impl.bloomfilter.DoubleHashingStrategyFaster'}">
+					#{not empty _sf.saltField ? msg['common.person.'.concat(_sf.saltField.name())] : _sf.saltValue}
+				</p:column>
+				<p:column styleClass="icons">
+					<p:commandButton actionListener="#{cc.attrs.domain.onEditSourceField(_sf)}"
+									 icon="mdi mdi-pencil"
+									 oncomplete="PF('sourceField_dialog').show();"
+									 process="@this"
+									 styleClass="secondary"
+									 title="#{cmsg['ui.button.edit']}"
+									 update="#{cc.attrs.id}:sourceField_dialog" />
+					<p:commandButton actionListener="#{cc.attrs.domain.onRemoveSourceField(_sf)}"
+									 icon="mdi mdi-delete-empty"
+									 styleClass="secondary"
+									 title="#{cmsg['ui.button.remove']}"
+									 update="@form:sourceFields" />
+				</p:column>
+			</p:dataTable>
+			<p:commandButton actionListener="#{cc.attrs.domain.onNewSourceField}" icon="mdi mdi-plus"
+							 immediate="true"
+							 oncomplete="PF('sourceField_dialog').show();"
+							 style="margin-bottom: 10px;"
+							 styleClass="secondary"
+							 update="#{cc.attrs.id}:sourceField_dialog"
+							 value="#{msg['page.management.domain.privacy.bloomFilter.sourceField.add']}" />
+			<br /> <br />
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddBloomFilter}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('bloomFilter_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:form:tabs:bloomFilters"
+							 value="#{cmsg['ui.button.save']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('bloomFilter_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="sourceField_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.privacy.bloomFilter.sourceField']}"
+			  modal="true" responsive="true" widgetVar="sourceField_dialog">
+		<h:form rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedSourceField}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid" style="margin-bottom: 0">
+				<!-- Name -->
+				<p:outputLabel for="sourceField" value="#{msg['model.domain.privacy.bloomFilter.sourceField.name']}" />
+				<p:selectOneMenu id="sourceField" process="@this" partialSubmit="true" required="true" value="#{cc.attrs.domain.selectedSourceField.name}"
+								 filter="true" filterMatchMode="contains">
+					<f:selectItem noSelectionOption="true" itemLabel="#{cmsg['ui.select.pleaseSelect']}" itemDisabled="true" />
+					<f:selectItems value="#{cc.attrs.domain.fieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
+				</p:selectOneMenu>
+			</p:panelGrid>
+
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid" style="margin-bottom: 0"
+						 rendered="#{cc.attrs.domain.selectedBloomFilter.algorithm == 'org.emau.icmvc.ttp.deduplication.impl.bloomfilter.RandomHashingStrategy'}">
+				<!-- seed -->
+				<p:outputLabel for="sourceFieldSeed" value="#{msg['model.domain.privacy.bloomFilter.balanced.seed']}" />
+				<p:inputNumber id="sourceFieldSeed" decimalPlaces="0" minValue="0" required="true" value="#{cc.attrs.domain.selectedSourceField.seed}" />
+			</p:panelGrid>
+
+			<ui:fragment
+					rendered="#{cc.attrs.domain.selectedBloomFilter.algorithm == 'org.emau.icmvc.ttp.deduplication.impl.bloomfilter.DoubleHashingStrategy' or cc.attrs.domain.selectedBloomFilter.algorithm == 'org.emau.icmvc.ttp.deduplication.impl.bloomfilter.DoubleHashingStrategyFaster'}">
+				<h:outputText value="#{msg['model.domain.privacy.bloomFilter.sourceField.salt']}" styleClass="block font-bold" style="margin-top: 5px" />
+				<p:panelGrid id="sourceFieldSalt" columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid">
+					<!-- salt -->
+					<p:selectOneButton value="#{cc.attrs.domain.doubleHashingSaltType}" style="margin-top: 5px" unselectable="false">
+						<f:selectItem itemLabel="#{msg['model.domain.privacy.bloomFilter.sourceField.saltValue']}" itemValue="FIXED" />
+						<f:selectItem itemLabel="#{msg['model.domain.privacy.bloomFilter.sourceField.saltField']}" itemValue="FIELD" />
+						<p:ajax process="sourceFieldSalt" partialSubmit="true" update="sourceFieldSalt" resetValues="true" />
+					</p:selectOneButton>
+
+					<!-- Fixed salt -->
+					<p:inputText id="saltValue" required="true" rendered="#{cc.attrs.domain.doubleHashingSaltType == 'FIXED'}" value="#{cc.attrs.domain.selectedSourceField.saltValue}" />
+
+					<!-- Field salt -->
+					<p:selectOneMenu id="saltField" required="true" rendered="#{cc.attrs.domain.doubleHashingSaltType == 'FIELD'}"
+									 value="#{cc.attrs.domain.selectedSourceField.saltField}"
+									 filter="true" filterMatchMode="contains">
+						<f:selectItem noSelectionOption="true" itemLabel="#{cmsg['ui.select.pleaseSelect']}" itemDisabled="true" />
+						<f:selectItems value="#{cc.attrs.domain.fieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
+					</p:selectOneMenu>
+				</p:panelGrid>
+			</ui:fragment>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onAddSourceField}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('sourceField_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:bloomFilterForm:sourceFields"
+							 value="#{cmsg['ui.button.save']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('sourceField_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+</composite:implementation>
+
+</html>

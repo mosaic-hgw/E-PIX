@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.enums;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -58,7 +58,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlJavaTypeAdapter(FieldNameAdapter.class)
 public enum FieldName
 {
-	firstName, middleName, lastName, prefix, suffix, birthDate, gender, birthPlace, race, religion, mothersMaidenName, degree, motherTongue, nationality, civilStatus, externalDate, value1, value2, value3, value4, value5, value6, value7, value8, value9, value10;
+	firstName, middleName, lastName, prefix, suffix, birthDate, gender, birthPlace, race, religion, mothersMaidenName, degree, motherTongue, nationality, civilStatus, externalDate, value1, value2, value3, value4, value5, value6, value7, value8, value9, value10, vitalStatus, dateOfDeath;
 
 	public String value()
 	{

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,16 +40,6 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  */
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -79,12 +69,23 @@ import org.emau.icmvc.ttp.epix.frontend.controller.testtools.EpixWebTest;
 import org.emau.icmvc.ttp.epix.frontend.model.EpixWebFile;
 import org.emau.icmvc.ttp.epix.frontend.model.WebPerson;
 import org.emau.icmvc.ttp.epix.frontend.model.WebPersonField;
+import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
 import org.icmvc.ttp.web.controller.LanguageBean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.file.UploadedFile;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class ImportControllerTest extends EpixWebTest
 {
@@ -98,10 +99,13 @@ public class ImportControllerTest extends EpixWebTest
 	ConfigurationContainer configurationContainer;
 	DomainSelector domainSelector;
 	SourceDTO selectedSource;
+	EpixHelper epixHelper;
 
 	@BeforeEach
 	void setUpImportControllerTest()
 	{
+		initMocks(this);
+		
 		uploadFile = mock(UploadedFile.class);
 
 		event = mock(FileUploadEvent.class);
@@ -112,14 +116,17 @@ public class ImportControllerTest extends EpixWebTest
 		importController.setLanguageBean(languageBean);
 
 		configurationContainer = mock(ConfigurationContainer.class);
-		epixWebFile = new EpixWebFile(languageBean, configurationContainer);
+		epixWebFile = new EpixWebFile(languageBean, configurationContainer, new ArrayList<>());
 		epixWebFile.setContainsHeader(true);
 		importController.setWebFile(epixWebFile);
 
 		domainSelector = mock(DomainSelector.class, RETURNS_DEEP_STUBS);
 		when(domainSelector.getSelectedDomainConfiguration()).thenReturn(configurationContainer);
 		when(domainSelector.getSelectedDomain().getMpiDomain().getName()).thenReturn("MPI");
-		importController.setDomainSelector(domainSelector);
+		epixHelper = mock(EpixHelper.class, RETURNS_DEEP_STUBS);
+		when(epixHelper.getDomainSelector()).thenReturn(domainSelector);
+		when(epixHelper.getManagementService()).thenReturn(managementService);
+		importController.setEpixHelper(epixHelper);
 
 		selectedSource = mock(SourceDTO.class);
 		when(selectedSource.getName()).thenReturn("Source");
@@ -132,7 +139,7 @@ public class ImportControllerTest extends EpixWebTest
 	void onUpload()
 	{
 		// Arrange
-		epixWebFile = new EpixWebFile(languageBean, configurationContainer);
+		epixWebFile = new EpixWebFile(languageBean, configurationContainer, new ArrayList<>());
 		String content = "Max";
 		when(uploadFile.getContent()).thenReturn(content.getBytes());
 
@@ -231,7 +238,7 @@ public class ImportControllerTest extends EpixWebTest
 	void detectCustomColumnTypes()
 	{
 		// Arrange
-		String content = "value1;Value 2;CcCc;Wert 4\n"
+		String content = "field1;Field 2;CcCc;Feld 4\n"
 				+ "Max;Mustermann;Greifswald;01.01.1990";
 		when(uploadFile.getContent()).thenReturn(content.getBytes());
 
@@ -250,6 +257,29 @@ public class ImportControllerTest extends EpixWebTest
 		assertEquals(WebPersonField.value2.name(), epixWebFile.getColumnTypeMapping().get(epixWebFile.getColumns().get(1)));
 		assertEquals(WebPersonField.value3.name(), epixWebFile.getColumnTypeMapping().get(epixWebFile.getColumns().get(2)));
 		assertEquals(WebPersonField.value4.name(), epixWebFile.getColumnTypeMapping().get(epixWebFile.getColumns().get(3)));
+	}
+	
+	@Test
+	void detectIdentifierDomain()
+	{
+		// Arrange
+		String content = "MyIdentifierDomain;Vorname\n"
+				+ "id-001;Max";
+		when(uploadFile.getContent()).thenReturn(content.getBytes());
+
+		IdentifierDomainDTO myIdentifierDomain = mock(IdentifierDomainDTO.class);
+		when(myIdentifierDomain.getName()).thenReturn("MyIdentifierDomain");
+		List<IdentifierDomainDTO> identifierDomains = List.of(myIdentifierDomain);
+
+		epixWebFile = new EpixWebFile(languageBean, configurationContainer, identifierDomains);
+		epixWebFile.setContainsHeader(true);
+
+		// Act
+		epixWebFile.onUpload(event);
+
+		// Assert
+		assertEquals("localId.MyIdentifierDomain", epixWebFile.getColumnTypeMapping().get(epixWebFile.getColumns().get(0)));
+		assertEquals(WebPersonField.firstName.name(), epixWebFile.getColumnTypeMapping().get(epixWebFile.getColumns().get(1)));
 	}
 
 	@Test
@@ -447,8 +477,8 @@ public class ImportControllerTest extends EpixWebTest
 		String content = "Firstname\n"
 				+ "Max";
 		when(uploadFile.getContent()).thenReturn(content.getBytes());
-		List<FieldName> requiredFields = Arrays.asList(FieldName.firstName, FieldName.lastName);
-		when(importController.getDomainSelector().getSelectedDomainConfiguration().getRequiredFields()).thenReturn(requiredFields);
+		when(epixHelper.required(FieldName.firstName.name())).thenReturn(true);
+		when(epixHelper.required(FieldName.lastName.name())).thenReturn(true);
 
 		// Act
 		epixWebFile.onUpload(event);
@@ -498,13 +528,13 @@ public class ImportControllerTest extends EpixWebTest
 		IdentifierDomainDTO identifierDomain2 = mock(IdentifierDomainDTO.class);
 		when(identifierDomain2.getName()).thenReturn("CASE");
 		List<IdentifierDomainDTO> identifierDomains = Arrays.asList(identifierDomain1, identifierDomain2);
-		when(managementService.getIdentifierDomains()).thenReturn(identifierDomains);
+		when(epixHelper.getIdentifierDomainsFiltered()).thenReturn(identifierDomains);
 
 		// Act
 		epixWebFile.onUpload(event);
 		// Select all columns for import
 		epixWebFile.setSelectedColumns(Arrays.asList("Firstname", "lid1", "lid2", "Lastname"));
-		// Map uploaded identifier columns to identifier domains (usally done with selectbox in frontend)
+		// Map uploaded identifier columns to identifier domains (usually done with selectbox in frontend)
 		epixWebFile.getColumnTypeMapping().put("lid1", "localId.PATIENT");
 		epixWebFile.getColumnTypeMapping().put("lid2", "localId.CASE");
 		epixWebFile.generateColumnTypeIndex();

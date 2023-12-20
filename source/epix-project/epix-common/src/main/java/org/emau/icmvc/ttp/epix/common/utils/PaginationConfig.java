@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.utils;
  * ###license-information-start###
  * gPAS - a Generic Pseudonym Administration Service
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,18 +40,24 @@ package org.emau.icmvc.ttp.epix.common.utils;
  */
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityField;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
+import org.emau.icmvc.ttp.epix.common.model.enums.PersonField;
+import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 
 /**
  * parameter for get...Paginated functions
@@ -97,29 +103,61 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
  */
 public class PaginationConfig implements Serializable
 {
-	private static final long serialVersionUID = 5400581744252774912L;
+	private static final long serialVersionUID = 6071259667642410949L;
 
+	// pagination
 	private int firstEntry = 0;
 	private int pageSize = 0;
+
+	// filtering modes
+	private String globalFieldFilter;
+	private boolean globalFieldFilterCaseSensitive = false;
 	private final Set<IdentityHistoryEvent> eventFilter = new HashSet<>();
 	private final Set<PossibleMatchSolution> solutionFilter = new HashSet<>();
+	private final Set<PossibleMatchPriority> priorityFilter = new HashSet<>();
+
+	// identity filtering
 	private final Map<IdentityField, String> identityFilter = new HashMap<>();
 	private boolean identityFilterAsConjunction = true;
 	private boolean identityFilterCaseSensitive = false;
+	private final Map<Gender, String> identityGenderStrings = new HashMap<>();
+	private final Map<VitalStatus, String> identityVitalStatusStrings = new HashMap<>();
 	private IdentityField sortField = null;
 	private boolean sortIsAscending = true;
+
+	// person filtering
+	private final Map<PersonField, String> personFilter = new HashMap<>();
+	private boolean personFilterAsConjunction = true;
+	private boolean personFilterCaseSensitive = false;
+
+	// identity and person
+	private boolean identityAndPersonFilterCombinedAsConjunction = false;
+
+	// misc
+	private String createTimestampFilter = null;
 	private String dateFormat;
-	private String dateTimeFormat;
+	private String timeFormat;
 
 	public PaginationConfig()
+	{}
+
+	public PaginationConfig(String globalFieldFilter, boolean caseSensitive)
 	{
+		setGlobalFieldFilter(globalFieldFilter);
+		setGlobalFieldFilterCaseSensitive(caseSensitive);
 	}
 
-	public PaginationConfig(Map<IdentityField, String> identityFilter, boolean identityFilterAsConjunction, boolean identityFilterCaseSensitive)
+	public PaginationConfig(Map<IdentityField, String> identityFilter, Map<PersonField, String> personFilter, boolean asConjunction, boolean caseSensitive)
 	{
 		setIdentityFilter(identityFilter);
-		this.identityFilterAsConjunction = identityFilterAsConjunction;
-		this.identityFilterCaseSensitive = identityFilterCaseSensitive;
+		this.identityFilterAsConjunction = asConjunction;
+		this.identityFilterCaseSensitive = caseSensitive;
+
+		setPersonFilter(personFilter);
+		this.personFilterAsConjunction = asConjunction;
+		this.personFilterCaseSensitive = caseSensitive;
+
+		setIdentityAndPersonFilterCombinedAsConjunction(asConjunction);
 	}
 
 	public boolean isUsingPagination()
@@ -147,29 +185,37 @@ public class PaginationConfig implements Serializable
 		this.pageSize = pageSize;
 	}
 
-	public boolean isUsingSorting()
-	{
-		return sortField != null;
+	// ### filtering modes ##############################################################################################################
 
-	}
-	public IdentityField getSortField()
+	public String getGlobalFieldFilter()
 	{
-		return sortField;
+		return globalFieldFilter;
 	}
 
-	public void setSortField(IdentityField sortField)
+	public void setGlobalFieldFilter(String globalFieldFilter)
 	{
-		this.sortField = sortField;
+		this.globalFieldFilter = globalFieldFilter;
+		if (isUsingGlobalFieldFiltering())
+		{
+			identityFilter.clear();
+			personFilter.clear();
+			identityAndPersonFilterCombinedAsConjunction = false;
+		}
 	}
 
-	public boolean isSortIsAscending()
+	public boolean isUsingGlobalFieldFiltering()
 	{
-		return sortIsAscending;
+		return globalFieldFilter != null && !globalFieldFilter.isBlank();
 	}
 
-	public void setSortIsAscending(boolean sortIsAscending)
+	public boolean isGlobalFieldFilterCaseSensitive()
 	{
-		this.sortIsAscending = sortIsAscending;
+		return globalFieldFilterCaseSensitive;
+	}
+
+	public void setGlobalFieldFilterCaseSensitive(boolean globalFieldFilterCaseSensitive)
+	{
+		this.globalFieldFilterCaseSensitive = globalFieldFilterCaseSensitive;
 	}
 
 	public boolean isUsingEventFiltering()
@@ -179,7 +225,7 @@ public class PaginationConfig implements Serializable
 
 	public Set<IdentityHistoryEvent> getEventFilter()
 	{
-		return Collections.unmodifiableSet(eventFilter);
+		return new HashSet<>(eventFilter);
 	}
 
 	public void setEventFilter(Set<IdentityHistoryEvent> eventFilter)
@@ -198,7 +244,7 @@ public class PaginationConfig implements Serializable
 
 	public Set<PossibleMatchSolution> getSolutionFilter()
 	{
-		return Collections.unmodifiableSet(solutionFilter);
+		return new HashSet<>(solutionFilter);
 	}
 
 	public void setSolutionFilter(Set<PossibleMatchSolution> solutionFilter)
@@ -210,6 +256,27 @@ public class PaginationConfig implements Serializable
 		}
 	}
 
+	public boolean isUsingPriorityFiltering()
+	{
+		return !priorityFilter.isEmpty();
+	}
+
+	public Set<PossibleMatchPriority> getPriorityFilter()
+	{
+		return new HashSet<>(priorityFilter);
+	}
+
+	public void setPriorityFilter(Set<PossibleMatchPriority> priorityFilter)
+	{
+		this.priorityFilter.clear();
+		if (priorityFilter != null)
+		{
+			this.priorityFilter.addAll(priorityFilter.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
+		}
+	}
+
+	// ### identity filtering ##############################################################################################################
+
 	public boolean isUsingIdentityFiltering()
 	{
 		return !identityFilter.isEmpty();
@@ -217,7 +284,7 @@ public class PaginationConfig implements Serializable
 
 	public Map<IdentityField, String> getIdentityFilter()
 	{
-		return Collections.unmodifiableMap(identityFilter);
+		return new HashMap<>(identityFilter);
 	}
 
 	public void setIdentityFilter(Map<IdentityField, String> identityFilter)
@@ -227,6 +294,7 @@ public class PaginationConfig implements Serializable
 		{
 			identityFilter.entrySet().stream().filter(e -> e.getKey() != null && e.getValue() != null && !e.getValue().isEmpty())
 					.forEach(e -> this.identityFilter.put(e.getKey(), e.getValue()));
+			globalFieldFilter = null;
 		}
 	}
 
@@ -250,6 +318,261 @@ public class PaginationConfig implements Serializable
 		this.identityFilterCaseSensitive = identityFilterCaseSensitive;
 	}
 
+	public boolean isGlobalIdentityFiltering()
+	{
+		return getGlobalIdentityFilterPattern() != null;
+	}
+
+	public String getGlobalIdentityFilterPattern()
+	{
+		if (isIdentityFilterAsConjunction())
+		{
+			return null;
+		}
+
+		Set<String> patternsWithoutGenderPattern = identityFilter.entrySet().stream().filter(e -> !IdentityField.GENDER.equals(e.getKey())).map(Map.Entry::getValue).collect(Collectors.toSet());
+
+		if (patternsWithoutGenderPattern.size() != 1)
+		{
+			return null;
+		}
+
+		return patternsWithoutGenderPattern.stream().findFirst().orElse(null);
+	}
+
+	/**
+	 * If {@link IdentityField#NONE} is the only key in the identity filter map with a non-empty pattern value,
+	 * then configure the filter to search in all given global filter fields linked by OR (disjunction),
+	 * otherwise leave the filter configuration untouched.
+	 *
+	 * @param globalFilterFields
+	 *            the identity fields to search in when using global identity field filtering
+	 *
+	 * @return true when global filtering was detected and configured
+	 */
+	public boolean detectAndConfigureGlobalIdentityFiltering(Set<IdentityField> globalFilterFields)
+	{
+		final String pattern = identityFilter.get(IdentityField.NONE);
+
+		if (identityFilter.size() == 1 && Strings.isNotBlank(pattern))
+		{
+			// replace in the identity filter map with the NONE key by a map with
+			// all given fields as keys and the same global search pattern
+			setIdentityFilter(globalFilterFields.stream().collect(Collectors.toMap(f -> f, f -> pattern, (a, b) -> b)));
+			setIdentityFilterAsConjunction(false);
+			return true;
+		}
+		return false;
+	}
+
+	public Map<Gender, String> getIdentityGenderStrings()
+	{
+		return Collections.unmodifiableMap(identityGenderStrings);
+	}
+
+	public void setIdentityGenderStrings(Map<Gender, String> identityGenderStrings)
+	{
+		this.identityGenderStrings.clear();
+		if (identityGenderStrings != null)
+		{
+			this.identityGenderStrings.putAll(identityGenderStrings);
+		}
+	}
+
+	public boolean detectAndConfigureIdentityGenderFiltering()
+	{
+		return detectAndConfigureIdentityGenderFiltering(getIdentityGenderStrings());
+	}
+
+	/**
+	 * If {@link IdentityField#GENDER} is a key in the identity fields filter map, then replace the (localized) gender strings
+	 * by all gender symbol keys (as defined in {@link Gender}) for which the value's pattern matches the gender string value.
+	 *
+	 * @param genderStrings
+	 *            a map with genders as keys and the localized strings as values
+	 * @return true when the identity gender pattern has changed
+	 */
+	public boolean detectAndConfigureIdentityGenderFiltering(Map<Gender, String> genderStrings)
+	{
+		return detectAndConfigureStatusFiltering(genderStrings, identityFilter, IdentityField.GENDER, isIdentityFilterCaseSensitive());
+	}
+
+	public Map<VitalStatus, String> getIdentityVitalStatusStrings()
+	{
+		return Collections.unmodifiableMap(identityVitalStatusStrings);
+	}
+
+	public void setIdentityVitalStatusStrings(Map<VitalStatus, String> identityVitalStatusStrings)
+	{
+		this.identityVitalStatusStrings.clear();
+		if (identityVitalStatusStrings != null)
+		{
+			this.identityVitalStatusStrings.putAll(identityVitalStatusStrings);
+		}
+	}
+
+	public boolean detectAndConfigureIdentityVitalStatusFiltering()
+	{
+		return detectAndConfigureIdentityVitalStatusFiltering(getIdentityVitalStatusStrings());
+	}
+
+	/**
+	 * If {@link IdentityField#VITAL_STATUS} is a key in the person fields filter map, then replace the (localized) vitalStatus strings
+	 * by all vital status symbol keys (as defined in {@link VitalStatus}) for which the value's pattern matches the vital status string value.
+	 *
+	 * @param vitalStatusStrings
+	 *            a map with vital status as keys and the localized strings as values
+	 * @return true when the person vital status pattern has changed
+	 */
+	public boolean detectAndConfigureIdentityVitalStatusFiltering(Map<VitalStatus, String> vitalStatusStrings)
+	{
+		return detectAndConfigureStatusFiltering(vitalStatusStrings, identityFilter, IdentityField.VITAL_STATUS, isIdentityFilterCaseSensitive());
+	}
+
+	public boolean isUsingSorting()
+	{
+		return sortField != null;
+	}
+
+	public IdentityField getSortField()
+	{
+		return sortField;
+	}
+
+	public void setSortField(IdentityField sortField)
+	{
+		this.sortField = sortField;
+	}
+
+	public boolean isSortIsAscending()
+	{
+		return sortIsAscending;
+	}
+
+	public void setSortIsAscending(boolean sortIsAscending)
+	{
+		this.sortIsAscending = sortIsAscending;
+	}
+
+	// ### person filtering ##############################################################################################################
+
+	public boolean isUsingPersonFiltering()
+	{
+		return !personFilter.isEmpty();
+	}
+
+	public Map<PersonField, String> getPersonFilter()
+	{
+		return Collections.unmodifiableMap(personFilter);
+	}
+
+	public void setPersonFilter(Map<PersonField, String> personFilter)
+	{
+		this.personFilter.clear();
+		if (personFilter != null)
+		{
+			personFilter.entrySet().stream().filter(e -> e.getKey() != null && e.getValue() != null && !e.getValue().isEmpty())
+					.forEach(e -> this.personFilter.put(e.getKey(), e.getValue()));
+			globalFieldFilter = null;
+		}
+	}
+
+	public boolean isPersonFilterAsConjunction()
+	{
+		return personFilterAsConjunction;
+	}
+
+	public void setPersonFilterAsConjunction(boolean personFilterAsConjunction)
+	{
+		this.personFilterAsConjunction = personFilterAsConjunction;
+	}
+
+	public boolean isPersonFilterCaseSensitive()
+	{
+		return personFilterCaseSensitive;
+	}
+
+	public void setPersonFilterCaseSensitive(boolean personFilterCaseSensitive)
+	{
+		this.personFilterCaseSensitive = personFilterCaseSensitive;
+	}
+
+	public boolean isGlobalPersonFiltering()
+	{
+		return getGlobalPersonFilterPattern() != null;
+	}
+
+	public String getGlobalPersonFilterPattern()
+	{
+		if (isPersonFilterAsConjunction())
+		{
+			return null;
+		}
+
+		Set<String> patterns = personFilter.values().stream().collect(Collectors.toSet());
+
+		if (patterns.size() != 1)
+		{
+			return null;
+		}
+
+		return patterns.stream().findFirst().orElse(null);
+	}
+
+	/**
+	 * If {@link PersonField#NONE} is the only key in the identity filter map with a non-empty pattern value,
+	 * then configure the filter to search in all given global filter fields linked by OR (disjunction),
+	 * otherwise leave the filter configuration untouched.
+	 *
+	 * @param globalFilterFields
+	 *            the person fields to search in when using global person field filtering
+	 *
+	 * @return true when global filtering was detected and configured
+	 */
+	public boolean detectAndConfigureGlobalPersonFiltering(Set<PersonField> globalFilterFields)
+	{
+		final String pattern = personFilter.get(PersonField.NONE);
+
+		if (personFilter.size() == 1 && Strings.isNotBlank(pattern))
+		{
+			// replace in the person filter map with the NONE key by a map with
+			// all given fields as keys and the same global search pattern
+			setPersonFilter(globalFilterFields.stream().collect(Collectors.toMap(f -> f, f -> pattern, (a, b) -> b)));
+			setPersonFilterAsConjunction(false);
+			return true;
+		}
+		return false;
+	}
+
+	// ### general stuff ##############################################################################################################
+
+	public boolean isIdentityAndPersonFilterCombinedAsConjunction()
+	{
+		return identityAndPersonFilterCombinedAsConjunction;
+	}
+
+	public void setIdentityAndPersonFilterCombinedAsConjunction(boolean identityAndPersonFilterCombinedAsConjunction)
+	{
+		this.identityAndPersonFilterCombinedAsConjunction = identityAndPersonFilterCombinedAsConjunction;
+	}
+
+	public boolean isUsingCreateTimestampFiltering()
+	{
+		return createTimestampFilter != null && !createTimestampFilter.isBlank();
+	}
+
+	public String getCreateTimestampFilter()
+	{
+		return createTimestampFilter;
+	}
+
+	public void setCreateTimestampFilter(String createTimestampFilter)
+	{
+		this.createTimestampFilter = createTimestampFilter;
+	}
+
+	// ### other stuff ###
+
 	public String getDateFormat()
 	{
 		return dateFormat;
@@ -260,98 +583,27 @@ public class PaginationConfig implements Serializable
 		this.dateFormat = dateFormat;
 	}
 
-	public String getDateTimeFormat()
+	public String getTimeFormat()
 	{
-		return dateTimeFormat;
+		return timeFormat;
 	}
 
-	public void setDateTimeFormat(String dateTimeFormat)
+	public void setTimeFormat(String timeFormat)
 	{
-		this.dateTimeFormat = dateTimeFormat;
+		this.timeFormat = timeFormat;
 	}
 
-	/**
-	 * If {@link IdentityField#NONE} is the only key in the identity filter map with a non-empty pattern value,
-	 * then configure the filter to search in all given global filter fields linked by OR (disjunction),
-	 * otherwise leave the filter configuration untouched.
-	 *
-	 * @param globalFilterFields the fields to search in when using global identity field filtering
-	 *
-	 * @return true when global filtering was detected and configured
-	 */
-	public boolean detectAndConfigureGlobalFiltering(Set<IdentityField> globalFilterFields)
+	public boolean normalize()
 	{
-		final String pattern = identityFilter.get(IdentityField.NONE);
-		if (identityFilter.size() == 1 && pattern != null && !pattern.isEmpty())
+		if (isUsingGlobalFieldFiltering())
 		{
-			// replace identity the filter map with the NONE key by a map with
-			// all given fields as keys and the same global search pattern
-			setIdentityFilter(globalFilterFields.stream().collect(Collectors.toMap(f -> f, f -> pattern, (a, b) -> b)));
-			setIdentityFilterAsConjunction(false);
+			String filter = getGlobalFieldFilter();
+			setIdentityFilter(Map.of(IdentityField.NONE, filter));
+			setPersonFilter(Map.of(PersonField.NONE, filter));
+			setIdentityAndPersonFilterCombinedAsConjunction(false);
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * If {@link IdentityField#GENDER} is a key in the identity fields filter map, then replace the (localized) gender strings
-	 * by all gender symbol keys (as defined in {@link Gender}) for which the value's pattern matches the gender string value.
-	 *
-	 * @param genderStrings a map with genders as keys and the localized strings as values
-	 * @return true when the identity gender pattern has changed
-	 */
-	public boolean detectAndConfigureGenderFiltering(Map<Gender, String> genderStrings)
-	{
-		String pattern = identityFilter.get(IdentityField.GENDER);
-		if (pattern != null && !pattern.isEmpty())
-		{
-			// replace gender string by comma-separated gender symbols
-			// all given fields as keys and the same global search pattern
-			final String p = pattern.replace("*", "").replace("%", "");
-			String genders;
-
-			if (isIdentityFilterCaseSensitive())
-			{
-				genders = genderStrings.entrySet().stream().filter(e -> e.getValue().contains(p))
-							.map(e -> e.getKey().name()).collect(Collectors.joining(","));
-			}
-			else
-			{
-				genders = genderStrings.entrySet().stream().filter(e -> e.getValue().toLowerCase().contains(p.toLowerCase()))
-						.map(e -> e.getKey().name()).collect(Collectors.joining(","));
-			}
-			if (!genders.isEmpty())
-			{
-				identityFilter.put(IdentityField.GENDER, genders);
-			}
-			else
-			{
-				identityFilter.remove(IdentityField.GENDER);
-			}
-			return true;
-		}
-		return false;
-	}
-
-	public boolean isGlobalFiltering()
-	{
-		return getGlobalFilterPattern() != null;
-	}
-
-	public String getGlobalFilterPattern()
-	{
-		if (isIdentityFilterAsConjunction())
-		{
-			return null;
-		}
-
-		Set<String> patternsWithoutGenderPattern = identityFilter.entrySet().stream().filter(e -> !IdentityField.GENDER.equals(e.getKey())).map(Map.Entry::getValue).collect(Collectors.toSet());
-
-		if (patternsWithoutGenderPattern.size() != 1) {
-			return null;
-		}
-
-		return patternsWithoutGenderPattern.stream().findFirst().orElse(null);
 	}
 
 	@Override
@@ -361,15 +613,29 @@ public class PaginationConfig implements Serializable
 		int result = 1;
 		result = prime * result + firstEntry;
 		result = prime * result + pageSize;
+
+		result = prime * result + (globalFieldFilter == null ? 0 : globalFieldFilter.hashCode());
+		result = prime * result + (globalFieldFilterCaseSensitive ? 1231 : 1237);
 		result = prime * result + eventFilter.hashCode();
-		result = prime * result + identityFilter.hashCode();
 		result = prime * result + solutionFilter.hashCode();
+		result = prime * result + priorityFilter.hashCode();
+
+		result = prime * result + identityFilter.hashCode();
 		result = prime * result + (identityFilterAsConjunction ? 1231 : 1237);
 		result = prime * result + (identityFilterCaseSensitive ? 1231 : 1237);
+		result = prime * result + identityGenderStrings.hashCode();
+		result = prime * result + identityVitalStatusStrings.hashCode();
 		result = prime * result + (sortField == null ? 0 : sortField.hashCode());
 		result = prime * result + (sortIsAscending ? 1231 : 1237);
+
+		result = prime * result + personFilter.hashCode();
+		result = prime * result + (personFilterAsConjunction ? 1231 : 1237);
+		result = prime * result + (personFilterCaseSensitive ? 1231 : 1237);
+
+		result = prime * result + (identityAndPersonFilterCombinedAsConjunction ? 1231 : 1237);
+		result = prime * result + (createTimestampFilter == null ? 0 : createTimestampFilter.hashCode());
 		result = prime * result + (dateFormat == null ? 0 : dateFormat.hashCode());
-		result = prime * result + (dateTimeFormat == null ? 0 : dateTimeFormat.hashCode());
+		result = prime * result + (timeFormat == null ? 0 : timeFormat.hashCode());
 		return result;
 	}
 
@@ -416,15 +682,27 @@ public class PaginationConfig implements Serializable
 			return false;
 		}
 		PaginationConfig other = (PaginationConfig) obj;
-		if (!identityFilter.equals(other.identityFilter))
+		if (!Objects.equals(eventFilter, other.eventFilter))
 		{
 			return false;
 		}
-		if (!eventFilter.equals(other.eventFilter))
+		if (!Objects.equals(solutionFilter, other.solutionFilter))
 		{
 			return false;
 		}
-		if (!solutionFilter.equals(other.solutionFilter))
+		if (!Objects.equals(priorityFilter, other.priorityFilter))
+		{
+			return false;
+		}
+		if (!Objects.equals(globalFieldFilter, other.globalFieldFilter))
+		{
+			return false;
+		}
+		if (globalFieldFilterCaseSensitive != other.globalFieldFilterCaseSensitive)
+		{
+			return false;
+		}
+		if (!Objects.equals(identityFilter, other.identityFilter))
 		{
 			return false;
 		}
@@ -436,11 +714,39 @@ public class PaginationConfig implements Serializable
 		{
 			return false;
 		}
+		if (!Objects.equals(personFilter, other.personFilter))
+		{
+			return false;
+		}
+		if (personFilterAsConjunction != other.personFilterAsConjunction)
+		{
+			return false;
+		}
+		if (personFilterCaseSensitive != other.personFilterCaseSensitive)
+		{
+			return false;
+		}
+		if (identityAndPersonFilterCombinedAsConjunction != other.identityAndPersonFilterCombinedAsConjunction)
+		{
+			return false;
+		}
+		if (!Objects.equals(createTimestampFilter, other.createTimestampFilter))
+		{
+			return false;
+		}
 		if (!Objects.equals(dateFormat, other.dateFormat))
 		{
 			return false;
 		}
-		if (!Objects.equals(dateTimeFormat, other.dateTimeFormat))
+		if (!Objects.equals(timeFormat, other.timeFormat))
+		{
+			return false;
+		}
+		if (!Objects.equals(identityGenderStrings, other.identityGenderStrings))
+		{
+			return false;
+		}
+		if (!Objects.equals(identityVitalStatusStrings, other.identityVitalStatusStrings))
 		{
 			return false;
 		}
@@ -450,14 +756,99 @@ public class PaginationConfig implements Serializable
 	@Override
 	public String toString()
 	{
-		return "PaginationConfig [" + String.join(", ",
-				isUsingPagination() ? "firstEntry=" + firstEntry + "pageSize=" + pageSize : "",
-				isUsingEventFiltering() ? ", eventFilter=" + eventFilter : "",
-				isUsingSolutionFiltering() ? ", solutionFilter=" + solutionFilter : "",
-				isUsingIdentityFiltering() ? ", identityFilter=" + identityFilter + ", filterAsConjunction=" + identityFilterAsConjunction + ", filterCaseSensitive=" + identityFilterCaseSensitive : "",
-				isUsingSorting() ? ", sortField=" + sortField + ", sortIsAscending=" + sortIsAscending : "",
-				"dateFormat=" + dateFormat + ", dateTimeFormat=" + dateTimeFormat)
-				+ "]";
+		List<String> props = new ArrayList<>();
+		if (isUsingPagination())
+		{
+			props.add("firstEntry=" + firstEntry + ", pageSize=" + pageSize);
+		}
+		if (isUsingGlobalFieldFiltering())
+		{
+			props.add("globalFieldFilter=" + globalFieldFilter + ", globalFieldFilterCaseSensitive=" + globalFieldFilterCaseSensitive);
+		}
+		if (isUsingIdentityFiltering())
+		{
+			props.add("identityFilter=" + identityFilter + ", identityFilterAsConjunction=" + identityFilterAsConjunction + ", identityFilterCaseSensitive=" + identityFilterCaseSensitive);
+		}
+		if (isUsingPersonFiltering())
+		{
+			props.add("personFilter=" + personFilter + ", personFilterAsConjunction=" + personFilterAsConjunction + ", personFilterCaseSensitive=" + personFilterCaseSensitive);
+		}
+		if (isUsingPersonFiltering() || isUsingIdentityFiltering())
+		{
+			props.add("identityAndPersonFilterCombinedAsConjunction=" + identityAndPersonFilterCombinedAsConjunction);
+		}
+		if (isUsingSolutionFiltering())
+		{
+			props.add("solutionFilter=" + solutionFilter);
+		}
+		if (isUsingPriorityFiltering())
+		{
+			props.add("priorityFilter=" + priorityFilter);
+		}
+		if (isUsingEventFiltering())
+		{
+			props.add("eventFilter=" + eventFilter);
+		}
+		if (isUsingCreateTimestampFiltering())
+		{
+			props.add("createTimestampFilter=" + createTimestampFilter);
+		}
+		if (isUsingSorting())
+		{
+			props.add("sortField=" + sortField + ", sortIsAscending=" + sortIsAscending);
+		}
+		if (dateFormat != null)
+		{
+			props.add("dateFormat=" + dateFormat);
+		}
+		if (timeFormat != null)
+		{
+			props.add("dateTimeFormat=" + timeFormat);
+		}
+		if (!identityGenderStrings.isEmpty())
+		{
+			props.add("genderStrings=" + identityGenderStrings);
+		}
+		if (!identityVitalStatusStrings.isEmpty())
+		{
+			props.add("vitalStatusStrings=" + identityVitalStatusStrings);
+		}
+
+		return "PaginationConfig [" + String.join(", ", props) + "]";
+	}
+
+	private static <T extends Enum<?>> boolean detectAndConfigureStatusFiltering(Map<? extends Enum<?>, String> statusStrings,
+			Map<T, String> filterMap, T filterKey, boolean caseSensitive)
+	{
+		String pattern = filterMap.get(filterKey);
+		if (pattern != null && !pattern.isEmpty() && !statusStrings.isEmpty())
+		{
+			// replace (localized) status (or gender) string by comma-separated status symbols
+			// all given fields as keys and the same global search pattern
+			final String p = pattern.replace("*", "").replace("%", "");
+			String statuses;
+
+			if (caseSensitive)
+			{
+				statuses = statusStrings.entrySet().stream().filter(e -> e.getValue().contains(p))
+						.map(e -> e.getKey().name()).collect(Collectors.joining(","));
+			}
+			else
+			{
+				statuses = statusStrings.entrySet().stream().filter(e -> e.getValue().toLowerCase().contains(p.toLowerCase()))
+						.map(e -> "" + e.getKey().name()).collect(Collectors.joining(","));
+			}
+			if (!statuses.isEmpty())
+			{
+				filterMap.put(filterKey, statuses);
+			}
+			else
+			{
+				filterMap.remove(filterKey);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -476,7 +867,15 @@ public class PaginationConfig implements Serializable
 
 		public PaginationConfig build()
 		{
+			pg.normalize();
 			return pg;
+		}
+
+		public Builder withGlobalFieldFilter(String globalFieldFilter, boolean caseSensitive)
+		{
+			pg.setGlobalFieldFilter(globalFieldFilter);
+			pg.setGlobalFieldFilterCaseSensitive(caseSensitive);
+			return this;
 		}
 
 		public Builder withEventFilter(Set<IdentityHistoryEvent> eventFilter)
@@ -491,11 +890,66 @@ public class PaginationConfig implements Serializable
 			return this;
 		}
 
+		public Builder withPriorityFilter(Set<PossibleMatchPriority> possibleMatchPriorities)
+		{
+			pg.setPriorityFilter(possibleMatchPriorities);
+			return this;
+		}
+
+		public Builder withPriorityFilter(PossibleMatchPriority possibleMatchPriority)
+		{
+			return withPriorityFilter(Collections.singleton(possibleMatchPriority));
+		}
+
 		public Builder withIdentityFilter(Map<IdentityField, String> identityFilters, boolean asConjunction, boolean caseSensitive)
 		{
 			pg.setIdentityFilter(identityFilters);
 			pg.setIdentityFilterAsConjunction(asConjunction);
 			pg.setIdentityFilterCaseSensitive(caseSensitive);
+			return this;
+		}
+
+		public Builder withIdentityFilter(String globalIdentityFilter, boolean caseSensitive)
+		{
+			if (globalIdentityFilter != null && !globalIdentityFilter.isBlank())
+			{
+				pg.setIdentityFilter(Map.of(IdentityField.NONE, globalIdentityFilter));
+			}
+			else
+			{
+				pg.setIdentityFilter(null);
+			}
+			pg.setIdentityFilterAsConjunction(false);
+			pg.setIdentityFilterCaseSensitive(caseSensitive);
+			return this;
+		}
+
+		public Builder withPersonFilter(Map<PersonField, String> personFilters, boolean asConjunction, boolean caseSensitive)
+		{
+			pg.setPersonFilter(personFilters);
+			pg.setPersonFilterAsConjunction(asConjunction);
+			pg.setPersonFilterCaseSensitive(caseSensitive);
+			return this;
+		}
+
+		public Builder withPersonFilter(String globalPersonFilter, boolean caseSensitive)
+		{
+			if (globalPersonFilter != null && !globalPersonFilter.isBlank())
+			{
+				pg.setPersonFilter(Map.of(PersonField.NONE, globalPersonFilter));
+			}
+			else
+			{
+				pg.setPersonFilter(null);
+			}
+			pg.setPersonFilterAsConjunction(false);
+			pg.setPersonFilterCaseSensitive(caseSensitive);
+			return this;
+		}
+
+		public Builder withCreateTimestampFilter(String createTimestampFilter)
+		{
+			pg.setCreateTimestampFilter(createTimestampFilter);
 			return this;
 		}
 
@@ -516,7 +970,19 @@ public class PaginationConfig implements Serializable
 		public Builder withDateTimeFormats(String dateFormat, String dateTimeFormat)
 		{
 			pg.setDateFormat(dateFormat);
-			pg.setDateTimeFormat(dateTimeFormat);
+			pg.setTimeFormat(dateTimeFormat);
+			return this;
+		}
+
+		public Builder withIdentityGenderStrings(Map<Gender, String> genderStrings)
+		{
+			pg.setIdentityGenderStrings(genderStrings);
+			return this;
+		}
+
+		public Builder withIdentityVitalStatusStrings(Map<VitalStatus, String> vitalStatusStrings)
+		{
+			pg.setIdentityVitalStatusStrings(vitalStatusStrings);
 			return this;
 		}
 	}

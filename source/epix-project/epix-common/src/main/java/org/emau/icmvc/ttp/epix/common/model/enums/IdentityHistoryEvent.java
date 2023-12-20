@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.enums;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -50,5 +50,5 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 public enum IdentityHistoryEvent
 {
 	// pay attention to the type of the corresponding database column within identity_history ("event" - char(13) atm) when adding new values here
-	NEW, UPDATE, MERGE, MATCH, PERFECT_MATCH, MOVE, FORCED_MATCH, SET_REFERENCE, FORCED_UPDATE, DEACTIVATED;
+	NEW, UPDATE, MERGE, MATCH, PERFECT_MATCH, MOVE, FORCED_MATCH, SET_REFERENCE, FORCED_UPDATE, DEACTIVATED, ADD_CONTACT, DEL_CONTACT, ADD_IDENTIF, DEL_IDENTIF
 }

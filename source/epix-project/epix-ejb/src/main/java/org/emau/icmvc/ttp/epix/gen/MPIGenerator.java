@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.gen;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,18 +39,17 @@ package org.emau.icmvc.ttp.epix.gen;
  * ###license-information-end###
  */
 
-
 import java.sql.Timestamp;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.epix.persistence.model.Domain;
 import org.emau.icmvc.ttp.epix.persistence.model.Identifier;
 
 /**
- * 
+ *
  * @author Christian Schack, geidell
- * 
+ *
  */
 public abstract class MPIGenerator
 {

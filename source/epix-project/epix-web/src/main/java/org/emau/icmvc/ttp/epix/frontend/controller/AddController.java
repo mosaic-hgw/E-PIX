@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-end###
  */
 
-
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +50,7 @@ import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
@@ -63,6 +64,7 @@ import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 import org.emau.icmvc.ttp.epix.common.model.ResponseEntryDTO;
 import org.emau.icmvc.ttp.epix.common.model.SourceDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 
 import static org.emau.icmvc.ttp.epix.frontend.util.SessionMapKeys.EDIT_PERSON;
@@ -73,19 +75,14 @@ public class AddController extends AbstractEpixWebBean
 {
 	@ManagedProperty(value = "#{resolveController}")
 	private ResolveController resolveController;
-
 	private IdentityInDTO identity;
 	private ContactInDTO contact;
 	private IdentifierDTO identifier;
 	private SourceDTO selectedSource;
 	private String comment;
 	private List<IdentifierDTO> identifiers;
-
-	private boolean emptyButton;
-	private Integer editContact;
-	private boolean editIdentifier;
-
 	private String mpi;
+	PersonDTO person;
 
 	@PostConstruct
 	public void init() throws UnknownObjectException, InvalidParameterException
@@ -94,28 +91,31 @@ public class AddController extends AbstractEpixWebBean
 		contact = new ContactInDTO();
 		identifier = new IdentifierDTO();
 		selectedSource = null;
-		emptyButton = false;
-		editContact = null;
-		editIdentifier = false;
 		mpi = null;
 
 		ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
 		Map<String, Object> sessionMap = externalContext.getSessionMap();
 		if (sessionMap.containsKey(EDIT_PERSON))
 		{
-			PersonDTO person = service.getPersonByMPI(domainSelector.getSelectedDomainName(), (String) sessionMap.get(EDIT_PERSON));
+			person = service.getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), (String) sessionMap.get(EDIT_PERSON));
 			List<ContactInDTO> contacts = new ArrayList<>();
 			for (ContactOutDTO c : person.getReferenceIdentity().getContacts())
 			{
 				contacts.add(new ContactInDTO(c));
 			}
-			identity = new IdentityInDTO(person.getReferenceIdentity(), contacts);
+			IdentityOutDTO referenceIdentity = person.getReferenceIdentity();
+			identity = new IdentityInDTO(referenceIdentity, contacts);
 			mpi = person.getMpiId().getValue();
+
 			sessionMap.remove(EDIT_PERSON);
 			loadIdentifiers();
 		}
+		else
+		{
+			identity.setVitalStatus(VitalStatus.ALIVE);
+		}
 	}
-	
+
 	private void loadIdentifiers()
 	{
 		identifiers = new ArrayList<>();
@@ -124,7 +124,7 @@ public class AddController extends AbstractEpixWebBean
 		{
 			try
 			{
-				for (IdentityOutDTO otherIdentitiy : service.getPersonByMPI(domainSelector.getSelectedDomainName(), mpi).getOtherIdentities())
+				for (IdentityOutDTO otherIdentitiy : service.getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), mpi).getOtherIdentities())
 				{
 					identifiers.addAll(otherIdentitiy.getIdentifiers());
 				}
@@ -140,21 +140,56 @@ public class AddController extends AbstractEpixWebBean
 	{
 		try
 		{
-			ResponseEntryDTO response = service.requestMPI(domainSelector.getSelectedDomainName(), identity, selectedSource.getName(), null);
+			validateDateOfDeath();
+			String domainName = getDomainSelector().getSelectedDomainName();
+			ResponseEntryDTO response;
+
+			if (isUseNotifications())
+			{
+				response = serviceWithNotification.requestMPI(NOTIFICATION_CLIENT_ID, domainName, identity, selectedSource.getName(), null);
+			}
+			else
+			{
+				response = service.requestMPI(domainName, identity, selectedSource.getName(), null);
+			}
+
+			Object[] args = {};
+			Object[] args2 = {};
+			if (response.getPerson() != null && response.getPerson().getMpiId() != null)
+			{
+				args = new Object[] { getRequestPath(
+						(HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest())
+						+ "/html/internal/person.xhtml?domain="
+						+ getDomainSelector().getSelectedDomainName()
+						+ "&mpi="
+						+ response.getPerson().getMpiId().getValue()};
+
+				args2 = new Object[] { getRequestPath(
+						(HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest())
+						+ "/html/internal/resolve.xhtml?domain="
+						+ getDomainSelector().getSelectedDomainName()
+						+ "&mpi="
+						+ response.getPerson().getMpiId().getValue()};
+			}
+			
 			switch (response.getMatchStatus())
 			{
 				case NO_MATCH:
 					logMessage(getBundle().getString("add.info.added.noMatch"), Severity.INFO);
+					logMessage(new MessageFormat(getBundle().getString("add.info.open")).format(args), Severity.INFO);
 					break;
 				case MATCH:
 					logMessage(getBundle().getString("add.info.added.match"), Severity.INFO);
+					logMessage(new MessageFormat(getBundle().getString("add.info.open")).format(args), Severity.INFO);
 					break;
 				case PERFECT_MATCH:
 					logMessage(getBundle().getString("add.info.added.perfectMatch"), Severity.WARN);
+					logMessage(new MessageFormat(getBundle().getString("add.info.open")).format(args), Severity.INFO);
 					break;
 				case POSSIBLE_MATCH:
 					resolveController.init();
-					logMessage(getBundle().getString("add.info.added.possibleMatch"), Severity.INFO);
+					logMessage(new MessageFormat(getBundle().getString("add.info.added.possibleMatch")).format(args2), Severity.INFO);
+					logMessage(new MessageFormat(getBundle().getString("add.info.open")).format(args), Severity.INFO);
 					break;
 				case MATCH_ERROR:
 					logMessage(getBundle().getString("add.info.added.matchError"), Severity.ERROR);
@@ -175,13 +210,12 @@ public class AddController extends AbstractEpixWebBean
 					init();
 					break;
 				default:
-					emptyButton = true;
 					break;
 			}
 		}
 		catch (InvalidParameterException e)
 		{
-			logMessage(getBundle().getString("exception." + e.getMessage().replace(" ", "_")), Severity.ERROR);
+			logInvalidParameterException(e);
 		}
 		catch (MPIException e)
 		{
@@ -191,147 +225,6 @@ public class AddController extends AbstractEpixWebBean
 		{
 			logMessage(e);
 		}
-	}
-
-	public String onUpdateIdentity()
-	{
-		try
-		{
-			// TODO force ggf. über Rückfrage im Frontend lösen
-			ResponseEntryDTO response = service.updatePerson(domainSelector.getSelectedDomainName(), mpi, identity, selectedSource.getName(), true, comment);
-
-			switch (response.getMatchStatus())
-			{
-				case NO_MATCH:
-				case MATCH:
-				case PERFECT_MATCH:
-				case POSSIBLE_MATCH:
-					ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-					Map<String, Object> sessionMap = externalContext.getSessionMap();
-					sessionMap.put("updateIdentityResponse", response.getMatchStatus());
-					return "search.xhml?faces-redirect=true";
-
-				case MATCH_ERROR:
-					logMessage(getBundle().getString("add.info.edited.matchError"), Severity.ERROR);
-					break;
-				case MULTIPLE_MATCH:
-					logMessage(getBundle().getString("add.info.edited.multipleMatch"), Severity.ERROR);
-					break;
-				default:
-					logMessage(getBundle().getString("add.info.edited.matchUnknown"), Severity.ERROR);
-					break;
-			}
-		}
-		catch (InvalidParameterException | UnknownObjectException e)
-		{
-			logMessage(e);
-		}
-		catch (MPIException e)
-		{
-			logMPIException(e);
-		}
-		return null;
-	}
-
-	public String onCancelUpdateIdentity()
-	{
-		ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-		Map<String, Object> sessionMap = externalContext.getSessionMap();
-		sessionMap.put("cancelUpdateIdentity", "cancel");
-
-		return "search.xhml?faces-redirect=true";
-	}
-
-	public void onNewContact()
-	{
-		contact = new ContactInDTO();
-	}
-
-	public void onAddContact()
-	{
-		if (validateContact())
-		{
-			identity.getContacts().add(contact);
-		}
-	}
-
-	public void onDeleteContact(int index)
-	{
-		identity.getContacts().remove(index);
-	}
-
-	public void onEditContact(int index)
-	{
-		contact = new ContactInDTO(identity.getContacts().get(index));
-		editContact = index;
-	}
-
-	public void onUpdateContact()
-	{
-		if (validateContact())
-		{
-			identity.getContacts().set(editContact, contact);
-			editContact = null;
-		}
-	}
-
-	public void onNewIdentifier()
-	{
-		identifier = new IdentifierDTO();
-	}
-
-	public void onAddIdentifier()
-	{
-		identity.getIdentifiers().add(identifier);
-		loadIdentifiers();
-	}
-
-	public void onDeleteIdentifier(int index)
-	{
-		identity.getIdentifiers().remove(index);
-		loadIdentifiers();
-	}
-
-	public void onEditIdentifier(int index)
-	{
-		identifier = identity.getIdentifiers().get(index);
-		editIdentifier = true;
-	}
-
-	public void onUpdateIdentifier()
-	{
-		editIdentifier = false;
-	}
-
-	private boolean validateContact()
-	{
-		if (StringUtils.isEmpty(contact.getCity())
-				&& StringUtils.isEmpty(contact.getCountry())
-				&& StringUtils.isEmpty(contact.getCountryCode())
-				&& StringUtils.isEmpty(contact.getDistrict())
-				&& StringUtils.isEmpty(contact.getEmail())
-				&& StringUtils.isEmpty(contact.getMunicipalityKey())
-				&& StringUtils.isEmpty(contact.getPhone())
-				&& StringUtils.isEmpty(contact.getState())
-				&& StringUtils.isEmpty(contact.getStreet())
-				&& StringUtils.isEmpty(contact.getZipCode()))
-		{
-			logMessage(getBundle().getString("add.error.contactEmpty"), Severity.WARN, false);
-			FacesContext facesContext = FacesContext.getCurrentInstance();
-			facesContext.renderResponse();
-			facesContext.validationFailed();
-			return false;
-		}
-		else if (identity.getContacts().contains(contact))
-		{
-			logMessage(getBundle().getString("add.error.contactDuplicate"), Severity.WARN, false);
-			FacesContext facesContext = FacesContext.getCurrentInstance();
-			facesContext.renderResponse();
-			facesContext.validationFailed();
-			return false;
-		}
-
-		return true;
 	}
 
 	public IdentityInDTO getIdentity()
@@ -349,6 +242,7 @@ public class AddController extends AbstractEpixWebBean
 		return identifier;
 	}
 
+	@Override
 	public List<SourceDTO> getSources()
 	{
 		return managementService.getSources();
@@ -374,21 +268,6 @@ public class AddController extends AbstractEpixWebBean
 		this.comment = comment;
 	}
 
-	public boolean getEmptyButton()
-	{
-		return emptyButton;
-	}
-
-	public boolean isEditContact()
-	{
-		return editContact != null;
-	}
-
-	public boolean isEditIdentifier()
-	{
-		return editIdentifier;
-	}
-
 	public String getMpi()
 	{
 		return mpi;
@@ -402,5 +281,18 @@ public class AddController extends AbstractEpixWebBean
 	public void setResolveController(ResolveController resolveController)
 	{
 		this.resolveController = resolveController;
+	}
+
+	private void validateDateOfDeath()
+	{
+		if (!identity.getVitalStatus().isDead())
+		{
+			identity.setDateOfDeath(null);
+		}
+	}
+
+	public PersonDTO getPerson()
+	{
+		return person;
 	}
 }

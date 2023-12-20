@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,39 +39,43 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
+import java.io.Serial;
 import java.util.Date;
 
+import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class IdentityHistoryDTO extends IdentityOutBaseDTO
 {
-	private static final long serialVersionUID = -6148149007417877446L;
+	@Serial
+	private static final long serialVersionUID = 7914394675246745984L;
 	private long historyId;
 	private Date historyTimestamp;
 	private IdentityHistoryEvent event;
-	private Double matchingScore;
+	private double matchingScore;
 	private String comment;
+	private String user;
 
 	public IdentityHistoryDTO()
 	{
 		super();
 	}
 
-	public IdentityHistoryDTO(IdentityOutBaseDTO superDTO, long historyId, Date historyTimestamp, IdentityHistoryEvent event, Double matchingScore,
-			String comment)
+	public IdentityHistoryDTO(IdentityOutBaseDTO superDTO, long historyId, Date historyTimestamp, IdentityHistoryEvent event, double matchingScore,
+			String comment, String user)
 	{
 		super(superDTO);
 		this.historyId = historyId;
-		this.historyTimestamp = historyTimestamp;
+		setHistoryTimestamp(historyTimestamp);
 		this.event = event;
 		this.matchingScore = matchingScore;
 		this.comment = comment;
+		this.user = user;
 	}
 
 	public long getHistoryId()
@@ -91,7 +95,7 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 
 	public void setHistoryTimestamp(Date historyTimestamp)
 	{
-		this.historyTimestamp = historyTimestamp;
+		this.historyTimestamp = historyTimestamp != null ? new Date(historyTimestamp.getTime()) : null;
 	}
 
 	public IdentityHistoryEvent getEvent()
@@ -104,12 +108,12 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 		this.event = event;
 	}
 
-	public Double getMatchingScore()
+	public double getMatchingScore()
 	{
 		return matchingScore;
 	}
 
-	public void setMatchingScore(Double matchingScore)
+	public void setMatchingScore(double matchingScore)
 	{
 		this.matchingScore = matchingScore;
 	}
@@ -124,16 +128,29 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 		this.comment = comment;
 	}
 
+	public String getUser()
+	{
+		return user;
+	}
+
+	public void setUser(String user)
+	{
+		this.user = user;
+	}
+
 	@Override
 	public int hashCode()
 	{
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((comment == null) ? 0 : comment.hashCode());
-		result = prime * result + ((event == null) ? 0 : event.hashCode());
-		result = prime * result + (int) (historyId ^ (historyId >>> 32));
-		result = prime * result + ((historyTimestamp == null) ? 0 : historyTimestamp.hashCode());
-		result = prime * result + ((matchingScore == null) ? 0 : matchingScore.hashCode());
+		result = prime * result + (comment == null ? 0 : comment.hashCode());
+		result = prime * result + (event == null ? 0 : event.hashCode());
+		result = prime * result + (int) (historyId ^ historyId >>> 32);
+		result = prime * result + (historyTimestamp == null ? 0 : historyTimestamp.hashCode());
+		long temp;
+		temp = Double.doubleToLongBits(matchingScore);
+		result = prime * result + (int) (temp ^ temp >>> 32);
+		result = prime * result + (user == null ? 0 : user.hashCode());
 		return result;
 	}
 
@@ -141,44 +158,74 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (!super.equals(obj))
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		IdentityHistoryDTO other = (IdentityHistoryDTO) obj;
 		if (comment == null)
 		{
 			if (other.comment != null)
+			{
 				return false;
+			}
 		}
 		else if (!comment.equals(other.comment))
+		{
 			return false;
+		}
 		if (event != other.event)
+		{
 			return false;
+		}
 		if (historyId != other.historyId)
+		{
 			return false;
+		}
 		if (historyTimestamp == null)
 		{
 			if (other.historyTimestamp != null)
+			{
 				return false;
+			}
 		}
 		else if (!historyTimestamp.equals(other.historyTimestamp))
-			return false;
-		if (matchingScore == null)
 		{
-			if (other.matchingScore != null)
-				return false;
-		}
-		else if (!matchingScore.equals(other.matchingScore))
 			return false;
+		}
+		if (Double.doubleToLongBits(matchingScore) != Double.doubleToLongBits(other.matchingScore))
+		{
+			return false;
+		}
+		if (user == null)
+		{
+			if (other.user != null)
+			{
+				return false;
+			}
+		}
+		else if (!user.equals(other.user))
+		{
+			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "IdentityHistoryDTO [historyId=" + historyId + ", historyTimestamp=" + historyTimestamp + ", event=" + event + ", matchingScore="
-				+ matchingScore + ", comment=" + comment + "]";
+		return "IdentityHistoryDTO [historyId=" + historyId + ", historyTimestamp=" + historyTimestamp
+				+ (event != null ? ", event=" + event : "")
+				+ ", matchingScore=" + matchingScore
+				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+				+ "]";
 	}
 }

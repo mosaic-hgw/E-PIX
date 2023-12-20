@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.enums;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,19 +39,18 @@ package org.emau.icmvc.ttp.epix.common.model.enums;
  * ###license-information-end###
  */
 
-
 import java.lang.reflect.ParameterizedType;
 
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * see https://stackoverflow.com/questions/12147306/handling-invalid-enum-values-while-doing-jaxb-unmarshalling<br>
  * and because of annotations can't be generic an extra class is needed for every enum
- * 
+ *
  * @author geidell
  *
  * @param <T>
@@ -59,14 +58,14 @@ import org.apache.logging.log4j.LogManager;
 public abstract class GenericEnumAdapter<T extends Enum<T>> extends XmlAdapter<String, T>
 {
 	private final static Logger logger = LogManager.getLogger(GenericEnumAdapter.class);
-	private Class<T> clazz;
+	private final Class<T> clazz;
 
 	@SuppressWarnings("unchecked")
 	public GenericEnumAdapter()
 	{
 		super();
 		// http://blog.xebia.com/acessing-generic-types-at-runtime-in-java/
-		this.clazz = ((Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
+		this.clazz = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 	}
 
 	@Override

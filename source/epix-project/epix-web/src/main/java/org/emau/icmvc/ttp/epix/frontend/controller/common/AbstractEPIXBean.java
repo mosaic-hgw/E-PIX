@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,65 +40,60 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  */
 
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.ResourceBundle;
 
-import javax.ejb.EJB;
 import javax.faces.context.FacesContext;
 
+import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
-import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
-import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
-import org.emau.icmvc.ttp.epix.service.EPIXService;
-import org.emau.icmvc.ttp.epix.service.EPIXServiceWithNotification;
-import org.icmvc.ttp.web.controller.AbstractBean;
 
-public abstract class AbstractEpixBean extends AbstractBean
+public abstract class AbstractEpixBean extends AbstractEpixServiceBean
 {
-	@EJB(lookup = "java:global/epix/epix-ejb/EPIXServiceImpl!org.emau.icmvc.ttp.epix.service.EPIXService")
-	protected EPIXService service;
-
-	@EJB(lookup = "java:global/epix/epix-ejb/EPIXServiceWithNotificationImpl!org.emau.icmvc.ttp.epix.service.EPIXServiceWithNotification")
-	protected EPIXServiceWithNotification serviceWithNotification;
-
-	@EJB(lookup = "java:global/epix/epix-ejb/EPIXManagementServiceImpl!org.emau.icmvc.ttp.epix.service.EPIXManagementService")
-	protected EPIXManagementService managementService;
-
-	protected static final String TOOL = "E-PIX";
-	protected static final String NOTIFICATION_CLIENT_ID = "E-PIX_Web";
 
 	@Override
-	protected ResourceBundle getBundle()
+	public ResourceBundle getBundle()
 	{
 		FacesContext facesContext = FacesContext.getCurrentInstance();
 		return facesContext.getApplication().getResourceBundle(facesContext, "msg");
 	}
 
-	public List<Gender> getGenders()
-	{
-		return Arrays.asList(Gender.values());
-	}
-
 	public void logMPIException(MPIException e)
 	{
-		String key = e.getErrorCode() != null ? "common.error.MPIErrorCode." + e.getErrorCode().toString() : "";
+		String key = e.getErrorCode() != null ?
+				"common.error.MPIErrorCode." + e.getErrorCode().toString() :
+				"common.error." + (e.getMessage() != null ? e.getMessage().replace(" ", "_") : "MPIError");
+
+		logBundleError(key, e.getLocalizedMessage());
+	}
+
+	public void logInvalidParameterException(InvalidParameterException e)
+	{
+		String key = e.getErrorCode() != null ?
+				"common.error.InvalidParameterCode." + e.getErrorCode().toString() :
+				"common.error." + (e.getMessage() != null ? e.getMessage().replace(" ", "_") : "InvalidParameter");
+
+		logBundleError(key, e.getLocalizedMessage());
+	}
+
+	private void logBundleError(String key, String localizedMsg)
+	{
 		if (getBundle().containsKey(key))
 		{
 			// Log original message
-			logger.error(e.getLocalizedMessage());
+			logger.error(localizedMsg);
 			// Log and display translated message
-			logMessage(getBundle().getString(key), Severity.ERROR);
+			logBundleMessage(key, Severity.ERROR, true);
 		}
 		else
 		{
 			// Log and display original message
-			logMessage(e.getLocalizedMessage(), Severity.ERROR);
+			logMessage(localizedMsg, Severity.ERROR);
 		}
 	}
 
-	public String getTool()
+	protected void logBundleMessage(String key, Severity severity, boolean scrollToTop)
 	{
-		return TOOL;
+		String msg = getBundle().getString(key);
+		logMessage(msg, severity, scrollToTop);
 	}
 }

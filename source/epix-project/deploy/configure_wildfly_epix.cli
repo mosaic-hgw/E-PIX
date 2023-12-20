@@ -1,57 +1,83 @@
 # add datasource for epix
-set epixDbHost=${EPIX_DB_HOST}
-if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_HOST})
-	set epixDbHost=mysql
+##########################
+set epixDbHost=mysql
+if (outcome == "success") of :resolve-expression(expression=${env.EPIX_DB_HOST})
+	set epixDbHost=${env.EPIX_DB_HOST}
 end-if
-set epixDbPort=${EPIX_DB_PORT}
-if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_PORT})
-	set epixDbPort=3306
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_DB_HOST})
+	set epixDbHost=${env.TTP_EPIX_DB_HOST}
 end-if
-set epixDbName=${EPIX_DB_NAME}
-if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_NAME})
-	set epixDbName=epix
+
+set epixDbPort=3306
+if (outcome == "success") of :resolve-expression(expression=${env.EPIX_DB_PORT})
+	set epixDbPort=${env.EPIX_DB_PORT}
 end-if
-set epixDbUser=${EPIX_DB_USER}
-if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_USER})
-	set epixDbUser=epix_user
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_DB_PORT})
+	set epixDbPort=${env.TTP_EPIX_DB_PORT}
 end-if
-set epixDbPass=${EPIX_DB_PASS}
-if (outcome != "success") of :resolve-expression(expression=${env.EPIX_DB_PASS})
-	set epixDbPass=epix_password
+
+set epixDbName=epix
+if (outcome == "success") of :resolve-expression(expression=${env.EPIX_DB_NAME})
+	set epixDbName=${env.EPIX_DB_NAME}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_DB_NAME})
+	set epixDbName=${env.TTP_EPIX_DB_NAME}
+end-if
+
+set epixDbUser=epix_user
+if (outcome == "success") of :resolve-expression(expression=${env.EPIX_DB_USER})
+	set epixDbUser=${env.EPIX_DB_USER}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_DB_USER})
+	set epixDbUser=${env.TTP_EPIX_DB_USER}
+end-if
+
+set epixDbPass=epix_password
+if (outcome == "success") of :resolve-expression(expression=${env.EPIX_DB_PASS})
+	set epixDbPass=${env.EPIX_DB_PASS}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_DB_PASS})
+	set epixDbPass=${env.TTP_EPIX_DB_PASS}
 end-if
 
 if (outcome != "success") of /subsystem=datasources/data-source=EPIXDS:read-resource
-	try
-		echo \>\>\> add datasources EPIXDS
-		data-source add \
-			--name=EPIXDS \
-			--driver-name=mysql \
-			--jndi-name=java:jboss/datasources/EPIXDS \
-			--connection-url=jdbc:mysql://$epixDbHost:$epixDbPort/$epixDbName?useSSL=false&allowPublicKeyRetrieval=true \
-			--user-name=$epixDbUser \
-			--password=$epixDbPass \
-			--use-ccm=true \
-			--min-pool-size=0 \
-			--max-pool-size=20 \
-			--flush-strategy=FailingConnectionOnly \
-			--use-java-context=true \
-			--jta=true \
-			--enabled=true
-	catch
-		echo \<\<\< FAILED add datasources EPIXDS
-		data-source remove --name=EPIXDS
-	end-try
+    echo \>\>\> add datasources EPIXDS
+    data-source add \
+        --name=EPIXDS \
+        --driver-name=mysql \
+        --jndi-name=java:jboss/datasources/EPIXDS \
+        --connection-url=jdbc:mysql://$epixDbHost:$epixDbPort/$epixDbName?useSSL=false&allowPublicKeyRetrieval=true \
+        --user-name=$epixDbUser \
+        --password=$epixDbPass \
+        --use-ccm=true \
+        --min-pool-size=0 \
+        --max-pool-size=20 \
+        --flush-strategy=FailingConnectionOnly \
+        --use-java-context=true \
+        --jta=true \
+        --enabled=true \
+        --check-valid-connection-sql="select 1" \
+        --validate-on-match=false \
+        --background-validation=true \
+        --background-validation-millis=10000
 end-if
 
 
 # add logger for epix
+######################
 set epixLogLevel=${EPIX_LOG_LEVEL}
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_LOG_LEVEL})
+	set epixLogLevel=${env.TTP_EPIX_LOG_LEVEL}
+end-if
 if (result ~= "(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)") of :resolve-expression(expression=$epixLogLevel)
 	echo \>\>\> set epix-log-level to $epixLogLevel
 else
 	set epixLogLevel="INFO"
 end-if
 set epixFileLog=${EPIX_FILE_LOG}
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_LOG_TO_FILE})
+	set epixFileLog=${env.TTP_EPIX_LOG_TO_FILE}
+end-if
 if (result ~= "(?i)(on|true|yes|1)") of :resolve-expression(expression=$epixFileLog)
 	echo \>\>\> add epix-logger as separate file
 	/subsystem=logging/size-rotating-file-handler=epix-handler:add(file={"relative-to"=>"jboss.server.log.dir", "path"=>"epix.log"})
@@ -68,64 +94,176 @@ else
 end-if
 
 
+set wfOverlaysDir=${docker.wildfly.jboss}
+if (outcome == "success") of :resolve-expression(expression=${env.WF_OVERLAYS_DIR})
+	set wfOverlaysDir=${env.WF_OVERLAYS_DIR}
+end-if
 set authMode=${EPIX_AUTH_MODE}
-# gRAS-Authentication
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_WEB_AUTH_MODE})
+	set authMode=${env.TTP_EPIX_WEB_AUTH_MODE}
+end-if
+# gRAS-Authentication for WEB
+##############################
 if (result ~= "(?i)(gras)") of :resolve-expression(expression=$authMode)
-	try
-		echo \>\>\> install epix-Authentication for $authMode-Authentication
-		deployment-overlay add \
-			--name=epixGrasAuth \
-			--content=/WEB-INF/web.xml=${docker.wildfly.jboss}/epix_gras_web.xml,/WEB-INF/jboss-web.xml=${docker.wildfly.jboss}/epix_gras_jboss-web.xml \
-			--deployments=epix-web-*.war \
-			--redeploy-affected
-	catch
-		echo \<\<\< FAILED install epix-Authentication for $authMode-Authentication
-		deployment-overlay remove \
-			--name=epixGrasAuth \
-			--redeploy-affected
-	end-try
+    echo \>\>\> install epix-Authentication for $authMode-Authentication
+    deployment-overlay add \
+        --name=epixGrasAuth \
+        --content=/WEB-INF/web.xml=$wfOverlaysDir/epix_gras_web.xml,/WEB-INF/jboss-web.xml=$wfOverlaysDir/epix_gras_jboss-web.xml \
+        --deployments=epix-web-*.war \
+        --redeploy-affected
 end-if
 
-# KeyCloak-Authentication
+
+# KeyCloak-Authentication for WEB
+##################################
 if (result ~= "(?i)(keycloak-json)") of :resolve-expression(expression=$authMode)
+    echo \>\>\> install epix-Authentication for $authMode-Authentication
+    deployment-overlay add \
+        --name=epixOIDCAuth \
+        --content=/WEB-INF/web.xml=$wfOverlaysDir/epix_oidc_web.xml,/WEB-INF/oidc.json=$wfOverlaysDir/oidc.json \
+        --deployments=epix-web-*.war \
+        --redeploy-affected
+end-if
+
+# KeyCloak-Authentication for WEB (alternative Methode)
+########################################################
+set ttpWebKeycloakRealm=ttp
+if (outcome == "success") of :resolve-expression(expression=${env.KEYCLOAK_REALM})
+	set ttpWebKeycloakRealm=${env.KEYCLOAK_REALM}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_KEYCLOAK_REALM})
+	set ttpWebKeycloakRealm=${env.TTP_KEYCLOAK_REALM}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_WEB_KEYCLOAK_REALM})
+	set ttpWebKeycloakRealm=${env.TTP_WEB_KEYCLOAK_REALM}
+end-if
+
+set ttpWebKeycloakClientId=ths
+if (outcome == "success") of :resolve-expression(expression=${env.KEYCLOAK_RESOURCE})
+	set ttpWebKeycloakClientId=${env.KEYCLOAK_RESOURCE}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.KEYCLOAK_CLIENT_ID})
+	set ttpWebKeycloakClientId=${env.KEYCLOAK_CLIENT_ID}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_KEYCLOAK_CLIENT_ID})
+	set ttpWebKeycloakClientId=${env.TTP_KEYCLOAK_CLIENT_ID}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_WEB_KEYCLOAK_CLIENT_ID})
+	set ttpWebKeycloakClientId=${env.TTP_WEB_KEYCLOAK_CLIENT_ID}
+end-if
+
+set ttpWebKeycloakBaseUrl=<PROTOCOL://HOST_OR_IP:PORT/auth/>
+if (outcome == "success") of :resolve-expression(expression=${env.KEYCLOAK_SERVER_URL})
+	set ttpWebKeycloakBaseUrl=${env.KEYCLOAK_SERVER_URL}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_KEYCLOAK_SERVER_URL})
+	set ttpWebKeycloakBaseUrl=${env.TTP_KEYCLOAK_SERVER_URL}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_WEB_KEYCLOAK_SERVER_URL})
+	set ttpWebKeycloakBaseUrl=${env.TTP_WEB_KEYCLOAK_SERVER_URL}
+end-if
+
+set ttpWebKeycloakSecret=<CLIENT_SECRET>
+if (outcome == "success") of :resolve-expression(expression=${env.KEYCLOAK_CLIENT_SECRET})
+	set ttpWebKeycloakSecret=${env.KEYCLOAK_CLIENT_SECRET}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_KEYCLOAK_CLIENT_SECRET})
+	set ttpWebKeycloakSecret=${env.TTP_KEYCLOAK_CLIENT_SECRET}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_WEB_KEYCLOAK_CLIENT_SECRET})
+	set ttpWebKeycloakSecret=${env.TTP_WEB_KEYCLOAK_CLIENT_SECRET}
+end-if
+
+set ttpWebKeycloakSslRequired=external
+if (outcome == "success") of :resolve-expression(expression=${env.KEYCLOAK_SSL_REQUIRED})
+	set ttpWebKeycloakSslRequired=${env.KEYCLOAK_SSL_REQUIRED}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_KEYCLOAK_SSL_REQUIRED})
+	set ttpWebKeycloakSslRequired=${env.TTP_KEYCLOAK_SSL_REQUIRED}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_WEB_KEYCLOAK_SSL_REQUIRED})
+	set ttpWebKeycloakSslRequired=${env.TTP_WEB_KEYCLOAK_SSL_REQUIRED}
+end-if
+
+set ttpWebKeycloakConfidentialPort=8443
+if (outcome == "success") of :resolve-expression(expression=${env.KEYCLOAK_CONFIDENTIAL_PORT})
+	set ttpWebKeycloakConfidentialPort=${env.KEYCLOAK_CONFIDENTIAL_PORT}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_KEYCLOAK_CONFIDENTIAL_PORT})
+	set ttpWebKeycloakConfidentialPort=${env.TTP_KEYCLOAK_CONFIDENTIAL_PORT}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_WEB_KEYCLOAK_CONFIDENTIAL_PORT})
+	set ttpWebKeycloakConfidentialPort=${env.TTP_WEB_KEYCLOAK_CONFIDENTIAL_PORT}
+end-if
+
+set ttpWebKeycloakUseResourceRoleMappings=false
+if (outcome == "success") of :resolve-expression(expression=${env.KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS})
+	set ttpWebKeycloakUseResourceRoleMappings=${env.KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS})
+	set ttpWebKeycloakUseResourceRoleMappings=${env.TTP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS}
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_WEB_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS})
+	set ttpWebKeycloakUseResourceRoleMappings=${env.TTP_WEB_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS}
+end-if
+if (result ~= "(?i)(keycloak)") of :resolve-expression(expression=$authMode)
+    echo \>\>\> install epix-Authentication for $authMode-Authentication
+    deployment-overlay add \
+        --name=epixOIDCAuth \
+        --content=/WEB-INF/web.xml=$wfOverlaysDir/epix_oidc_web.xml \
+        --deployments=epix-web-*.war \
+        --redeploy-affected
+    set epixVersion=${EPIX_VERSION}
+    /subsystem=elytron-oidc-client/secure-deployment=epix-web-$epixVersion.war:add( \
+        provider-url=$ttpWebKeycloakBaseUrl/realms/$ttpWebKeycloakRealm, \
+        client-id=$ttpWebKeycloakClientId, \
+        ssl-required=$ttpWebKeycloakSslRequired, \
+        confidential-port=$ttpWebKeycloakConfidentialPort, \
+        use-resource-role-mappings=$ttpWebKeycloakUseResourceRoleMappings \
+    )
+    /subsystem=elytron-oidc-client/secure-deployment=epix-web-$epixVersion.war/credential=secret:add(secret=$ttpWebKeycloakSecret)
+end-if
+
+# KeyCloak-Authentication for SOAP
+###################################
+if (result ~= "(?i)(on|true|yes|1)") of :resolve-expression(expression=${env.TTP_EPIX_SOAP_KEYCLOAK_ENABLE})
+    echo \>\>\> set system-property for TTP_EPIX_SOAP_KEYCLOAK_ENABLE
+    /system-property=ttp.auth.soap.keycloak.epix.enabled:add(value=true)
+else
 	try
-		echo \>\>\> install epix-Authentication for $authMode-Authentication
-		deployment-overlay add \
-			--name=epixKeycloakAuth \
-			--content=/WEB-INF/web.xml=${docker.wildfly.jboss}/epix_keycloak_web.xml,/WEB-INF/keycloak.json=${docker.wildfly.jboss}/keycloak.json \
-			--deployments=epix-web-*.war \
-			--redeploy-affected
+		/system-property=ttp.auth.soap.keycloak.epix.enabled:add(value=false)
 	catch
-		echo \<\<\< FAILED install epix-Authentication for $authMode-Authentication
-		deployment-overlay remove \
-			--name=epixKeycloakAuth \
-			--redeploy-affected
 	end-try
 end-if
 
-# KeyCloak-Authentication (alternative Methode)
-if (result ~= "(?i)(keycloak)") of :resolve-expression(expression=$authMode)
-	try
-		echo \>\>\> install epix-Authentication for $authMode-Authentication
-		deployment-overlay add \
-			--name=epixKeycloakAuth \
-			--content=/WEB-INF/web.xml=${docker.wildfly.jboss}/epix_keycloak_web.xml \
-			--deployments=epix-web-*.war \
-			--redeploy-affected
-		set epixVersion=${EPIX_VERSION}
-		/subsystem=keycloak/secure-deployment=epix-web-$epixVersion.war:add( \
-			realm=${env.KEYCLOAK_REALM}, \
-			resource=${env.KEYCLOAK_RESOURCE}, \
-			auth-server-url=${env.KEYCLOAK_SERVER_URL}, \
-			ssl-required=${env.KEYCLOAK_SSL_REQUIRED}, \
-			confidential-port=${env.KEYCLOAK_CONFIDENTIAL_PORT}, \
-			use-resource-role-mappings=${env.KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS} \
-		)
-		/subsystem=keycloak/secure-deployment=epix-web-$epixVersion.war/credential=secret:add(value=${env.KEYCLOAK_CLIENT_SECRET})
-	catch
-		echo \<\<\< FAILED install epix-Authentication for $authMode-Authentication
-		deployment-overlay remove \
-			--name=epixKeycloakAuth \
-			--redeploy-affected
-	end-try
+# Authentication-Roles for SOAP
+################################
+# roles (role.epix.[user|admin].[name|services])
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_SOAP_ROLE_USER_NAME})
+    set temp="${env.TTP_EPIX_SOAP_ROLE_USER_NAME}"
+    echo \>\>\> set system-property for TTP_EPIX_SOAP_ROLE_USER_NAME
+    /system-property=ttp.auth.soap.role.epix.user.name:add(value=$temp)
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_SOAP_ROLE_USER_SERVICES})
+    set temp="${env.TTP_EPIX_SOAP_ROLE_USER_SERVICES}"
+    echo \>\>\> set system-property for TTP_EPIX_SOAP_ROLE_USER_SERVICES
+    /system-property=ttp.auth.soap.role.epix.user.services:add(value=$temp)
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_SOAP_ROLE_ADMIN_NAME})
+    set temp="${env.TTP_EPIX_SOAP_ROLE_ADMIN_NAME}"
+    echo \>\>\> set system-property for TTP_EPIX_SOAP_ROLE_ADMIN_NAME
+    /system-property=ttp.auth.soap.role.epix.admin.name:add(value=$temp)
+end-if
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_SOAP_ROLE_ADMIN_SERVICES})
+    set temp="${env.TTP_EPIX_SOAP_ROLE_ADMIN_SERVICES}"
+    echo \>\>\> set system-property for TTP_EPIX_SOAP_ROLE_ADMIN_SERVICES
+    /system-property=ttp.auth.soap.role.epix.admin.services:add(value=$temp)
+end-if
+
+# Domain-based Auth-Roles
+##########################
+if (outcome == "success") of :resolve-expression(expression=${env.TTP_EPIX_AUTH_DOMAIN_ROLES})
+    set temp=${env.TTP_EPIX_AUTH_DOMAIN_ROLES}
+    echo \>\>\> set system-property for TTP_EPIX_AUTH_DOMAIN_ROLES
+    /system-property=ttp.auth.epix.domain.roles:add(value=$temp)
 end-if

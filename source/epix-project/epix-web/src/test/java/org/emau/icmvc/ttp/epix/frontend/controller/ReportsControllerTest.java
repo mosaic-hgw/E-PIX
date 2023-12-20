@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -40,13 +40,15 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  */
 
 
-import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
-import org.icmvc.ttp.web.controller.LanguageBean;
-import org.icmvc.ttp.web.testtools.JsfTest;
-import org.junit.jupiter.api.Test;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
+import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
+import org.icmvc.ttp.web.controller.LanguageBean;
+import org.icmvc.ttp.web.controller.Time;
+import org.icmvc.ttp.web.testtools.JsfTest;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -64,7 +66,10 @@ class ReportsControllerTest extends JsfTest
 
 		DomainSelector domainSelector = mock(DomainSelector.class);
 		when(domainSelector.getSelectedDomainName()).thenReturn(domainName);
-		reportsController.setDomainSelector(domainSelector);
+		EpixHelper epixHelper = new EpixHelper();
+		epixHelper.setDomainSelector(domainSelector);
+		reportsController.setEpixHelper(epixHelper);
+		reportsController.setTime(new Time());
 
 		LanguageBean languageBean = new LanguageBean();
 		reportsController.setLanguageBean(languageBean);

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -56,34 +56,46 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PersistMode;
  */
 public class ConfigurationContainer implements Serializable
 {
-	private static final long serialVersionUID = -8092674346366089256L;
-	private final MatchingMode matchingMode;
-	private final String mpiGenerator;
-	private final String mpiPrefix;
+	private static final long serialVersionUID = 4542967924668614814L;
+	private MatchingMode matchingMode = MatchingMode.MATCHING_IDENTITIES;
+	private String mpiGenerator;
+	private String mpiPrefix;
 	private boolean useNotifications = false;
 	private boolean limitSearchForLowMemory = false;
-	private final PersistMode persistMode;
+	private PersistMode persistMode = PersistMode.IDENTIFYING;
 	private final List<FieldName> requiredFields = new ArrayList<>();
 	private final Map<String, String> valueFieldMapping = new HashMap<>();
-	private final DeduplicationDTO deduplication;
-	private final PrivacyDTO privacy;
-	private final MatchingDTO matchingConfig;
+	private DeduplicationDTO deduplication = new DeduplicationDTO();
+	private PrivacyDTO privacy = new PrivacyDTO();
+	private MatchingDTO matchingConfig = new MatchingDTO();
+	private final List<PreprocessingFieldDTO> preprocessingFields = new ArrayList<>();
+
+	public ConfigurationContainer()
+	{}
 
 	public ConfigurationContainer(MatchingMode matchingMode, String mpiGenerator, String mpiPrefix, boolean useNotifications, boolean limitSearchForLowMemory,
-			PersistMode persistMode, List<FieldName> requiredFields, Map<String, String> valueFieldMapping, DeduplicationDTO deduplication, PrivacyDTO privacy, MatchingDTO matchingConfig)
+			PersistMode persistMode, List<FieldName> requiredFields, Map<String, String> valueFieldMapping, DeduplicationDTO deduplication, PrivacyDTO privacy, MatchingDTO matchingConfig,
+			List<PreprocessingFieldDTO> preprocessingFields)
 	{
 		super();
-		this.matchingMode = matchingMode;
+		setMatchingMode(matchingMode);
 		this.mpiGenerator = mpiGenerator;
 		this.mpiPrefix = mpiPrefix;
 		this.useNotifications = useNotifications;
 		this.limitSearchForLowMemory = limitSearchForLowMemory;
-		this.persistMode = persistMode;
-		this.requiredFields.addAll(requiredFields);
-		this.valueFieldMapping.putAll(valueFieldMapping);
-		this.deduplication = deduplication;
-		this.privacy = privacy;
-		this.matchingConfig = matchingConfig;
+		setPersistMode(persistMode);
+		setRequiredFields(requiredFields);
+		setValueFieldMapping(valueFieldMapping);
+		setDeduplication(deduplication);
+		setPrivacy(privacy);
+		setMatchingConfig(matchingConfig);
+		setPreprocessingFields(preprocessingFields);
+	}
+
+	public ConfigurationContainer(ConfigurationContainer cc)
+	{
+		this(cc.getMatchingMode(), cc.getMpiGenerator(), cc.getMpiPrefix(), cc.isUseNotifications(), cc.isLimitSearchForLowMemory(), cc.getPersistMode(), cc.getRequiredFields(),
+				cc.getValueFieldMapping(), cc.getDeduplication(), cc.getPrivacy(), cc.getMatchingConfig(), cc.getPreprocessingFields());
 	}
 
 	public boolean isUseNotifications()
@@ -111,9 +123,19 @@ public class ConfigurationContainer implements Serializable
 		return matchingMode;
 	}
 
+	public void setMatchingMode(MatchingMode matchingMode)
+	{
+		this.matchingMode = matchingMode != null ? matchingMode : MatchingMode.MATCHING_IDENTITIES;
+	}
+
 	public String getMpiGenerator()
 	{
 		return mpiGenerator;
+	}
+
+	public void setMpiGenerator(String mpiGenerator)
+	{
+		this.mpiGenerator = mpiGenerator;
 	}
 
 	public String getMpiPrefix()
@@ -121,9 +143,19 @@ public class ConfigurationContainer implements Serializable
 		return mpiPrefix;
 	}
 
+	public void setMpiPrefix(String mpiPrefix)
+	{
+		this.mpiPrefix = mpiPrefix;
+	}
+
 	public PersistMode getPersistMode()
 	{
-		return persistMode == null ? PersistMode.IDENTIFYING : persistMode;
+		return persistMode;
+	}
+
+	public void setPersistMode(PersistMode persistMode)
+	{
+		this.persistMode = persistMode != null ? persistMode : PersistMode.IDENTIFYING;
 	}
 
 	public List<FieldName> getRequiredFields()
@@ -131,9 +163,17 @@ public class ConfigurationContainer implements Serializable
 		return requiredFields;
 	}
 
-	public Map<String, String> getValueFieldMapping()
+	public void setRequiredFields(List<FieldName> requiredFields)
 	{
-		return valueFieldMapping;
+		if (requiredFields != null)
+		{
+			this.requiredFields.clear();
+			this.requiredFields.addAll(requiredFields);
+		}
+		else
+		{
+			this.requiredFields.clear();
+		}
 	}
 
 	public DeduplicationDTO getDeduplication()
@@ -141,9 +181,19 @@ public class ConfigurationContainer implements Serializable
 		return deduplication;
 	}
 
+	public void setDeduplication(DeduplicationDTO deduplication)
+	{
+		this.deduplication = deduplication != null ? new DeduplicationDTO(deduplication) : null;
+	}
+
 	public PrivacyDTO getPrivacy()
 	{
 		return privacy;
+	}
+
+	public void setPrivacy(PrivacyDTO privacy)
+	{
+		this.privacy = privacy;
 	}
 
 	public MatchingDTO getMatchingConfig()
@@ -151,21 +201,59 @@ public class ConfigurationContainer implements Serializable
 		return matchingConfig;
 	}
 
+	public void setMatchingConfig(MatchingDTO matchingConfig)
+	{
+		this.matchingConfig = matchingConfig;
+	}
+
+	public Map<String, String> getValueFieldMapping()
+	{
+		return valueFieldMapping;
+	}
+
+	public void setValueFieldMapping(Map<String, String> valueFieldMapping)
+	{
+		this.valueFieldMapping.clear();
+		if (valueFieldMapping != null)
+		{
+			this.valueFieldMapping.putAll(valueFieldMapping);
+		}
+	}
+
+	public List<PreprocessingFieldDTO> getPreprocessingFields()
+	{
+		return preprocessingFields;
+	}
+
+	public void setPreprocessingFields(List<PreprocessingFieldDTO> preprocessingFields)
+	{
+		this.preprocessingFields.clear();
+		if (preprocessingFields != null)
+		{
+			for (PreprocessingFieldDTO fieldDTO : preprocessingFields)
+			{
+				this.preprocessingFields.add(new PreprocessingFieldDTO(fieldDTO));
+			}
+		}
+	}
+
 	@Override
 	public int hashCode()
 	{
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + (deduplication == null ? 0 : deduplication.hashCode());
 		result = prime * result + (limitSearchForLowMemory ? 1231 : 1237);
 		result = prime * result + (matchingConfig == null ? 0 : matchingConfig.hashCode());
 		result = prime * result + (matchingMode == null ? 0 : matchingMode.hashCode());
 		result = prime * result + (mpiGenerator == null ? 0 : mpiGenerator.hashCode());
 		result = prime * result + (mpiPrefix == null ? 0 : mpiPrefix.hashCode());
 		result = prime * result + (persistMode == null ? 0 : persistMode.hashCode());
-		result = prime * result + requiredFields.hashCode();
-		result = prime * result + (useNotifications ? 1231 : 1237);
-		result = prime * result + valueFieldMapping.hashCode();
+		result = prime * result + (preprocessingFields == null ? 0 : preprocessingFields.hashCode());
 		result = prime * result + (privacy == null ? 0 : privacy.hashCode());
+		result = prime * result + (requiredFields == null ? 0 : requiredFields.hashCode());
+		result = prime * result + (useNotifications ? 1231 : 1237);
+		result = prime * result + (valueFieldMapping == null ? 0 : valueFieldMapping.hashCode());
 		return result;
 	}
 
@@ -185,11 +273,18 @@ public class ConfigurationContainer implements Serializable
 			return false;
 		}
 		ConfigurationContainer other = (ConfigurationContainer) obj;
-		if (limitSearchForLowMemory != other.limitSearchForLowMemory)
+		if (deduplication == null)
+		{
+			if (other.deduplication != null)
+			{
+				return false;
+			}
+		}
+		else if (!deduplication.equals(other.deduplication))
 		{
 			return false;
 		}
-		if (persistMode != other.persistMode)
+		if (limitSearchForLowMemory != other.limitSearchForLowMemory)
 		{
 			return false;
 		}
@@ -230,6 +325,32 @@ public class ConfigurationContainer implements Serializable
 		{
 			return false;
 		}
+		if (persistMode != other.persistMode)
+		{
+			return false;
+		}
+		if (preprocessingFields == null)
+		{
+			if (other.preprocessingFields != null)
+			{
+				return false;
+			}
+		}
+		else if (!preprocessingFields.equals(other.preprocessingFields))
+		{
+			return false;
+		}
+		if (privacy == null)
+		{
+			if (other.privacy != null)
+			{
+				return false;
+			}
+		}
+		else if (!privacy.equals(other.privacy))
+		{
+			return false;
+		}
 		if (requiredFields == null)
 		{
 			if (other.requiredFields != null)
@@ -256,21 +377,14 @@ public class ConfigurationContainer implements Serializable
 		{
 			return false;
 		}
-		if (privacy == null)
-		{
-			return other.privacy == null;
-		}
-		else
-		{
-			return privacy.equals(other.privacy);
-		}
+		return true;
 	}
 
 	@Override
 	public String toString()
 	{
-		return "ConfigurationContainer [matchingMode=" + matchingMode + ", mpiGenerator=" + mpiGenerator + ", mpiPrefix=" + mpiPrefix
-				+ ", useNotifications=" + useNotifications + ", limitSearchForLowMemory=" + limitSearchForLowMemory + ", persistMode="
-				+ persistMode + ", requiredFields=" + requiredFields + ", valueFieldMapping=" + valueFieldMapping + ", matchingConfig=" + matchingConfig + ", privacy=" + privacy + "]";
+		return "ConfigurationContainer [matchingMode=" + matchingMode + ", mpiGenerator=" + mpiGenerator + ", mpiPrefix=" + mpiPrefix + ", useNotifications=" + useNotifications
+				+ ", limitSearchForLowMemory=" + limitSearchForLowMemory + ", persistMode=" + persistMode + ", requiredFields=" + requiredFields + ", valueFieldMapping=" + valueFieldMapping
+				+ ", deduplication=" + deduplication + ", privacy=" + privacy + ", matchingConfig=" + matchingConfig + ", preprocessingFields=" + preprocessingFields + "]";
 	}
 }

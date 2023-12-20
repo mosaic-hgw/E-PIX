@@ -1,0 +1,405 @@
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  							kontakt-ths@uni-greifswald.de
+  
+  							concept and implementation
+  							l.geidel,c.schack, d.langner, g.koetzschke
+  
+  							web client
+  							a.blumentritt, f.m. moser
+  
+  							docker
+  							r.schuldt
+  
+  							privacy preserving record linkage (PPRL)
+  							c.hampf
+  
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  							https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+<html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:idat-display="http://java.sun.com/jsf/composite/components/idat/display"
+	  xmlns:idat-form="http://java.sun.com/jsf/composite/components/idat/form"
+	  xmlns:f="http://java.sun.com/jsf/core"
+	  xmlns:h="http://java.sun.com/jsf/html"
+	  xmlns:p="http://primefaces.org/ui"
+	  xmlns:ui="http://java.sun.com/jsf/facelets">
+<!-- author: Arne Blumentritt -->
+<h:body>
+	<ui:composition template="/resources/templates/epix.xhtml">
+
+		<ui:define name="meta">
+			<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+			<meta http-equiv="Pragma" content="no-cache" />
+			<meta http-equiv="Expires" content="0" />
+		</ui:define>
+
+		<ui:define name="header_title">
+			<h:outputText value="#{msg['page.person.title']}" />
+		</ui:define>
+
+		<ui:define name="title">
+			<h:outputText value="#{msg['page.person.title']}" />
+		</ui:define>
+
+		<ui:define name="help">
+			<h:outputText value="#{msg['page.person.help']}" />
+		</ui:define>
+
+		<ui:define name="content">
+			<f:event listener="#{personController.init(param['domain'], param['mpi'])}" type="preRenderView" />
+
+			<ui:fragment rendered="#{not empty personController.person}">
+				<div class="grid">
+					<!-- General -->
+					<div class="col-12 xl:col-6">
+						<p:panel styleClass="h-full" id="general">
+							<div class="h-full flex flex-column justify-content-between">
+								<div>
+									<idat-display:person_summary identity="#{personController.referenceIdentity}" styleTitle="font-weight: bold; font-size: 1.5em" />
+
+									<ui:fragment rendered="#{not empty personController.possibleMatches}">
+										<br />
+										<h:outputFormat
+												value="#{personController.possibleMatches.size() == 1 ? msg['page.person.possibleMatches.help.singular'] : msg['page.person.possibleMatches.help.plural']}"
+												styleClass="font-bold">
+											<f:param value="#{personController.possibleMatches.size()}" />
+										</h:outputFormat>
+										<br />
+										<p:commandButton action="#{personController.onOpenPossibleMatches}"
+														 icon="mdi mdi-account-multiple"
+														 partialSubmit="true"
+														 process="@this"
+														 styleClass="secondary"
+														 value="#{personController.possibleMatches.size() == 1 ? msg['page.person.possibleMatches.show.singular'] : msg['page.person.possibleMatches.show.plural']}" />
+									</ui:fragment>
+								</div>
+								<div>
+									<!--								<p:commandButton actionListener="#{personController.onDeactivatePerson}"-->
+									<!--												 disabled="#{personController.person.deactivated}"-->
+									<!--												 icon="mdi mdi-close-circle"-->
+									<!--												 partialSubmit="true"-->
+									<!--												 process="@this"-->
+									<!--												 styleClass="secondary"-->
+									<!--												 update="general, history"-->
+									<!--												 value="#{msg['page.person.general.deactivate']}">-->
+									<!--									<p:confirm escape="false" header="#{msg['common.confirmation']}" icon="mdi mdi-close-circle" message="#{msg['page.person.general.deactivate.confirm']}" />-->
+									<!--								</p:commandButton>-->
+
+									<p:commandButton action="#{personController.onDeletePerson}"
+													 icon="mdi mdi-delete-empty"
+													 partialSubmit="true"
+													 process="@this"
+													 styleClass="secondary"
+													 value="#{msg['page.person.general.delete']}">
+										<p:confirm header="#{msg['common.confirmation']}" icon="mdi mdi-delete-empty" message="#{msg['page.person.general.delete.confirm']}" />
+									</p:commandButton>
+								</div>
+							</div>
+						</p:panel>
+					</div>
+
+					<!-- Identifier -->
+					<div class="col-12 xl:col-6">
+						<p:panel styleClass="h-full">
+							<!-- MPIs-->
+							<h4>
+								<h:outputText value="#{msg['page.person.mpi.title']}" />
+							</h4>
+							- <b>#{personController.referenceMpi}</b>
+							<a href="/gpas-web/html/internal/edit.xhtml?originalValue=#{personController.referenceMpi}" target="_blank" class="ttp-logo-button">
+								<i class="mdi mdi-share"></i>
+								<p:graphicImage value="/html/public/assets/images/gPAS-Logo-ohne-Text-160y.png" />
+							</a>
+							<br />
+							<br />
+							<h:outputText value="#{msg['page.person.mpi.help.multiple']}" styleClass="subtitle font-bold" rendered="#{not empty personController.mpis}" />
+							<ui:repeat value="#{personController.mpis}" var="_mpi">
+								- <h:outputText value="#{_mpi}" />
+								<br />
+							</ui:repeat>
+							<br />
+
+							<ui:fragment rendered="#{!personController.person.deactivated}">
+								<!-- Local Identifiers-->
+								<h4>
+									<h:outputText value="#{msg['page.person.identifier.title']}" />
+								</h4>
+								<h:panelGroup id="identifiers" layout="block" style="margin-bottom: 10px">
+									<h:outputText value="#{msg['page.person.identifier.help'.concat(empty personController.identifiers ? '.empty' : '')]}" styleClass="subtitle" />
+									<p:dataTable id="identifier_table" value="#{personController.identifiers}" var="_identifier" rendered="#{not empty personController.identifiers}"
+												 styleClass="no-header width-auto">
+										<p:column sortBy="#{_identifier.identifierDomain.labelOrName}">
+											<h:outputText value="#{_identifier.identifierDomain.labelOrName}" />
+										</p:column>
+										<p:column>
+											<h:outputText value="#{_identifier.value}" />
+										</p:column>
+										<p:column styleClass="icons">
+											<!-- Delete Identifier -->
+											<p:commandButton action="#{personController.onDeleteIdentifier(_identifier)}"
+															 icon="mdi mdi-delete-empty"
+															 process="@this" update="identifiers, history" styleClass="secondary">
+												<p:confirm header="#{msg['common.confirmation']}" icon="mdi mdi-delete-empty"
+														   message="#{msg['page.person.identifier.delete.confirm']}" />
+											</p:commandButton>
+										</p:column>
+									</p:dataTable>
+								</h:panelGroup>
+								<p:commandButton actionListener="#{personController.onNewIdentifier}"
+												 disabled="#{empty epixHelper.identifierDomainsFiltered}"
+												 icon="mdi mdi-plus"
+												 oncomplete="PF('newIdentifier').show()"
+												 process="@this"
+												 styleClass="secondary"
+												 style="margin-top: -10px"
+												 update="newIdentifier"
+												 value="#{msg['page.person.identifier.add']}">
+									<p:resetInput target=":newIdentifier" />
+								</p:commandButton>
+							</ui:fragment>
+						</p:panel>
+					</div>
+
+					<!-- Identities -->
+					<h:panelGroup class="col-12" layout="block" rendered="#{!personController.person.deactivated}">
+						<h:panelGroup id="identities" layout="block">
+							<p:panel>
+								<h4>
+									<h:outputText value="#{msg['page.person.identity.title']}" />
+								</h4>
+								<h:outputText value="#{msg['page.person.identity.help']}" styleClass="subtitle" escape="false" />
+								<idat-display:persons_table actionController="#{personController}"
+															actionSetReferenceIdentity="onSetReferenceIdentity"
+															actionEditIdentity="onEditIdentity"
+															actionEditIdentityOnComplete="PF('newIdentity').show()"
+															actionEditIdentityUpdate="newIdentity, history"
+															actionDeleteIdentity="onDeleteIdentity"
+															showContact="false"
+															showLocalIdentifiers="false"
+															showStatus="true"
+															update="general, identifiers, contacts, history"
+															webPersonList="#{personController.webIdentities}" />
+								<p:commandButton actionListener="#{personController.onNewIdentity}"
+												 icon="mdi mdi-plus"
+												 oncomplete="PF('newIdentity').show()"
+												 process="@this"
+												 styleClass="secondary"
+												 update="newIdentity"
+												 value="#{msg['page.person.identity.add']}">
+									<p:resetInput target=":newIdentity" />
+								</p:commandButton>
+							</p:panel>
+						</h:panelGroup>
+					</h:panelGroup>
+
+					<!-- Addresses -->
+					<h:panelGroup class="col-12" layout="block" rendered="#{!personController.person.deactivated}">
+						<h:panelGroup id="contacts" layout="block">
+							<p:panel>
+								<h4>
+									<h:outputText value="#{msg['page.person.contact.title']}" />
+								</h4>
+								<h:outputText value="#{msg['page.person.contact.help'.concat(empty personController.webContacts ? '.empty' : '')]}" styleClass="subtitle" />
+								<idat-display:persons_table actionController="#{personController}"
+															actionEditContact="onEditContact"
+															actionEditContactOnComplete="PF('newContact').show()"
+															actionEditContactUpdate="newContact"
+															actionDeleteContact="onDeleteContact"
+															actionDeleteContactUpdate="contacts, history"
+															rendered="#{not empty personController.webContacts}"
+															showIdat="false"
+															showStatus="true"
+															webPersonList="#{personController.webContacts}" />
+								<p:commandButton actionListener="#{personController.onNewContact}"
+												 icon="mdi mdi-plus"
+												 oncomplete="PF('newContact').show()"
+												 process="@this"
+												 styleClass="secondary"
+												 update="newContact"
+												 value="#{msg['page.person.contact.add']}">
+									<p:resetInput target=":newContact" />
+								</p:commandButton>
+							</p:panel>
+						</h:panelGroup>
+					</h:panelGroup>
+
+					<!-- History -->
+					<div class="col-12">
+						<p:panel>
+							<h4>
+								<h:outputText value="#{msg['page.person.history.title']}" />
+							</h4>
+							<h:outputText value="#{msg['page.person.history.help']}" styleClass="subtitle" />
+
+							<p:chronoline id="history" value="#{personController.historyList}" var="_history" align="alternate" styleClass="person-chronoline">
+
+								<p:card>
+									<f:facet name="title">
+										#{msg['page.person.history.event.'.concat(_history.event.name())]}
+									</f:facet>
+									<f:facet name="subtitle">
+										<h:outputText value="#{_history.date}" converter="datetime" />
+										<ui:fragment rendered="#{not empty _history.user}">
+											<h:outputFormat value=" #{msg['page.person.history.user']}">
+												<f:param value="#{_history.user}" />
+											</h:outputFormat>
+										</ui:fragment>
+									</f:facet>
+									<h:panelGroup layout="block" rendered="#{not empty _history.identity}" id="history_identity">
+										<idat-display:person_summary identity="#{_history.identity}" />
+									</h:panelGroup>
+
+									<ui:fragment rendered="#{not empty _history.oldIdentity}">
+										<i class="mdi mdi-#{msg['page.person.history.event.'.concat(_history.event.name()).concat('.icon.action')]}" style="align-self: center" />
+										<div style="opacity: #{_history.event.name() == 'PERSON_SPLIT' ? '0.75' : '1.0'}">
+											<idat-display:person_summary identity="#{_history.oldIdentity}" />
+										</div>
+									</ui:fragment>
+
+									<h:panelGroup layout="block" rendered="#{not empty _history.contact}" id="history_contact">
+										<idat-display:contact_summary contact="#{_history.contact}" rendered="#{not empty _history.contact}" />
+									</h:panelGroup>
+
+									<h:panelGroup layout="block" rendered="#{not empty _history.identifier}" id="history_identifier">
+										<h:outputText value="#{_history.identifier.identifierDomain.labelOrName} " />
+										<h:outputText value="#{_history.identifier.value}" />
+									</h:panelGroup>
+								</p:card>
+
+								<f:facet name="marker">
+								<span class="ui-chrono-marker tag_#{msg['page.person.history.event.'.concat(_history.event.name()).concat('.color')]}"><i
+										class="mdi mdi-#{msg['page.person.history.event.'.concat(_history.event.name()).concat('.icon')]}" /></span>
+								</f:facet>
+							</p:chronoline>
+						</p:panel>
+					</div>
+				</div>
+			</ui:fragment>
+
+			<p:dialog id="newIdentity" widgetVar="newIdentity" modal="true" closeOnEscape="true" style="max-width: 1800px;" styleClass="no-title">
+				<h:form rendered="#{not empty personController.editIdentity}">
+					<h3>
+						<h:outputText value="#{personController.edit ? msg['page.person.identity.edit'] : msg['page.person.identity.add'] }" />
+					</h3>
+					<h:outputText value="#{msg['page.person.identity.edit.hint']}" rendered="#{personController.edit}" styleClass="mb-3 block" />
+					<p:messages />
+					<div class="grid">
+						<idat-form:identity identity="#{personController.editIdentity}" person="#{personController.person}" />
+						<div class="col-12 md:col-12">
+							<p:panel styleClass="h-full">
+								<div class="grid">
+									<div class="col-12 md:col-6">
+										<div class="formgrid grid">
+											<h:panelGroup class="field col-12 md:col-6">
+												<p:outputLabel for="updateComment" value="#{msg['add.label.updateComment']}" />
+												<p:inputText id="updateComment" value="#{personController.editComment}" styleClass="w-full" />
+											</h:panelGroup>
+											<h:panelGroup class="field col-12 md:col-6">
+												<p:outputLabel for="source" value="#{msg['import.label.source']}" />
+												<p:selectOneMenu label="#{msg['common.pleaseSelect']}" required="true" id="source" value="#{personController.editSource}"
+																 requiredMessage="#{msg['import.label.pleaseSelectSource']}" styleClass="w-full">
+													<f:selectItem noSelectionOption="true" itemLabel="#{msg['common.pleaseSelect']}" itemDisabled="true" />
+													<f:selectItems value="#{personController.sources}" var="_source" itemLabel="#{empty _source.label ? _source.name : _source.label}"
+																   itemValue="#{_source.name}" />
+												</p:selectOneMenu>
+											</h:panelGroup>
+											<h:panelGroup class="field col-12 md:col-6">
+												<p:outputLabel for="forceUpdate" value="#{msg['page.person.identity.add.forceUpdate']}" />
+												<p:selectBooleanCheckbox id="forceUpdate" styleClass="w-full"
+																		 value="#{personController.forceEdit}" />
+											</h:panelGroup>
+											<h:panelGroup class="field col-6 hidden md:inline" />
+											<h:panelGroup class="field col-12 mb-0">
+												<p:commandButton actionListener="#{personController.onAddIdentity}"
+																 icon="mdi mdi-check"
+																 ignoreAutoUpdate="true"
+																 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newIdentity').hide();"
+																 update="@form, identities, history"
+																 value="#{cmsg['ui.button.save']}" />
+												<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('newIdentity').hide();"
+																 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+											</h:panelGroup>
+										</div>
+									</div>
+								</div>
+							</p:panel>
+						</div>
+					</div>
+				</h:form>
+			</p:dialog>
+
+			<p:dialog id="newContact" widgetVar="newContact" modal="true" closeOnEscape="true" header="#{msg['page.person.contact.add']}" style="max-width: 900px;">
+				<h:form rendered="#{not empty personController.editContact}">
+					<p:messages />
+					<div class="grid">
+						<idat-form:contact identity="#{personController.editIdentity}" contact="#{personController.editContact}" dialog="true" />
+					</div>
+
+					<p:commandButton actionListener="#{personController.onAddContact}"
+									 icon="mdi mdi-check"
+									 ignoreAutoUpdate="true"
+									 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newContact').hide();"
+									 update="@form, contacts, history"
+									 value="#{cmsg['ui.button.save']}" />
+					<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('newContact').hide();"
+									 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+
+				</h:form>
+			</p:dialog>
+
+			<p:dialog id="newIdentifier" widgetVar="newIdentifier" modal="true" closeOnEscape="true" header="#{msg['page.person.identifier.add']}">
+				<h:form rendered="#{not empty personController.editIdentifier}">
+					<p:messages />
+					<p:panelGrid columns="2" columnClasses="ui-grid-col-6,ui-grid-col-6" layout="grid">
+						<p:outputLabel for="identifierDomain" value="#{msg['common.identifier.localIdentifierDomain']}" />
+						<p:selectOneMenu label="#{msg['import.label.source']}" id="identifierDomain" value="#{personController.editIdentifier.identifierDomain}"
+										 converter="#{identifierDomainDTOConverter}" required="true" requiredMessage="#{msg['import.label.pleaseSelectDomain']}">
+							<f:selectItem noSelectionOption="true" itemLabel="#{msg['common.pleaseSelect']}" itemDisabled="true" />
+							<f:selectItems value="#{personController.identifierDomainsFiltered}" var="_domain" itemLabel="#{_domain.label}" itemValue="#{_domain}" />
+						</p:selectOneMenu>
+						<!--************************************************************** -->
+						<p:outputLabel for="identifierValue" value="#{msg['common.identifier.localIdentifier']}" />
+						<p:inputText id="identifierValue" value="#{personController.editIdentifier.value}" required="true" />
+					</p:panelGrid>
+
+					<p:commandButton actionListener="#{personController.onAddIdentifier}"
+									 icon="mdi mdi-check"
+									 ignoreAutoUpdate="true"
+									 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newIdentifier').hide();"
+									 update="@form, identifiers, history"
+									 value="#{cmsg['ui.button.save']}" />
+					<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('newIdentifier').hide();"
+									 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+
+				</h:form>
+			</p:dialog>
+
+			<p:confirmDialog closeOnEscape="true" global="true">
+				<p:commandButton icon="mdi mdi-check" styleClass="ui-confirmdialog-yes" type="button" value="#{cmsg['ui.button.yes']}" />
+				<p:commandButton icon="mdi mdi-close" styleClass="ui-confirmdialog-no" type="button" value="#{cmsg['ui.button.no']}" />
+				<h:outputText />
+			</p:confirmDialog>
+		</ui:define>
+	</ui:composition>
+</h:body>
+</html>

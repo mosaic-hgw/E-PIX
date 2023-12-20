@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,18 +39,17 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class IdentifierDomainDTO implements Serializable
 {
-	private static final long serialVersionUID = 7856255349073032514L;
+	private static final long serialVersionUID = 884075862233796910L;
 	private String name;
 	private String label;
 	private String oid;
@@ -63,13 +62,17 @@ public class IdentifierDomainDTO implements Serializable
 
 	public IdentifierDomainDTO(String name, String label, String oid, Date entryDate, Date updateDate, String description)
 	{
-		super();
 		this.name = name;
 		this.label = label;
 		this.oid = oid;
-		this.entryDate = entryDate;
-		this.updateDate = updateDate;
+		setEntryDate(entryDate);
+		setUpdateDate(updateDate);
 		this.description = description;
+	}
+
+	public IdentifierDomainDTO(IdentifierDomainDTO dto)
+	{
+		this(dto.getName(), dto.getLabel(), dto.getOid(), dto.getEntryDate(), dto.getUpdateDate(), dto.getDescription());
 	}
 
 	public String getName()
@@ -92,6 +95,11 @@ public class IdentifierDomainDTO implements Serializable
 		this.label = label;
 	}
 
+	public String getLabelOrName()
+	{
+		return getLabel() == null || getLabel().length() == 0 ? getName() : getLabel();
+	}
+
 	public String getOid()
 	{
 		return oid;
@@ -109,7 +117,7 @@ public class IdentifierDomainDTO implements Serializable
 
 	public void setEntryDate(Date entryDate)
 	{
-		this.entryDate = entryDate;
+		this.entryDate = entryDate != null ? new Date(entryDate.getTime()) : null;
 	}
 
 	public Date getUpdateDate()
@@ -119,7 +127,7 @@ public class IdentifierDomainDTO implements Serializable
 
 	public void setUpdateDate(Date updateDate)
 	{
-		this.updateDate = updateDate;
+		this.updateDate = updateDate != null ? new Date(updateDate.getTime()) : null;
 	}
 
 	public String getDescription()
@@ -137,12 +145,12 @@ public class IdentifierDomainDTO implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((description == null) ? 0 : description.hashCode());
-		result = prime * result + ((entryDate == null) ? 0 : entryDate.hashCode());
-		result = prime * result + ((label == null) ? 0 : label.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((oid == null) ? 0 : oid.hashCode());
-		result = prime * result + ((updateDate == null) ? 0 : updateDate.hashCode());
+		result = prime * result + (description == null ? 0 : description.hashCode());
+		result = prime * result + (entryDate == null ? 0 : entryDate.hashCode());
+		result = prime * result + (label == null ? 0 : label.hashCode());
+		result = prime * result + (name == null ? 0 : name.hashCode());
+		result = prime * result + (oid == null ? 0 : oid.hashCode());
+		result = prime * result + (updateDate == null ? 0 : updateDate.hashCode());
 		return result;
 	}
 
@@ -150,54 +158,84 @@ public class IdentifierDomainDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		IdentifierDomainDTO other = (IdentifierDomainDTO) obj;
 		if (description == null)
 		{
 			if (other.description != null)
+			{
 				return false;
+			}
 		}
 		else if (!description.equals(other.description))
+		{
 			return false;
+		}
 		if (entryDate == null)
 		{
 			if (other.entryDate != null)
+			{
 				return false;
+			}
 		}
 		else if (!entryDate.equals(other.entryDate))
+		{
 			return false;
+		}
 		if (label == null)
 		{
 			if (other.label != null)
+			{
 				return false;
+			}
 		}
 		else if (!label.equals(other.label))
+		{
 			return false;
+		}
 		if (name == null)
 		{
 			if (other.name != null)
+			{
 				return false;
+			}
 		}
 		else if (!name.equals(other.name))
+		{
 			return false;
+		}
 		if (oid == null)
 		{
 			if (other.oid != null)
+			{
 				return false;
+			}
 		}
 		else if (!oid.equals(other.oid))
+		{
 			return false;
+		}
 		if (updateDate == null)
 		{
 			if (other.updateDate != null)
+			{
 				return false;
+			}
 		}
 		else if (!updateDate.equals(other.updateDate))
+		{
 			return false;
+		}
 		return true;
 	}
 

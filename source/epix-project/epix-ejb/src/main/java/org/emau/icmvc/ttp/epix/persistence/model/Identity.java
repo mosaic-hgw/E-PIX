@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -50,6 +50,7 @@ import javax.persistence.Cacheable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -71,6 +72,7 @@ import org.emau.icmvc.ttp.epix.common.model.IdentityInBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 
 /**
  *
@@ -83,12 +85,10 @@ import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
 @Cacheable(false)
 @NamedQueries({
 		@NamedQuery(name = "Identity.findByIdentifier", query = "SELECT i FROM Identity i JOIN i.person p JOIN i.identifiers li WHERE li.value = :value AND li.identifierDomain = :identifierDomain AND p.domain = :domain AND i.deactivated = false"),
-		@NamedQuery(name = "Identity.findByPerson", query = "SELECT i FROM Identity i WHERE i.person = :person AND i.deactivated = false"),
-		@NamedQuery(name = "Identity.findByIds", query = "SELECT i FROM Identity i WHERE i.id IN :ids AND i.deactivated = false"),
 		@NamedQuery(name = "Identity.findDeactivatedByDomain", query = "SELECT i FROM Identity i JOIN i.person p WHERE i.deactivated = true AND p.domain = :domain") })
 public class Identity implements Serializable
 {
-	private static final long serialVersionUID = 2307144354821091923L;
+	private static final long serialVersionUID = 3383743198718663530L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "identity_index")
 	private long id;
@@ -138,8 +138,13 @@ public class Identity implements Serializable
 	private boolean forcedReference;
 	@Column(columnDefinition = "BIT", length = 1)
 	private boolean deactivated;
+	@Column(name = "vital_status")
+	@Enumerated
+	private VitalStatus vitalStatus;
+	@Column(name = "date_of_death")
+	private Date dateOfDeath;
 
-	@OneToMany(mappedBy = "identity", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "identity", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH })
 	private List<Contact> contacts = new ArrayList<>();
 	@ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
 	@JoinTable(name = "identity_identifier", joinColumns = { @JoinColumn(name = "identity_id", referencedColumnName = "id") }, inverseJoinColumns = {
@@ -197,6 +202,8 @@ public class Identity implements Serializable
 		this.forcedReference = forcedReference;
 		addContacts(contacts);
 		this.version = 0;
+		this.vitalStatus = dto.getVitalStatus();
+		this.dateOfDeath = dto.getDateOfDeath();
 	}
 
 	public long getId()
@@ -564,7 +571,33 @@ public class Identity implements Serializable
 		return forcedReference || person.getDomain().getSafeSource().equals(source);
 	}
 
-	public void update(Identity newIdentity, Timestamp timestamp)
+	public VitalStatus getVitalStatus()
+	{
+		return vitalStatus;
+	}
+
+	public void setVitalStatus(VitalStatus vitalStatus)
+	{
+		this.vitalStatus = vitalStatus;
+	}
+
+	public Date getDateOfDeath()
+	{
+		return dateOfDeath;
+	}
+
+	public void setDateOfDeath(Date dateOfDeath)
+	{
+		this.dateOfDeath = dateOfDeath;
+	}
+
+	/**
+	 * Updates this identity with the new identity.
+	 * @param newIdentity the new identity
+	 * @param timestamp the timestamp
+	 * @return a list with new (actually added) contacts
+	 */
+	public List<Contact> update(Identity newIdentity, Timestamp timestamp)
 	{
 		this.firstName = newIdentity.getFirstName();
 		this.middleName = newIdentity.getMiddleName();
@@ -603,11 +636,19 @@ public class Identity implements Serializable
 		}
 		this.source = newIdentity.getSource();
 		this.forcedReference = newIdentity.isForcedReference();
-		addContacts(newIdentity.getContacts());
+		this.vitalStatus = newIdentity.vitalStatus;
+		this.dateOfDeath = newIdentity.dateOfDeath;
+		return addContacts(newIdentity.getContacts());
 	}
 
-	public void addContacts(List<Contact> possibleNewContacts)
+	/**
+	 * Adds contacts to this identity. Ignore existing contacts.
+	 * @param possibleNewContacts the contacts to add
+	 * @return a list with new (actually added) contacts
+	 */
+	public List<Contact> addContacts(List<Contact> possibleNewContacts)
 	{
+		List<Contact> newContacts = new ArrayList<>();
 		// nicht contains, da die equals-methode nur ueber die id geht!
 		for (Contact c : possibleNewContacts)
 		{
@@ -623,9 +664,11 @@ public class Identity implements Serializable
 			if (contactIsNew)
 			{
 				contacts.add(c);
+				newContacts.add(c);
 				c.setIdentity(this);
 			}
 		}
+		return newContacts;
 	}
 
 	public IdentityOutDTO toDTO()
@@ -643,7 +686,7 @@ public class Identity implements Serializable
 		IdentityInBaseDTO inBase = new IdentityInBaseDTO(firstName, middleName, lastName, prefix, suffix,
 				gender == ' ' || gender == Character.MIN_VALUE ? null : Gender.fromValue(gender), birthDate, iList, birthPlace, race, religion, mothersMaidenName, degree,
 				motherTongue, nationality, civilStatus, externalTimestamp == null ? null : new Date(externalTimestamp.getTime()), value1, value2,
-				value3, value4, value5, value6, value7, value8, value9, value10);
+				value3, value4, value5, value6, value7, value8, value9, value10, vitalStatus, dateOfDeath);
 		IdentityOutBaseDTO outBase = new IdentityOutBaseDTO(inBase, id, version, person.getId(), source.toDTO(), deactivated,
 				createTimestamp == null ? null : new Date(createTimestamp.getTime()), timestamp == null ? null : new Date(timestamp.getTime()));
 		return new IdentityOutDTO(outBase, cList);
@@ -698,7 +741,10 @@ public class Identity implements Serializable
 				+ race + ", religion=" + religion + ", mothersMaidenName=" + mothersMaidenName + ", degree=" + degree + ", motherTongue="
 				+ motherTongue + ", nationality=" + nationality + ", civilStatus=" + civilStatus + ", value1=" + value1 + ", value2=" + value2
 				+ ", value3=" + value3 + ", value4=" + value4 + ", value5=" + value5 + ", value6=" + value6 + ", value7=" + value7 + ", value8="
-				+ value8 + ", value9=" + value9 + ", value10=" + value10 + ", forcedReference=" + forcedReference + ", deactivated=" + deactivated
+				+ value8 + ", value9=" + value9 + ", value10=" + value10
+				+ (vitalStatus != null ? ", vitalStatus=" + vitalStatus : "")
+				+ (dateOfDeath != null ? ", dateOfDeath=" + dateOfDeath : "")
+				+ ", forcedReference=" + forcedReference + ", deactivated=" + deactivated
 				+ ", contacts=" + (contacts == null ? "null" : contacts.stream().map(Contact::toLongString).collect(Collectors.joining(", ")))
 				+ ", identifiers=" + (identifiers == null ? "null" : identifiers.stream().map(Object::toString).collect(Collectors.joining(", ")))
 				+ ", source=" + source + ", personId=" + (person == null ? "null" : person.getId()) + "]";

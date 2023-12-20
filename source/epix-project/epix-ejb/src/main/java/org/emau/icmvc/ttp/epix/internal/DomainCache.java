@@ -4,21 +4,21 @@ package org.emau.icmvc.ttp.epix.internal;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
- *
+ * 
  * 							concept and implementation
  * 							l.geidel,c.schack, d.langner, g.koetzschke
- *
+ * 
  * 							web client
  * 							a.blumentritt, f.m. moser
- *
+ * 
  * 							docker
  * 							r.schuldt
- *
+ * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
- *
+ * 
  * 							please cite our publications
  * 							http://dx.doi.org/10.3414/ME14-01-0133
  * 							http://dx.doi.org/10.1186/s12967-015-0545-6
@@ -28,12 +28,12 @@ package org.emau.icmvc.ttp.epix.internal;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * ###license-information-end###
@@ -47,13 +47,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.deduplication.PreprocessingStrategy;
 import org.emau.icmvc.ttp.deduplication.PrivacyStrategy;
 import org.emau.icmvc.ttp.deduplication.ValidateRequiredStrategy;
-import org.emau.icmvc.ttp.deduplication.config.model.MatchingConfiguration;
-import org.emau.icmvc.ttp.deduplication.config.model.ValueFieldsMapping;
 import org.emau.icmvc.ttp.deduplication.model.DeduplicationResult;
 import org.emau.icmvc.ttp.deduplication.model.MatchResult;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
@@ -61,14 +60,10 @@ import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectType;
-import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
-import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.pdqquery.model.SearchMask;
 import org.emau.icmvc.ttp.epix.persistence.model.Domain;
 import org.emau.icmvc.ttp.epix.persistence.model.Identity;
 import org.emau.icmvc.ttp.epix.persistence.model.IdentityPreprocessed;
-
-import it.unimi.dsi.fastutil.longs.LongList;
 
 /**
  *
@@ -380,13 +375,13 @@ public class DomainCache
 		}
 	}
 
-	public void deleteIdentity(String domainName, long identityId) throws UnknownObjectException
+	public void removeIdentity(String domainName, long identityId) throws UnknownObjectException
 	{
 		rwl.writeLock().lock();
 		try
 		{
 			DomainCacheEntry dcEntry = getCacheEntry(domainName);
-			dcEntry.getIpCache().deleteIdentity(identityId);
+			dcEntry.getIpCache().removeIdentity(identityId);
 		}
 		finally
 		{
@@ -547,26 +542,9 @@ public class DomainCache
 		}
 	}
 
-	public ConfigurationContainer getConfigurationContainerForDomain(String domainName) throws UnknownObjectException
-	{
-		rwl.readLock().lock();
-		try
-		{
-			DomainCacheEntry dcEntry = getCacheEntry(domainName);
-			return dcEntry.getConfigurationContainer();
-		}
-		finally
-		{
-			rwl.readLock().unlock();
-		}
-	}
-
-	// TODO
-
 	private final class DomainCacheEntry
 	{
 		private final Domain domain;
-		private final ConfigurationContainer configurationContainer;
 		private final IdentityPreprocessedCache ipCache;
 		private final PreprocessingStrategy preprocessor;
 		private final PrivacyStrategy privacyStrategy;
@@ -579,7 +557,6 @@ public class DomainCache
 			preprocessor = new PreprocessingStrategy(domain.getMatchingConfiguration().getPreprocessingConfig());
 			ipCache = new IdentityPreprocessedCache(domain.getMatchingConfiguration());
 			domain.setPersonCount(personCount);
-			configurationContainer = mapConfiguration(domain.getMatchingConfiguration());
 			validateRequiredStrategy = new ValidateRequiredStrategy(domain.getMatchingConfiguration().getRequiredFields());
 			privacyStrategy = new PrivacyStrategy(domain.getMatchingConfiguration().getPrivacy());
 			logger.info("cache for " + domain.getName() + " initialised");
@@ -598,66 +575,6 @@ public class DomainCache
 		public void decPersonCount()
 		{
 			domain.setPersonCount(domain.getPersonCount() - 1);
-		}
-
-		private ConfigurationContainer mapConfiguration(MatchingConfiguration matchingConfiguration)
-		{
-			List<FieldName> requiredFields = new ArrayList<>();
-			if (matchingConfiguration.getRequiredFields() != null)
-			{
-				requiredFields.addAll(matchingConfiguration.getRequiredFields().getNames());
-			}
-			Map<String, String> valueFieldMapping = new HashMap<>();
-			if (matchingConfiguration.getValueFieldsMapping() != null)
-			{
-				ValueFieldsMapping mapping = matchingConfiguration.getValueFieldsMapping();
-				// unschoen, aber wird bei umstellung auf eav eh anders
-				if (mapping.getValue1() != null && !mapping.getValue1().isEmpty())
-				{
-					valueFieldMapping.put("value1", mapping.getValue1());
-				}
-				if (mapping.getValue2() != null && !mapping.getValue2().isEmpty())
-				{
-					valueFieldMapping.put("value2", mapping.getValue2());
-				}
-				if (mapping.getValue3() != null && !mapping.getValue3().isEmpty())
-				{
-					valueFieldMapping.put("value3", mapping.getValue3());
-				}
-				if (mapping.getValue4() != null && !mapping.getValue4().isEmpty())
-				{
-					valueFieldMapping.put("value4", mapping.getValue4());
-				}
-				if (mapping.getValue5() != null && !mapping.getValue5().isEmpty())
-				{
-					valueFieldMapping.put("value5", mapping.getValue5());
-				}
-				if (mapping.getValue6() != null && !mapping.getValue6().isEmpty())
-				{
-					valueFieldMapping.put("value6", mapping.getValue6());
-				}
-				if (mapping.getValue7() != null && !mapping.getValue7().isEmpty())
-				{
-					valueFieldMapping.put("value7", mapping.getValue7());
-				}
-				if (mapping.getValue8() != null && !mapping.getValue8().isEmpty())
-				{
-					valueFieldMapping.put("value8", mapping.getValue8());
-				}
-				if (mapping.getValue9() != null && !mapping.getValue9().isEmpty())
-				{
-					valueFieldMapping.put("value9", mapping.getValue9());
-				}
-				if (mapping.getValue10() != null && !mapping.getValue10().isEmpty())
-				{
-					valueFieldMapping.put("value10", mapping.getValue10());
-				}
-			}
-
-			return new ConfigurationContainer(matchingConfiguration.getMatchingMode(), matchingConfiguration.getMpiGenerator(),
-					matchingConfiguration.getMpiPrefix(), matchingConfiguration.isUseNotifications(), matchingConfiguration.isLowMemory(), matchingConfiguration.getPersistMode(),
-					requiredFields, valueFieldMapping, matchingConfiguration.getDeduplication() != null ? matchingConfiguration.getDeduplication().toDTO() : null,
-					matchingConfiguration.getPrivacy() != null ? matchingConfiguration.getPrivacy().toDTO() : null, matchingConfiguration.getMatching().toDTO());
 		}
 
 		public IdentityPreprocessed preprocess(Identity identity) throws MPIException
@@ -690,11 +607,6 @@ public class DomainCache
 		public Domain getDomain()
 		{
 			return domain;
-		}
-
-		public ConfigurationContainer getConfigurationContainer()
-		{
-			return configurationContainer;
 		}
 
 		public void checkValidation(IdentityPreprocessed matchable) throws InvalidParameterException, MPIException

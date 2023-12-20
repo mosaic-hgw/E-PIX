@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,83 +39,31 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-end###
  */
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import java.util.List;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
+import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
 import org.icmvc.ttp.web.testtools.JsfTest;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AbstractEpixWebBeanTest extends JsfTest
 {
 	@Test
-	void getValueFieldLabelFromConfig()
+	void getGenders()
 	{
 		// Arrange
 		NotSoAbstractEpixWebBean bean = new NotSoAbstractEpixWebBean();
 
-		Map<String, String> valueFieldMapping = new HashMap<>();
-		String field = "value1";
-		String value = "Testfeld";
-		valueFieldMapping.put(field, value);
-
-		DomainSelector domainSelector = mock(DomainSelector.class, Mockito.RETURNS_DEEP_STUBS);
-		when(domainSelector.getSelectedDomainConfiguration().getValueFieldMapping()).thenReturn(valueFieldMapping);
-		bean.setDomainSelector(domainSelector);
-
 		// Act
-		String result = bean.getValueFieldLabel(field);
+		List<Gender> genders = bean.epixHelper.getGenders();
 
 		// Assert
-		assertEquals(value, result);
-	}
-
-	@Test
-	void getCustomValueFieldLabelFromResources()
-	{
-		// Arrange
-		NotSoAbstractEpixWebBean bean = new NotSoAbstractEpixWebBean();
-
-		Map<String, String> valueFieldMapping = new HashMap<>();
-		String field = "value1";
-		String value = "deathDate";
-		valueFieldMapping.put(field, value);
-
-		DomainSelector domainSelector = mock(DomainSelector.class, Mockito.RETURNS_DEEP_STUBS);
-		when(domainSelector.getSelectedDomainConfiguration().getValueFieldMapping()).thenReturn(valueFieldMapping);
-		bean.setDomainSelector(domainSelector);
-
-		// Act
-		String result = bean.getValueFieldLabel(field);
-
-		// Assert
-		assertNotEquals(value, result);
-		assertEquals(bundleDe.getString("value.label." + value), result);
-	}
-
-	@Test
-	void getDefaultValueFieldLabelFromResources()
-	{
-		// Arrange
-		NotSoAbstractEpixWebBean bean = new NotSoAbstractEpixWebBean();
-
-		Map<String, String> valueFieldMapping = new HashMap<>();
-		String field = "value1";
-
-		DomainSelector domainSelector = mock(DomainSelector.class, Mockito.RETURNS_DEEP_STUBS);
-		when(domainSelector.getSelectedDomainConfiguration().getValueFieldMapping()).thenReturn(valueFieldMapping);
-		bean.setDomainSelector(domainSelector);
-
-		// Act
-		String result = bean.getValueFieldLabel(field);
-
-		// Assert
-		assertEquals(bundleDe.getString("common.person." + field), result);
+		assertEquals(Gender.values().length, genders.size());
+		assertEquals(Gender.M, genders.get(0));
+		assertEquals(Gender.F, genders.get(1));
+		assertEquals(Gender.X, genders.get(2));
+		assertEquals(Gender.O, genders.get(3));
+		assertEquals(Gender.U, genders.get(4));
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,22 +39,26 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
-
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
 public class IdentifierDTO implements Serializable
 {
-	private static final long serialVersionUID = 890293339837441647L;
+	@Serial
+	private static final long serialVersionUID = 7660489236741990843L;
 	private String value;
 	private String description;
 	private Date entryDate;
 	private IdentifierDomainDTO identifierDomain;
+
+	/** Marker for handling fresh (not yet persisted) contacts */
+	private transient boolean fresh;
 
 	public IdentifierDTO()
 	{
@@ -63,11 +67,25 @@ public class IdentifierDTO implements Serializable
 
 	public IdentifierDTO(String value, String description, Date entryDate, IdentifierDomainDTO identifierDomain)
 	{
-		super();
 		this.value = value;
 		this.description = description;
-		this.entryDate = entryDate;
+		setEntryDate(entryDate);
 		this.identifierDomain = identifierDomain;
+	}
+
+	public IdentifierDTO(IdentifierDTO dto)
+	{
+		this(dto.getValue(), dto.getDescription(), dto.getEntryDate(), dto.getIdentifierDomain());
+	}
+
+	public boolean isFresh()
+	{
+		return fresh;
+	}
+
+	public void setFresh(boolean fresh)
+	{
+		this.fresh = fresh;
 	}
 
 	public String getValue()
@@ -97,7 +115,7 @@ public class IdentifierDTO implements Serializable
 
 	public void setEntryDate(Date entryDate)
 	{
-		this.entryDate = entryDate;
+		this.entryDate = entryDate != null ? new Date(entryDate.getTime()) : null;
 	}
 
 	public IdentifierDomainDTO getIdentifierDomain()
@@ -115,10 +133,10 @@ public class IdentifierDTO implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((description == null) ? 0 : description.hashCode());
-		result = prime * result + ((entryDate == null) ? 0 : entryDate.hashCode());
-		result = prime * result + ((identifierDomain == null) ? 0 : identifierDomain.hashCode());
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		result = prime * result + (description == null ? 0 : description.hashCode());
+		result = prime * result + (entryDate == null ? 0 : entryDate.hashCode());
+		result = prime * result + (identifierDomain == null ? 0 : identifierDomain.hashCode());
+		result = prime * result + (value == null ? 0 : value.hashCode());
 		return result;
 	}
 
@@ -126,40 +144,62 @@ public class IdentifierDTO implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		IdentifierDTO other = (IdentifierDTO) obj;
 		if (description == null)
 		{
 			if (other.description != null)
+			{
 				return false;
+			}
 		}
 		else if (!description.equals(other.description))
+		{
 			return false;
+		}
 		if (entryDate == null)
 		{
 			if (other.entryDate != null)
+			{
 				return false;
+			}
 		}
 		else if (!entryDate.equals(other.entryDate))
+		{
 			return false;
+		}
 		if (identifierDomain == null)
 		{
 			if (other.identifierDomain != null)
+			{
 				return false;
+			}
 		}
 		else if (!identifierDomain.equals(other.identifierDomain))
+		{
 			return false;
+		}
 		if (value == null)
 		{
 			if (other.value != null)
+			{
 				return false;
+			}
 		}
 		else if (!value.equals(other.value))
+		{
 			return false;
+		}
 		return true;
 	}
 

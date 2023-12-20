@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -44,12 +44,20 @@ import java.util.Objects;
 
 public class BalancedDTO implements Serializable
 {
-	private static final long serialVersionUID = 769592742454538678L;
-	private final long seed;
+	private static final long serialVersionUID = -3606538170449942089L;
+	private long seed;
+
+	public BalancedDTO()
+	{}
 
 	public BalancedDTO(long seed)
 	{
 		this.seed = seed;
+	}
+
+	public BalancedDTO(BalancedDTO dto)
+	{
+		this(dto.getSeed());
 	}
 
 	public long getSeed()
@@ -57,22 +65,34 @@ public class BalancedDTO implements Serializable
 		return seed;
 	}
 
-	@Override public boolean equals(Object o)
+	public void setSeed(long seed)
+	{
+		this.seed = seed;
+	}
+
+	@Override
+	public boolean equals(Object o)
 	{
 		if (this == o)
+		{
 			return true;
+		}
 		if (o == null || getClass() != o.getClass())
+		{
 			return false;
+		}
 		BalancedDTO that = (BalancedDTO) o;
 		return seed == that.seed;
 	}
 
-	@Override public int hashCode()
+	@Override
+	public int hashCode()
 	{
 		return Objects.hash(seed);
 	}
 
-	@Override public String toString()
+	@Override
+	public String toString()
 	{
 		return "BalancedDTO[" +
 				"seed=" + seed +

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2022 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -39,7 +39,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-end###
  */
 
-
+import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Date;
@@ -47,6 +47,9 @@ import java.util.Date;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -57,12 +60,14 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.TableGenerator;
 
+import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.ContactHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.ContactOutDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.ContactHistoryEvent;
 
 /**
- * 
+ *
  * @author geidell
  *
  */
@@ -73,7 +78,8 @@ import org.emau.icmvc.ttp.epix.common.model.ContactOutDTO;
 @NamedQueries({ @NamedQuery(name = "ContactHistory.findByContact", query = "SELECT ch FROM ContactHistory ch WHERE ch.contact = :contact"), })
 public class ContactHistory implements Serializable
 {
-	private static final long serialVersionUID = 5764152617724537883L;
+	@Serial
+	private static final long serialVersionUID = 2791776464085881884L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "contact_history_index")
 	private long id;
@@ -94,12 +100,21 @@ public class ContactHistory implements Serializable
 	private String municipalityKey;
 	@Column(name = "external_timestamp")
 	private Timestamp externalTimestamp;
+	@Column(name = "date_of_move_in")
+	private Date dateOfMoveIn;
+	@Column(name = "date_of_move_out")
+	private Date dateOfMoveOut;
 	@Column(name = "history_timestamp", nullable = false)
 	private Timestamp historyTimestamp;
 	@Column(name = "identity_id")
 	private long identityId;
+	@Column(columnDefinition = "char(13)")
+	@Enumerated(EnumType.STRING)
+	private ContactHistoryEvent event;
+	private String comment;
+	private String user;
 	private boolean deactivated;
-	@ManyToOne(optional = false)
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "contact_id", nullable = false)
 	private Contact contact;
 
@@ -108,7 +123,7 @@ public class ContactHistory implements Serializable
 		historyTimestamp = new Timestamp(System.currentTimeMillis());
 	}
 
-	public ContactHistory(Contact contact, Timestamp timestamp)
+	public ContactHistory(Contact contact, ContactHistoryEvent event, String comment, Timestamp timestamp, String user)
 	{
 		this.contact = contact;
 		contactVersion = contact.getVersion();
@@ -124,13 +139,18 @@ public class ContactHistory implements Serializable
 		municipalityKey = getValidString(contact.getMunicipalityKey());
 		externalTimestamp = contact.getExternalTimestamp() == null ? null : new Timestamp(contact.getExternalTimestamp().getTime());
 		historyTimestamp = timestamp;
+		dateOfMoveIn = contact.getDateOfMoveIn();
+		dateOfMoveOut = contact.getDateOfMoveOut();
 		identityId = contact.getIdentity().getId();
 		deactivated = contact.isDeactivated();
+		this.event = event;
+		this.comment = comment;
+		this.user = user;
 	}
 
 	private String getValidString(String obj)
 	{
-		return (obj != null ? obj : "");
+		return obj != null ? obj : "";
 	}
 
 	public long getId()
@@ -273,6 +293,26 @@ public class ContactHistory implements Serializable
 		this.historyTimestamp = historyTimestamp;
 	}
 
+	public Date getDateOfMoveIn()
+	{
+		return dateOfMoveIn;
+	}
+
+	public void setDateOfMoveIn(Date dateOfMoveIn)
+	{
+		this.dateOfMoveIn = dateOfMoveIn;
+	}
+
+	public Date getDateOfMoveOut()
+	{
+		return dateOfMoveOut;
+	}
+
+	public void setDateOfMoveOut(Date dateOfMoveOut)
+	{
+		this.dateOfMoveOut = dateOfMoveOut;
+	}
+
 	public long getIdentityId()
 	{
 		return identityId;
@@ -281,6 +321,36 @@ public class ContactHistory implements Serializable
 	public void setIdentityId(long identityId)
 	{
 		this.identityId = identityId;
+	}
+
+	public ContactHistoryEvent getEvent()
+	{
+		return event;
+	}
+
+	public void setEvent(ContactHistoryEvent event)
+	{
+		this.event = event;
+	}
+
+	public String getComment()
+	{
+		return comment;
+	}
+
+	public void setComment(String comment)
+	{
+		this.comment = comment;
+	}
+
+	public String getUser()
+	{
+		return user;
+	}
+
+	public void setUser(String user)
+	{
+		this.user = user;
 	}
 
 	public boolean isDeactivated()
@@ -306,10 +376,10 @@ public class ContactHistory implements Serializable
 	public ContactHistoryDTO toDTO()
 	{
 		ContactInDTO inDTO = new ContactInDTO(street, zipCode, city, state, country, email, phone, countryCode, district, municipalityKey,
-				externalTimestamp == null ? null : new Date(externalTimestamp.getTime()));
+				externalTimestamp == null ? null : new Date(externalTimestamp.getTime()), dateOfMoveIn, dateOfMoveOut);
 		ContactOutDTO outDTO = new ContactOutDTO(inDTO, contact.getId(), contactVersion, identityId, deactivated,
 				new Date(contact.getCreateTimestamp().getTime()), new Date(contact.getTimestamp().getTime()));
-		return new ContactHistoryDTO(outDTO, id, new Date(historyTimestamp.getTime()));
+		return new ContactHistoryDTO(outDTO, event, comment, id, new Date(historyTimestamp.getTime()), user);
 	}
 
 	@Override
@@ -317,7 +387,7 @@ public class ContactHistory implements Serializable
 	{
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (int) (id ^ (id >>> 32));
+		result = prime * result + (int) (id ^ id >>> 32);
 		return result;
 	}
 
@@ -325,14 +395,22 @@ public class ContactHistory implements Serializable
 	public boolean equals(Object obj)
 	{
 		if (this == obj)
+		{
 			return true;
+		}
 		if (obj == null)
+		{
 			return false;
+		}
 		if (getClass() != obj.getClass())
+		{
 			return false;
+		}
 		ContactHistory other = (ContactHistory) obj;
 		if (id != other.id)
+		{
 			return false;
+		}
 		return true;
 	}
 
@@ -340,15 +418,24 @@ public class ContactHistory implements Serializable
 	public String toString()
 	{
 		return "ContactHistory [id=" + id + ", contactVersion=" + contactVersion + ", externalTimestamp=" + externalTimestamp + ", historyTimestamp="
-				+ historyTimestamp + ", identityId=" + identityId + ", deactivated=" + deactivated + ", contact=" + contact + "]";
+				+ historyTimestamp + ", identityId=" + identityId + ", deactivated=" + deactivated + ", contact=" + contact
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+				+ "]";
 	}
 
 	public String toLongString()
 	{
-		return "ContactHistory [id=" + id + ", contactVersion=" + contactVersion + ", street=" + street + ", zipCode=" + zipCode + ", city=" + city
-				+ ", state=" + state + ", email=" + email + ", phone=" + phone + ", country=" + country + ", countryCode=" + countryCode
+		return "ContactHistory [id=" + id + ", historyTimestamp=" + historyTimestamp
+				+ (event != null ? ", event=" + event : "")
+				+ ", contactVersion=" + contactVersion
+				+ ", street=" + street + ", zipCode=" + zipCode + ", city=" + city + ", state=" + state
+				+ ", email=" + email + ", phone=" + phone + ", country=" + country + ", countryCode=" + countryCode
 				+ ", district=" + district + ", municipalityKey=" + municipalityKey + ", externalTimestamp=" + externalTimestamp
-				+ ", historyTimestamp=" + historyTimestamp + ", identityId=" + identityId + ", deactivated=" + deactivated + ", contact=" + contact
+				+ (dateOfMoveIn != null ? ", dateOfMoveIn=" + dateOfMoveIn : "")
+				+ (dateOfMoveOut != null ? ", dateOfMoveOut=" + dateOfMoveOut : "")
+				+ ", identityId=" + identityId + ", deactivated=" + deactivated + ", contact=" + contact
+				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
+				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
 				+ "]";
 	}
 }
