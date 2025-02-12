@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.testtools;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.testtools;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -40,18 +40,24 @@ package org.emau.icmvc.ttp.epix.frontend.controller.testtools;
  */
 
 
+import org.emau.icmvc.ttp.epix.frontend.controller.common.ServiceHelper;
 import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
 import org.emau.icmvc.ttp.epix.service.EPIXService;
 import org.emau.icmvc.ttp.epix.service.EPIXServiceWithNotification;
+import org.emau.icmvc.ttp.epix.service.StatisticManager;
 import org.icmvc.ttp.web.testtools.JsfTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Answers;
 import org.mockito.Mock;
 
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public abstract class EpixWebTest extends JsfTest
 {
+	@Mock
+	protected ServiceHelper serviceHelper;
+
 	@Mock(answer = Answers.RETURNS_DEEP_STUBS)
 	protected EPIXService service;
 
@@ -59,11 +65,23 @@ public abstract class EpixWebTest extends JsfTest
 	protected EPIXServiceWithNotification serviceWithNotification;
 
 	@Mock(answer = Answers.RETURNS_DEEP_STUBS)
+	protected EPIXService serviceWithAutomaticNotification;
+
+	@Mock(answer = Answers.RETURNS_DEEP_STUBS)
 	protected EPIXManagementService managementService;
+
+	@Mock(answer = Answers.RETURNS_DEEP_STUBS)
+	protected StatisticManager statisticManager;
 
 	@BeforeEach
 	protected void setUpEpixWebTest()
 	{
 		initMocks(this);
+		when(serviceHelper.getService()).thenReturn(service);
+		when(serviceHelper.getManager()).thenReturn(managementService);
+		when(serviceHelper.getServiceWithNotification()).thenReturn(serviceWithNotification);
+		when(serviceHelper.getServiceWithAutomaticNotification(true)).thenReturn(serviceWithAutomaticNotification);
+		when(serviceHelper.getServiceWithAutomaticNotification(false)).thenReturn(service);
+		when(serviceHelper.getStatisticService()).thenReturn(statisticManager);
 	}
 }

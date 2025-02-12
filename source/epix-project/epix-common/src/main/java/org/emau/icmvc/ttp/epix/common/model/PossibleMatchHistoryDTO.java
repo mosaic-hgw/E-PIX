@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -44,6 +44,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import org.apache.logging.log4j.util.Strings;
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentityLinkCreationType;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
 
 /**
@@ -54,7 +55,7 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
 public class PossibleMatchHistoryDTO implements Serializable
 {
 	@Serial
-	private static final long serialVersionUID = -6632460376246033623L;
+	private static final long serialVersionUID = -3249268751984748954L;
 	private long id;
 	private long identity1Id;
 	private long identity2Id;
@@ -71,12 +72,14 @@ public class PossibleMatchHistoryDTO implements Serializable
 	private PossibleMatchSolution solution;
 	private String explanation;
 	private String user;
+	private Date initialCreationTimestamp;
+	private IdentityLinkCreationType creationType;
 
 	public PossibleMatchHistoryDTO()
 	{}
 
 	public PossibleMatchHistoryDTO(long id, long identity1Id, long identity2Id, long identityLinkId, double threshold, String algorithm, Date historyTimestamp, long updatedIdentityId, long person1Id,
-			long person2Id, PossibleMatchSolution solution, String explanation, String user)
+			long person2Id, PossibleMatchSolution solution, String explanation, String user, Date initialCreationTimestamp, IdentityLinkCreationType creationType)
 	{
 		this.id = id;
 		this.identity1Id = identity1Id;
@@ -90,12 +93,14 @@ public class PossibleMatchHistoryDTO implements Serializable
 		this.solution = solution;
 		this.explanation = explanation;
 		this.user = user;
+		this.initialCreationTimestamp = initialCreationTimestamp;
+		this.creationType = creationType;
 	}
 
 	public PossibleMatchHistoryDTO(PossibleMatchHistoryDTO dto)
 	{
 		this(dto.getId(), dto.getIdentity1Id(), dto.getIdentity2Id(), dto.getIdentityLinkId(), dto.getThreshold(), dto.getAlgorithm(), dto.getHistoryTimestamp(), dto.getUpdatedIdentityId(),
-				dto.getPerson1Id(), dto.getPerson2Id(), dto.getSolution(), dto.getExplanation(), dto.getUser());
+				dto.getPerson1Id(), dto.getPerson2Id(), dto.getSolution(), dto.getExplanation(), dto.getUser(), dto.getInitialCreationTimestamp(), dto.getCreationType());
 	}
 
 	public long getId()
@@ -231,6 +236,26 @@ public class PossibleMatchHistoryDTO implements Serializable
 		this.user = user;
 	}
 
+	public Date getInitialCreationTimestamp()
+	{
+		return initialCreationTimestamp;
+	}
+
+	public void setInitialCreationTimestamp(Date initialCreationTimestamp)
+	{
+		this.initialCreationTimestamp = initialCreationTimestamp;
+	}
+
+	public IdentityLinkCreationType getCreationType()
+	{
+		return creationType;
+	}
+
+	public void setCreationType(IdentityLinkCreationType creationType)
+	{
+		this.creationType = creationType;
+	}
+
 	@Override
 	public int hashCode()
 	{
@@ -251,6 +276,8 @@ public class PossibleMatchHistoryDTO implements Serializable
 		result = prime * result + (int) (temp ^ temp >>> 32);
 		result = prime * result + (int) (updatedIdentityId ^ updatedIdentityId >>> 32);
 		result = prime * result + (user == null ? 0 : user.hashCode());
+		result = prime * result + (initialCreationTimestamp == null ? 0 : initialCreationTimestamp.hashCode());
+		result = prime * result + (creationType == null ? 0 : creationType.hashCode());
 		return result;
 	}
 
@@ -350,6 +377,31 @@ public class PossibleMatchHistoryDTO implements Serializable
 		{
 			return false;
 		}
+
+		if (initialCreationTimestamp == null)
+		{
+			if (other.initialCreationTimestamp != null)
+			{
+				return false;
+			}
+		}
+		else if (!initialCreationTimestamp.equals(other.initialCreationTimestamp))
+		{
+			return false;
+		}
+
+		if (creationType == null)
+		{
+			if (other.creationType != null)
+			{
+				return false;
+			}
+		}
+		else if (!creationType.equals(other.creationType))
+		{
+			return false;
+		}
+
 		return true;
 	}
 
@@ -368,6 +420,8 @@ public class PossibleMatchHistoryDTO implements Serializable
 				+ ", solution=" + solution
 				+ ", explanation=" + explanation
 				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+			    + ", initialCreationTimestamp=" + initialCreationTimestamp
+			    + ", creationType=" + creationType
 				+ "]";
 	}
 }

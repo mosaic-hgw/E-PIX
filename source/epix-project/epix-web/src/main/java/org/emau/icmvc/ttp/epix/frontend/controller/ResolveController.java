@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,6 +39,8 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-end###
  */
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,12 +49,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
-import javax.validation.constraints.Size;
-
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
+import jakarta.validation.constraints.Size;
 import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
@@ -76,9 +77,11 @@ import org.primefaces.model.StreamedContent;
  * @author Arne Blumentritt
  */
 @ViewScoped
-@ManagedBean(name = "resolveController")
-public class ResolveController extends AbstractEpixWebBean
+@Named( "resolveController")
+public class ResolveController extends AbstractEpixWebBean implements Serializable
 {
+	@Serial
+	private static final long serialVersionUID = 2492383276811779657L;
 	private String externalPossibleMatchId1;
 	private String externalPossibleMatchId2;
 	private String externalPossibleMatchIdType;
@@ -110,7 +113,7 @@ public class ResolveController extends AbstractEpixWebBean
 		reasons.put(NO_REASON_OPTION, new ReasonDTO(NO_REASON_OPTION, null));
 		try
 		{
-			for (ReasonDTO reasonDTO : managementService.getDefinedDeduplicationReasons(getDomainSelector().getSelectedDomainName()))
+			for (ReasonDTO reasonDTO : getManager().getDefinedDeduplicationReasons(getDomainSelector().getSelectedDomainName()))
 			{
 				reasons.put(reasonDTO.getName(), reasonDTO);
 			}
@@ -151,15 +154,7 @@ public class ResolveController extends AbstractEpixWebBean
 	{
 		try
 		{
-			if (sendMergeNotification)
-			{
-				serviceWithNotification.assignIdentity(NOTIFICATION_CLIENT_ID, selectedPossibleMatch.getLinkId(), assignTargetId, getReason());
-			}
-			else
-			{
-				service.assignIdentity(selectedPossibleMatch.getLinkId(), assignTargetId, getReason());
-			}
-
+			getServiceWithAutomaticNotification().assignIdentity(selectedPossibleMatch.getLinkId(), assignTargetId, getReason());
 			Object[] args = { assignPersonNumber, assignPersonNumber == 1 ? 2 : 1 };
 			logMessage(new MessageFormat(getBundle().getString("resolve.info.assigned")).format(args), Severity.INFO);
 
@@ -182,7 +177,7 @@ public class ResolveController extends AbstractEpixWebBean
 	{
 		try
 		{
-			service.removePossibleMatch(selectedPossibleMatch.getLinkId(), getReason());
+			getServiceWithAutomaticNotification().removePossibleMatch(selectedPossibleMatch.getLinkId(), getReason());
 			logMessage(getBundle().getString("resolve.info.unlinked"), Severity.INFO);
 
 			loadMatches();
@@ -201,7 +196,7 @@ public class ResolveController extends AbstractEpixWebBean
 	{
 		try
 		{
-			service.prioritizePossibleMatch(selectedPossibleMatch.getLinkId(), PossibleMatchPriority.valueOf(priority));
+			getServiceWithAutomaticNotification().prioritizePossibleMatch(selectedPossibleMatch.getLinkId(), PossibleMatchPriority.valueOf(priority));
 			logMessage(getBundle().getString("resolve.info.prioritized." + PossibleMatchPriority.valueOf(priority)), Severity.INFO);
 			loadMatches();
 		}
@@ -243,7 +238,7 @@ public class ResolveController extends AbstractEpixWebBean
 				.withPriorityFilter(getPriority())
 				.build();
 
-		for (PossibleMatchDTO possibleMatch : service.getPossibleMatchesForDomainFiltered(getDomainSelector().getSelectedDomainName(), pc))
+		for (PossibleMatchDTO possibleMatch : getService().getPossibleMatchesForDomainFiltered(getDomainSelector().getSelectedDomainName(), pc))
 		{
 			dates.add(dateToString(possibleMatch.getPossibleMatchCreated(), "datetime"));
 			MPIIdentityDTO i1 = (MPIIdentityDTO) possibleMatch.getMatchingMPIIdentities().toArray()[0];
@@ -280,11 +275,11 @@ public class ResolveController extends AbstractEpixWebBean
 			PossibleMatchDTO result;
 			if (externalPossibleMatchIdType.equals("MPI"))
 			{
-				result = service.externalPossibleMatchForPerson(getDomainSelector().getSelectedDomainName(), externalPossibleMatchId1, externalPossibleMatchId2);
+				result = getService().externalPossibleMatchForPerson(getDomainSelector().getSelectedDomainName(), externalPossibleMatchId1, externalPossibleMatchId2);
 			}
 			else
 			{
-				result = service.externalPossibleMatchForIdentity(getDomainSelector().getSelectedDomainName(), Long.parseLong(externalPossibleMatchId1), Long.parseLong(externalPossibleMatchId2));
+				result = getService().externalPossibleMatchForIdentity(getDomainSelector().getSelectedDomainName(), Long.parseLong(externalPossibleMatchId1), Long.parseLong(externalPossibleMatchId2));
 			}
 
 			// Get both mpis and identites of the added possible match
@@ -351,7 +346,7 @@ public class ResolveController extends AbstractEpixWebBean
 		PersonDTO person;
 		try
 		{
-			person = service.getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), mpi);
+			person = getService().getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), mpi);
 
 			List<IdentityOutDTO> identities = new ArrayList<>();
 			identities.add(person.getReferenceIdentity());
@@ -453,7 +448,7 @@ public class ResolveController extends AbstractEpixWebBean
 	{
 		if (possibleMatchDTOLazyModel == null)
 		{
-			possibleMatchDTOLazyModel = new PossibleMatchDTOLazyModel(service, getDomainSelector(),
+			possibleMatchDTOLazyModel = new PossibleMatchDTOLazyModel(getService(), getDomainSelector(),
 					getSimpleDateFormat("date").toPattern(), getSimpleDateFormat("datetime").toPattern());
 		}
 

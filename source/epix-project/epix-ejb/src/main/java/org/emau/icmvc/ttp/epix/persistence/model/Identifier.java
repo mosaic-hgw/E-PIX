@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -42,18 +42,17 @@ package org.emau.icmvc.ttp.epix.persistence.model;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-import javax.persistence.Cacheable;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 
 /**

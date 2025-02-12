@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -52,7 +52,6 @@ import org.emau.icmvc.ttp.epix.common.model.SourceDTO;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.ICRUDObject;
 import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
-import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
 import org.icmvc.ttp.web.controller.Text;
 
 public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDTO>
@@ -60,9 +59,8 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 	private SourceDTO selected;
 
 	@Override
-	public void init(EPIXManagementService managementService, EpixHelper epixHelper, Text text)
+	public void init(EpixHelper epixHelper, Text text)
 	{
-		this.managementService = managementService;
 		this.text = text;
 		pageMode = PageMode.READ;
 		reload();
@@ -103,7 +101,7 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 		{
 			try
 			{
-				managementService.updateSource(selected);
+				getManager().updateSource(selected);
 				logMessage(new MessageFormat(getBundle().getString("domain.message.source.edit.success")).format(args), Severity.INFO);
 			}
 			catch (InvalidParameterException e)
@@ -127,7 +125,7 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 				// operate on a copy for the case that we stay on the dialog after a warning
 				SourceDTO tmp = new SourceDTO(selected);
 				tmp.setName(StringUtils.isEmpty(tmp.getName()) ? tmp.getLabel().replace(" ", "_") : tmp.getName());
-				managementService.addSource(tmp);
+				getManager().addSource(tmp);
 				logMessage(new MessageFormat(getBundle().getString("domain.message.source.add.success")).format(args), Severity.INFO);
 				// on success write back changes on selected (currently unused)
 				selected = new SourceDTO(tmp);
@@ -167,7 +165,7 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 		Object[] args = { selected.getLabel() };
 		try
 		{
-			managementService.deleteSource(selected.getName());
+			getManager().deleteSource(selected.getName());
 			logMessage(new MessageFormat(getBundle().getString("domain.message.source.delete.success")).format(args), Severity.INFO);
 			reload();
 		}
@@ -192,7 +190,7 @@ public class SourceBean extends AbstractEpixBean implements ICRUDObject<SourceDT
 	@Override
 	public List<SourceDTO> getAll()
 	{
-		return managementService.getSources();
+		return getManager().getSources();
 	}
 
 	@Override

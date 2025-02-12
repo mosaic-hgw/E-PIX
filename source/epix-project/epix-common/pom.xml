@@ -6,7 +6,7 @@
 	<parent>
 		<artifactId>epix-project</artifactId>
 		<groupId>org.emau.icmvc.ttp.epix</groupId>
-		<version>2023.1.2</version>
+		<version>2024.3.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -18,10 +18,6 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>javax.xml.bind</groupId>
-			<artifactId>jaxb-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.xml.ws</groupId>

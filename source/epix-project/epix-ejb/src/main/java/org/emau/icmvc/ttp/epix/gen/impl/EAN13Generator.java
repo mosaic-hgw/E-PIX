@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.gen.impl;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.gen.impl;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,64 +39,75 @@ package org.emau.icmvc.ttp.epix.gen.impl;
  * ###license-information-end###
  */
 
-import java.sql.Timestamp;
-
+import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.gen.MPIGenerator;
-import org.emau.icmvc.ttp.epix.persistence.model.Domain;
-import org.emau.icmvc.ttp.epix.persistence.model.Identifier;
 
 /**
- *
  * @author Christian Schack, geidell
- *
  */
 public class EAN13Generator extends MPIGenerator
 {
+	public static final boolean FIXED_4_DIGITS_PREFIX = true;
 	private static final String ZERO = "0";
 	private static final String MPIID_DESCRIPTION = "generated MPI id";
 
 	@Override
-	public Identifier generate(Domain domain, long counter, Timestamp timestamp)
+	public String getMPIDescription()
 	{
-		int mpiPrefix = Integer.valueOf(domain.getMatchingConfiguration().getMpiPrefix());
-		String mpiidValue = generate(counter, mpiPrefix);
-		return new Identifier(domain.getMpiDomain(), mpiidValue, MPIID_DESCRIPTION, timestamp);
+		return MPIID_DESCRIPTION;
 	}
 
-	private String generate(long counter, int mpiPrefix)
+	@Override
+	public String generate(long counter, int mpiPrefix)
 	{
-		if (logger.isDebugEnabled())
+		logger.debug("generate mpi for id {} and mpi-prefix {}", counter, mpiPrefix);
+
+		int mpiPrefixLength = Integer.toString(mpiPrefix).length();
+		int maxCounterLength = FIXED_4_DIGITS_PREFIX ? 8 : 12 - mpiPrefixLength;
+		if (counter <= 0 || Long.toString(counter).length() > maxCounterLength)
 		{
-			logger.debug("generate mpi for id: " + counter + " and mpi-prefix:" + mpiPrefix);
-		}
-		if (counter <= 0 || counter > 99999999l)
-		{
-			throw new IllegalArgumentException("counter for MPI id must have a max length of 8 and must be greater than 0 but is:" + counter);
+			throw new IllegalArgumentException("counter for MPI id must have a max length of " +
+					maxCounterLength + " and must be greater than 0 but is " + counter);
 		}
 		else if (mpiPrefix > 9999 || mpiPrefix < 0)
 		{
-			throw new IllegalArgumentException("mpi-prefix must be >0 and <10000 but is:" + mpiPrefix);
+			throw new IllegalArgumentException("mpi-prefix must be >=0 and <=9999 but is " + mpiPrefix);
 		}
 
-		// format: 4 ziffern domain-id, 8 ziffern uebergebener counter
-		String cwcs = String.valueOf(mpiPrefix * 100000000l + counter);
+		// format: 1..4 digits prefix, 12 - (1..4) digits counter (with left padded zeroes if FIXED_4_DIGITS_PREFIX is true)
+		long base = mpiPrefix * 100000000L;
+		if (!FIXED_4_DIGITS_PREFIX)
+		{
+			base *= switch (mpiPrefixLength)
+			{
+				case 1 -> 1000;
+				case 2 -> 100;
+				case 3 -> 10;
+				case 4 -> 1;
+				default -> throw new IllegalArgumentException("mpi-prefix must be >=0 and <=9999 but is " + mpiPrefix); // will never happen
+			};
+		}
+		String cwcs = String.valueOf(base + counter);
 		while (cwcs.length() < 12)
 		{
 			cwcs = ZERO.concat(cwcs);
 		}
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("MPI id without checksum: " + cwcs);
-		}
+
+		logger.debug("MPI id without checksum: {}", cwcs);
+
 		return cwcs + calculateChecksum(cwcs);
 	}
 
-	private int calculateChecksum(String cwcs)
+	@Override
+	public String generatePrefix(int mpiPrefix)
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("calculate checksum for: " + cwcs);
-		}
+		return FIXED_4_DIGITS_PREFIX ? StringUtils.leftPad(Integer.toString(mpiPrefix), 4, '0') : Integer.toString(mpiPrefix);
+	}
+
+	int calculateChecksum(String cwcs)
+	{
+		logger.debug("calculate checksum for: {}", cwcs);
+
 		// Filling the number into an array of int
 		int[] code = new int[12];
 		for (int i = 0; i < 12; i++)
@@ -128,24 +139,27 @@ public class EAN13Generator extends MPIGenerator
 		{
 			diff = 10 - diff;
 		}
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("checksum for: " + cwcs + " is: " + diff);
-		}
+
+		logger.debug("checksum for {} is {}", cwcs, diff);
+
 		return diff;
 	}
 
 	@Override
-	public boolean checkConsistence(String mpiidValue)
+	public long toCounter(String mpiIdValue, int mpiPrefix)
 	{
-		if (mpiidValue != null && mpiidValue.length() == 13)
+		int start = FIXED_4_DIGITS_PREFIX ? 4 : Integer.toString(mpiPrefix).length();
+		return Long.parseLong(mpiIdValue.substring(start, 12));
+	}
+
+	@Override
+	public boolean checkConsistence(String mpiIdValue)
+	{
+		if (mpiIdValue != null && mpiIdValue.length() == 13)
 		{
-			String cwcs = mpiidValue.substring(0, 12);
+			String cwcs = mpiIdValue.substring(0, 12);
 			String compareString = cwcs + calculateChecksum(cwcs);
-			if (compareString.equalsIgnoreCase(mpiidValue))
-			{
-				return true;
-			}
+			return compareString.equalsIgnoreCase(mpiIdValue);
 		}
 		return false;
 	}

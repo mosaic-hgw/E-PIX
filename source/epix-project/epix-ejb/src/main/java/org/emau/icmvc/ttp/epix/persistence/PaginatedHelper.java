@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.persistence;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -47,14 +47,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Path;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.SingularAttribute;
-
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.SingularAttribute;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityField;
@@ -136,7 +135,7 @@ class PaginatedHelper
 					case NONE:
 						break;
 					default:
-						logger.warn("unimplemented PersonField '" + entry.getKey().name() + "' for filter-clause within generateWhereForPerson()");
+						logger.warn("unimplemented PersonField '{}' for filter-clause within generateWhereForPerson()",  entry.getKey().name());
 						break;
 				}
 			}
@@ -165,7 +164,7 @@ class PaginatedHelper
 					order = path.get(Person_.timestamp);
 					break;
 				default:
-					logger.warn("unimplemented PersonField '" + sortField.name() + "' for order-by-clause within generateSortExpressionForPerson()");
+					logger.warn("unimplemented PersonField '{}' for order-by-clause within generateSortExpressionForPerson()", sortField.name());
 					break;
 			}
 		}
@@ -320,9 +319,10 @@ class PaginatedHelper
 					case DATE_OF_DEATH:
 						predicate = link(cb, asConjunction, predicate,
 								generateDateMatchPredicate(cb, path.get(Identity_.dateOfDeath), entry.getValue(), dateFormat));
+						break;
 					default:
 						logger.warn(
-								"unimplemented IdentityField '" + entry.getKey().name() + "' for filter-clause within generateWhereForIdentity()");
+								"unimplemented IdentityField '{}' for filter-clause within generateWhereForIdentity()", entry.getKey().name());
 						break;
 				}
 			}
@@ -436,7 +436,7 @@ class PaginatedHelper
 					break;
 				default:
 					logger.warn(
-							"unimplemented IdentityField '" + sortField.name() + "' for order-by-clause within generateSortExpressionForIdentity()");
+							"unimplemented IdentityField '{}' for order-by-clause within generateSortExpressionForIdentity()", sortField.name());
 					break;
 			}
 		}
@@ -650,9 +650,9 @@ class PaginatedHelper
 					case DATE_OF_DEATH:
 						predicate = link(cb, asConjunction, predicate,
 								generateDateMatchPredicate(cb, path.get(IdentityHistory_.dateOfDeath), entry.getValue(), dateFormat));
+						break;
 					default:
-						logger.warn("unimplemented IdentityField '" + entry.getKey().name()
-								+ "' for identityFilter-clause within generateWhereForIdentityHistory()");
+						logger.warn("unimplemented IdentityField '{}' for identityFilter-clause within generateWhereForIdentityHistory()", entry.getKey().name());
 						break;
 				}
 			}
@@ -766,8 +766,7 @@ class PaginatedHelper
 					order = path.get(IdentityHistory_.dateOfDeath);
 					break;
 				default:
-					logger.warn("unimplemented IdentityField '" + sortField.name()
-							+ "' for order-by-clause within generateSortExpressionForIdentityHistory()");
+					logger.warn("unimplemented IdentityField '{}' for order-by-clause within generateSortExpressionForIdentityHistory()", sortField.name());
 					break;
 			}
 		}
@@ -841,7 +840,7 @@ class PaginatedHelper
 		{
 			if (pc.detectAndConfigureGlobalIdentityFiltering(Set.of(IdentityField.LAST_NAME, IdentityField.FIRST_NAME, IdentityField.BIRTH_DATE)))
 			{
-				logger.debug("Configured default identity filter set for globally searching possible matches (" + pc.getIdentityFilter() + ")");
+				logger.debug("Configured default identity filter set for globally searching possible matches ({})",  pc.getIdentityFilter() );
 				configured = true;
 			}
 
@@ -856,7 +855,7 @@ class PaginatedHelper
 		{
 			if (pc.detectAndConfigureGlobalPersonFiltering(Set.of(PersonField.MPI)))
 			{
-				logger.debug("Configured default person filter set for globally searching possible matches (" + pc.getPersonFilter() + ")");
+				logger.debug("Configured default person filter set for globally searching possible matches ({})",  pc.getPersonFilter());
 				configured = true;
 			}
 
@@ -869,7 +868,7 @@ class PaginatedHelper
 
 		if (configured)
 		{
-			logger.debug("Final pagination config is " + pc);
+			logger.debug("Final pagination config is {}", pc);
 		}
 
 		if (pc.isUsingCreateTimestampFiltering())
@@ -1117,9 +1116,9 @@ class PaginatedHelper
 				case DATE_OF_DEATH:
 					predicate = link(cb, asConjunction, predicate,
 							generateDateMatchPredicate(cb, path1, path2, Identity_.dateOfDeath, pattern, dateFormat, false));
+					break;
 				default:
-					logger.warn("unimplemented IdentityField '" + entry.getKey().name()
-							+ "' for filter-clause within generatePredicateForIdentityPair");
+					logger.warn("unimplemented IdentityField '{}' for filter-clause within generatePredicateForIdentityPair",  entry.getKey().name());
 					break;
 			}
 		}
@@ -1159,8 +1158,7 @@ class PaginatedHelper
 				case NONE:
 					break;
 				default:
-					logger.warn("unimplemented PersonField '" + entry.getKey().name()
-							+ "' for filter-clause within generatePredicateForIdentityPair");
+					logger.warn("unimplemented PersonField '{}' for filter-clause within generatePredicateForIdentityPair", entry.getKey().name());
 					break;
 			}
 		}

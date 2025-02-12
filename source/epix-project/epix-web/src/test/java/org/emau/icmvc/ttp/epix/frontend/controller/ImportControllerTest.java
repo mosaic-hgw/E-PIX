@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -49,11 +49,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.application.FacesMessage;
-
+import jakarta.faces.application.FacesMessage;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
+import org.emau.icmvc.ttp.epix.common.exception.ValidatorException;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInBaseDTO;
@@ -85,7 +85,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 public class ImportControllerTest extends EpixWebTest
 {
@@ -101,11 +100,13 @@ public class ImportControllerTest extends EpixWebTest
 	SourceDTO selectedSource;
 	EpixHelper epixHelper;
 
+
 	@BeforeEach
 	void setUpImportControllerTest()
 	{
-		initMocks(this);
-		
+		setUpEpixWebTest();
+
+
 		uploadFile = mock(UploadedFile.class);
 
 		event = mock(FileUploadEvent.class);
@@ -125,7 +126,7 @@ public class ImportControllerTest extends EpixWebTest
 		when(domainSelector.getSelectedDomain().getMpiDomain().getName()).thenReturn("MPI");
 		epixHelper = mock(EpixHelper.class, RETURNS_DEEP_STUBS);
 		when(epixHelper.getDomainSelector()).thenReturn(domainSelector);
-		when(epixHelper.getManagementService()).thenReturn(managementService);
+		when(epixHelper.getManager()).thenReturn(managementService);
 		importController.setEpixHelper(epixHelper);
 
 		selectedSource = mock(SourceDTO.class);
@@ -326,7 +327,7 @@ public class ImportControllerTest extends EpixWebTest
 	}
 
 	@Test
-	void onImport() throws MPIException, InvalidParameterException, UnknownObjectException
+	void onImport() throws MPIException, InvalidParameterException, UnknownObjectException, ValidatorException
 	{
 		// Arrange
 		String content = "Firstname\n"
@@ -351,7 +352,7 @@ public class ImportControllerTest extends EpixWebTest
 	}
 
 	@Test
-	void onImportRequiredFields() throws MPIException, InvalidParameterException, UnknownObjectException
+	void onImportRequiredFields() throws MPIException, InvalidParameterException, UnknownObjectException, ValidatorException
 	{
 		// Arrange
 		String content = "Firstname\n"
@@ -380,7 +381,7 @@ public class ImportControllerTest extends EpixWebTest
 	}
 
 	@Test
-	void onImportError() throws MPIException, InvalidParameterException, UnknownObjectException
+	void onImportError() throws MPIException, InvalidParameterException, UnknownObjectException, ValidatorException
 	{
 		// TODO include Contact data
 
@@ -403,7 +404,7 @@ public class ImportControllerTest extends EpixWebTest
 	}
 
 	@Test
-	void onImportSuccessAndError() throws MPIException, InvalidParameterException, UnknownObjectException
+	void onImportSuccessAndError() throws MPIException, InvalidParameterException, UnknownObjectException, ValidatorException
 	{
 		// Arrange
 		String content = "Firstname\n"

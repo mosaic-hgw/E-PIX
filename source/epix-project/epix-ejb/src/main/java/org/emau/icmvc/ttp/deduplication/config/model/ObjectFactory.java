@@ -11,7 +11,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -21,7 +21,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -46,23 +46,25 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-end###
  */
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.annotation.XmlElementDecl;
-import javax.xml.bind.annotation.XmlRegistry;
 import javax.xml.namespace.QName;
+
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.annotation.XmlElementDecl;
+import jakarta.xml.bind.annotation.XmlRegistry;
 
 /**
  * This object contains factory methods for each Java content interface and Java element interface generated in the org.emau.icmvc.ttp.deduplication.config.model package.
  * <p>
- * An ObjectFactory allows you to programatically construct new instances of the Java representation for XML content. The Java representation of XML content can consist of schema derived interfaces
+ * An ObjectFactory allows you to programmatically construct new instances of the Java representation for XML content. The Java representation of XML content can consist of schema derived interfaces
  * and classes representing the binding of schema type definitions, element declarations and model groups. Factory methods for each of these are provided in this class.
  *
  */
 @XmlRegistry
 public class ObjectFactory
 {
-	private final static QName _MatchingConfiguration_QNAME = new QName("http://www.ttp.icmvc.emau.org/deduplication/config/model",
-			"MatchingConfiguration");
+	public static final String NAME_SPACE = "http://www.ttp.icmvc.emau.org/deduplication/config/model";
+	public static final String NAME = "MatchingConfiguration";
+	private static final QName _MatchingConfiguration_QNAME = new QName(NAME_SPACE, NAME);
 
 	/**
 	 * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: org.emau.icmvc.ttp.deduplication.config.model
@@ -147,7 +149,7 @@ public class ObjectFactory
 	 * Create an instance of {@link JAXBElement }{@code <}{@link MatchingConfiguration }{@code >}}
 	 *
 	 */
-	@XmlElementDecl(namespace = "http://www.ttp.icmvc.emau.org/deduplication/config/model", name = "MatchingConfiguration")
+	@XmlElementDecl(namespace = NAME_SPACE, name = NAME)
 	public JAXBElement<MatchingConfiguration> createMatchingConfiguration(MatchingConfiguration value)
 	{
 		return new JAXBElement<>(_MatchingConfiguration_QNAME, MatchingConfiguration.class, null, value);

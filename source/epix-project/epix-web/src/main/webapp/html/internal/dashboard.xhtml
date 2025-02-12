@@ -2,7 +2,7 @@
   ###license-information-start###
   gPAS - a Generic Pseudonym Administration Service
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -39,6 +39,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml"
 	  xmlns:component="http://java.sun.com/jsf/composite/components"
+	  xmlns:dashboard="http://java.sun.com/jsf/composite/components/dashboard"
 	  xmlns:f="http://java.sun.com/jsf/core"
 	  xmlns:h="http://java.sun.com/jsf/html"
 	  xmlns:p="http://primefaces.org/ui"
@@ -63,40 +64,48 @@
 		</ui:define>
 
 		<ui:define name="content">
-			<h:form id="main">
+			<f:event listener="#{dashboardController.checkDomainChange}" type="preRenderView" />
+
+			<h:form id="main" onkeypress="return event.keyCode != 13">
 				<p:panel rendered="#{dashboardController.selectedDomain == null}">
 					<h:outputText value="#{msg['page.dashboard.noDomain']}" />
 				</p:panel>
-				<p:panel rendered="#{dashboardController.selectedDomain != null and !dashboardController.init}">
+				<p:panel rendered="#{dashboardController.selectedDomain != null and !dashboardController.hasStats}">
 					<h:outputText value="#{msg['page.dashboard.empty']}" />
 					<p:commandButton actionListener="#{dashboardController.updateStats}" icon="mdi mdi-refresh" styleClass="secondary" update="@form" value="#{cmsg['ui.button.refresh']}"
 									 onclick="PF('loading').show()" oncomplete="PF('loading').hide()" />
 				</p:panel>
 
-				<ui:fragment rendered="#{dashboardController.selectedDomain != null and dashboardController.init}">
-					<div class="grid">
-						<div class="col-12 section-heading">
-							<h:outputText value="#{msg['page.dashboard.domain.statsFor']} " />
-							<p:selectOneButton value="#{dashboardController.domain}">
-								<f:selectItem itemLabel="#{dashboardController.selectedDomain.label}" itemValue="CURRENT"/>
-								<f:selectItem itemLabel="#{msg['page.dashboard.domain.ALL']}" itemValue="ALL"/>
-								<p:ajax process="@this" partialSubmit="true" update="main" />
-							</p:selectOneButton>
+				<div class="grid">
+					<ui:fragment rendered="#{dashboardController.selectedDomain != null and dashboardController.hasStats}">
+						<div class="col-12 section-heading justify-content-between gap-3">
+							<div class="flex align-items-center gap-3">
+								<h:outputText value="#{msg['page.dashboard.domain.statsFor']} " />
+								<p:selectOneButton value="#{dashboardController.domain}" unselectable="false">
+									<f:selectItem itemLabel="#{dashboardController.selectedDomain.label}" itemValue="CURRENT" />
+									<f:selectItem itemLabel="#{msg['page.dashboard.domain.ALL']}" itemValue="ALL"
+												  itemDisabled="#{not dashboardController.hasSummaryStats}" />
+									<p:ajax process="@this" update="main" />
+								</p:selectOneButton>
+							</div>
 						</div>
+					</ui:fragment>
 
+					<ui:fragment rendered="#{dashboardController.selectedDomain != null  and dashboardController.hasStatsInTimespan}">
 						<!-- All domains -->
 						<div class="col-12 md:col-8">
-							<p:panel>
+							<p:panel style="margin-bottom: 0">
 								<div class="overview flex flex-wrap">
-									<p:repeat value="#{dashboardController.latestStatsLabels.entrySet()}" var="_stat" varStatus="_i">
+									<ui:repeat value="#{dashboardController.latestStatsLabels.entrySet()}" var="_stat" varStatus="_i">
 										<div class="box">
 											<div>
-												<h:outputText styleClass="title block text-center" value="#{dashboardController.latestStats.mappedStatValue.get(_stat.key)}" />
+												<h:outputText styleClass="title block text-center"
+															  value="#{dashboardController.stats.mappedStatValue.get(_stat.key) == null?0:dashboardController.stats.mappedStatValue.get(_stat.key)}" />
 												<h:outputText styleClass="details block text-center" style="display: table-caption !important;" value="#{_stat.value}" />
 											</div>
 											<p:divider layout="vertical" />
 										</div>
-									</p:repeat>
+									</ui:repeat>
 									<div class="box">
 										<div>
 											<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary title block text-center" value="#{cmsg['page.dashboard.export.current']}">
@@ -107,12 +116,16 @@
 										<p:divider layout="vertical" />
 									</div>
 									<div class="box">
-										<div>
+										<p:outputPanel deferred="true" loaded="#{dashboardController.rangeStatsLoaded}" layout="block">
+											<p:ajax event="load" listener="#{dashboardController.loadRangeStats}" ignoreAutoUpdate="true" />
+											<f:facet name="loading">
+												<p:skeleton shape="rectangle" width="105px" height="68px" />
+											</f:facet>
 											<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary title block text-center" value="#{cmsg['page.dashboard.export.history']}">
 												<p:fileDownload
 														value="#{dashboardController.historyStatsDownload}" />
 											</p:commandButton>
-										</div>
+										</p:outputPanel>
 									</div>
 								</div>
 							</p:panel>
@@ -120,7 +133,7 @@
 
 						<!-- Meta -->
 						<div class="col-12 md:col-4">
-							<p:panel>
+							<p:panel styleClass="h-full">
 								<div class="overview flex flex-wrap" style="min-height: 98px;">
 									<div class="box">
 										<div>
@@ -131,9 +144,10 @@
 									</div>
 									<div class="box">
 										<div>
-											<h:outputText styleClass="toptitle block text-center" value="#{dashboardController.latestStatsDate}" />
-											<h:outputText styleClass="title block text-center" value="#{dashboardController.latestStatsTime}" />
-											<h:outputText styleClass="details block text-center" value="#{cmsg['page.dashboard.meta.latestDateTime']}" />
+											<p:commandButton icon="mdi mdi-calendar-clock-outline" process="@this" onclick="PF('date_dialog').show();"
+															 style="margin: -5px auto 0 auto; padding-bottom: 4px" styleClass="title block text-center secondary"
+															 value="#{cmsg['page.dashboard.meta.latestDateTime']}" />
+											<h:outputText styleClass="details block text-center z-1 text-xs" style="margin-bottom: -20px" value="#{dashboardController.latestStatsDateTimeString}" />
 										</div>
 										<p:divider layout="vertical" />
 									</div>
@@ -149,42 +163,37 @@
 						</div>
 
 						<!-- Person + Identity History -->
-						<div class="col-12 xl:col-6">
-							<p:panel styleClass="h-full">
-								<h4>
-									#{msg['page.dashboard.persons.history']}
-								</h4>
-								<p:lineChart model="#{dashboardController.personsIdentitiesHistoryChart}" style="width: 100%; height: 300px;" />
-								<div style="height: 40px;"></div>
-								<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary bottom">
-									<p:fileDownload
-											value="#{dashboardController.getLineChartAsCsv(dashboardController.personsIdentitiesHistoryChart, dashboardController.selectedDomain.name.concat(' persons_identities history'), dashboardController.tool)}" />
-								</p:commandButton>
-							</p:panel>
-						</div>
+						<p:outputPanel styleClass="col-12 xl:col-6" deferred="true" loaded="#{dashboardController.rangeStatsLoaded}" layout="block">
+							<f:facet name="loading">
+								<p:panel styleClass="h-full">
+									<h:outputText value="#{msg['page.dashboard.persons.history']}" styleClass="font-bold block" style="margin-bottom: 20px" />
+									<p:skeleton shape="rectangle" width="100%" height="300px" />
+								</p:panel>
+							</f:facet>
+
+							<dashboard:line_chart
+									download="#{dashboardController.getLineChartAsCsv(dashboardController.personsIdentitiesHistoryChart, dashboardController.selectedDomain.name.concat(' persons_identities history'), dashboardController.tool)}"
+									lineChart="#{dashboardController.personsIdentitiesHistoryChart}"
+									title="#{msg['page.dashboard.persons.history']}" />
+						</p:outputPanel>
 
 						<!-- Person + Identity Bar Chart -->
-						<div class="col-12 xl:col-4">
-							<p:panel styleClass="h-full" id="personsIdentityBarChart">
-								<h4 style="float: left">
-									#{msg['page.dashboard.persons.accumulation']}
-								</h4>
-								<p:selectOneButton style="float: right" value="#{dashboardController.personsIdentitiesBarScale}">
-									<f:selectItems itemLabel="#{cmsg['ui.chart.barScale.'.concat(_scale.name())]}"
-												   value="#{dashboardController.availableBarScales}" var="_scale" />
-									<p:ajax update="personsIdentityBarChart" />
-								</p:selectOneButton>
-								<p:barChart model="#{dashboardController.personsIdentityMonthChart}" rendered="#{dashboardController.personsIdentitiesBarScale == 'MONTHS_12'}"
-											style="width: 100%; height: 300px;" />
-								<p:barChart model="#{dashboardController.personsIdentityYearChart}" rendered="#{dashboardController.personsIdentitiesBarScale == 'YEARS'}"
-											style="width: 100%; height: 300px;" />
-								<div style="height: 40px;"></div>
-								<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary bottom">
-									<p:fileDownload
-											value="#{dashboardController.getBarChartAsCsv(dashboardController.personsIdentitiesBarScale == 'MONTHS_12' ? dashboardController.personsIdentityMonthChart : dashboardController.personsIdentityYearChart, dashboardController.selectedDomain.name.concat(' persons_identities increase'), dashboardController.tool)}" />
-								</p:commandButton>
-							</p:panel>
-						</div>
+						<p:outputPanel styleClass="col-12 xl:col-4" deferred="true" loaded="#{dashboardController.rangeStatsLoaded}" layout="block">
+							<f:facet name="loading">
+								<p:panel styleClass="h-full">
+									<h:outputText value="#{msg['page.dashboard.persons.accumulation']}" styleClass="font-bold block" style="margin-bottom: 20px" />
+									<p:skeleton shape="rectangle" width="100%" height="300px" />
+								</p:panel>
+							</f:facet>
+
+							<dashboard:bar_chart
+									download="#{dashboardController.getBarChartAsCsv(dashboardController.personsIdentitiesBarScale == 'MONTHS_12' ? dashboardController.personsIdentityMonthChart : dashboardController.personsIdentityYearChart, dashboardController.selectedDomain.name.concat(' persons_identities increase'), dashboardController.tool)}"
+									scale="#{dashboardController.personsIdentitiesBarScale}"
+									availableScales="#{dashboardController.availableBarScales}"
+									barChartMonths="#{dashboardController.personsIdentityMonthChart}"
+									barChartYears="#{dashboardController.personsIdentityYearChart}"
+									title="#{msg['page.dashboard.persons.accumulation']}" />
+						</p:outputPanel>
 
 						<!-- Person + Identity Ratio -->
 						<div class="col-12 xl:col-2">
@@ -213,70 +222,67 @@
 
 						<!-- Matching Current -->
 						<div class="col-12 xl:col-6">
-							<p:panel styleClass="h-full">
-								<h4>
-									#{msg['page.dashboard.matching']}
-								</h4>
-								<h:outputText value="#{msg['page.dashboard.matching.hint']}" escape="false" />
-								<p:pieChart model="#{dashboardController.getMatchingChart(false)}" style="width: 100%; height: 300px; margin-top: 20px;" styleClass="ui-sm-0" />
-								<p:pieChart model="#{dashboardController.getMatchingChart(true)}" style="width: 100%; height: 300px; margin-top: 20px;" styleClass="ui-sm-block ui-md-0 ui-g-0" />
-								<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary bottom">
-									<p:fileDownload
-											value="#{dashboardController.getPieChartAsCsv(dashboardController.getMatchingChart(false), dashboardController.latestStats.entrydate,dashboardController.selectedDomain.name.concat(' matching latest'), dashboardController.tool)}" />
-								</p:commandButton>
-							</p:panel>
+							<dashboard:pie_chart
+									download="#{dashboardController.getPieChartAsCsv(dashboardController.getMatchingChart(false), dashboardController.stats.entrydate,dashboardController.selectedDomain.name.concat(' matching latest'), dashboardController.tool)}"
+									pieChartDesktop="#{dashboardController.getMatchingChart(false)}"
+									pieChartMobile="#{dashboardController.getMatchingChart(true)}"
+									title="#{msg['page.dashboard.matching']}"
+									hint="#{msg['page.dashboard.matching.hint']}" />
 						</div>
 
 						<!-- Matching History -->
-						<div class="col-12 xl:col-6">
-							<p:panel styleClass="h-full">
-								<h4>
-									#{msg['page.dashboard.matching.history']}
-								</h4>
-								<p:lineChart model="#{dashboardController.matchingHistoryChart}" style="width: 100%; height: 300px;" />
-								<div style="height: 40px;"></div>
-								<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary bottom">
-									<p:fileDownload
-											value="#{dashboardController.getLineChartAsCsv(dashboardController.matchingHistoryChart, dashboardController.selectedDomain.name.concat(' matching history'), dashboardController.tool)}" />
-								</p:commandButton>
-							</p:panel>
-						</div>
+						<p:outputPanel styleClass="col-12 xl:col-6" deferred="true" loaded="#{dashboardController.rangeStatsLoaded}" layout="block">
+							<f:facet name="loading">
+								<p:panel styleClass="h-full">
+									<h:outputText value="#{msg['page.dashboard.matching.history']}" styleClass="font-bold block" style="margin-bottom: 20px" />
+									<p:skeleton shape="rectangle" width="100%" height="300px" />
+								</p:panel>
+							</f:facet>
+
+							<dashboard:line_chart
+									download="#{dashboardController.getLineChartAsCsv(dashboardController.matchingHistoryChart, dashboardController.selectedDomain.name.concat(' matching history'), dashboardController.tool)}"
+									lineChart="#{dashboardController.matchingHistoryChart}"
+									title="#{msg['page.dashboard.matching.history']}" />
+						</p:outputPanel>
 
 						<!-- Possible Matches Current -->
 						<div class="col-12 xl:col-6">
-							<p:panel styleClass="h-full">
-								<h4>
-									#{msg['page.dashboard.possibleMatches']}
-								</h4>
-								<h:outputText value="#{msg['page.dashboard.possibleMatches.hint']}" />
-								<p:pieChart model="#{dashboardController.getPossibleMatchesChart(false)}" style="width: 100%; height: 300px; margin-top: 20px;" styleClass="ui-sm-0" />
-								<p:pieChart model="#{dashboardController.getPossibleMatchesChart(true)}" style="width: 100%; height: 300px; margin-top: 20px;"
-											styleClass="ui-sm-block ui-md-0 ui-g-0" />
-								<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary bottom">
-									<p:fileDownload
-											value="#{dashboardController.getPieChartAsCsv(dashboardController.getPossibleMatchesChart(false), dashboardController.latestStats.entrydate,dashboardController.selectedDomain.name.concat(' possible_matches latest'), dashboardController.tool)}" />
-								</p:commandButton>
-							</p:panel>
+							<dashboard:pie_chart
+									download="#{dashboardController.getPieChartAsCsv(dashboardController.getPossibleMatchesChart(false), dashboardController.stats.entrydate,dashboardController.selectedDomain.name.concat(' possible_matches latest'), dashboardController.tool)}"
+									pieChartDesktop="#{dashboardController.getPossibleMatchesChart(false)}"
+									pieChartMobile="#{dashboardController.getPossibleMatchesChart(true)}"
+									title="#{msg['page.dashboard.possibleMatches']}"
+									hint="#{msg['page.dashboard.possibleMatches.hint']}" />
 						</div>
 
 						<!-- Possible Matches History -->
-						<div class="col-12 xl:col-6">
-							<p:panel styleClass="h-full">
-								<h4>
-									#{msg['page.dashboard.possibleMatches.history']}
-								</h4>
-								<p:lineChart model="#{dashboardController.possibleMatchesHistoryChart}" style="width: 100%; height: 300px;" />
-								<div style="height: 40px;"></div>
-								<p:commandButton ajax="false" icon="mdi mdi-download" styleClass="secondary bottom">
-									<p:fileDownload
-											value="#{dashboardController.getLineChartAsCsv(dashboardController.possibleMatchesHistoryChart, dashboardController.selectedDomain.name.concat(' possible_matches history'), dashboardController.tool)}" />
-								</p:commandButton>
-							</p:panel>
-						</div>
-					</div>
-				</ui:fragment>
+						<p:outputPanel styleClass="col-12 xl:col-6" deferred="true" loaded="#{dashboardController.rangeStatsLoaded}" layout="block">
+							<f:facet name="loading">
+								<p:panel styleClass="h-full">
+									<h:outputText value="#{msg['page.dashboard.possibleMatches.history']}" styleClass="font-bold block" style="margin-bottom: 20px" />
+									<p:skeleton shape="rectangle" width="100%" height="300px" />
+								</p:panel>
+							</f:facet>
+							<dashboard:line_chart
+									download="#{dashboardController.getLineChartAsCsv(dashboardController.possibleMatchesHistoryChart, dashboardController.selectedDomain.name.concat(' possible_matches history'), dashboardController.tool)}"
+									lineChart="#{dashboardController.possibleMatchesHistoryChart}"
+									title="#{msg['page.dashboard.possibleMatches.history']}" />
+						</p:outputPanel>
+					</ui:fragment>
+				</div>
 			</h:form>
 			<component:dummy />
+			<dashboard:range_dialog id="range_dialog_component" startDate="#{dashboardController.rangeStartDate}"
+									endDate="#{dashboardController.rangeEndDate}"
+									minDate="#{dashboardController.statsMinDate}"
+									maxDate="#{dashboardController.statsDate}"
+									dateChangeListener="#{dashboardController.onDateChange}"
+									update=":main" />
+			<dashboard:date_dialog date="#{dashboardController.statsDate}"
+								   dateChangeListener="#{dashboardController.onDateChange}"
+								   minDate="#{dashboardController.statsMinDate}"
+								   maxDate="#{dashboardController.statsMaxDate}"
+								   update=":main" />
 			<!-- ${disclaimer.enable.start}
 			<component:demo_disclaimer/>
 			${disclaimer.enable.end} -->

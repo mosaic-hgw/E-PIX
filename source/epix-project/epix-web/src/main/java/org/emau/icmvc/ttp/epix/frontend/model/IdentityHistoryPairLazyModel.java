@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -137,6 +137,7 @@ public class IdentityHistoryPairLazyModel extends AbstractLazyDataModel<Identity
 					.withIdentityGenderStrings(getGenderStrings()).build();
 
 			boolean sameQueryRowCount = isSameQueryWhenPagingAndSortingIsIgnored(pc);
+
 			if (registerQuery(pc))
 			{
 				setRowCount(getLastRowCount()); // see comment in #count()
@@ -160,7 +161,12 @@ public class IdentityHistoryPairLazyModel extends AbstractLazyDataModel<Identity
 			if (getRowCount() <= 0 || !sameQueryRowCount)
 			{
 				// query count of ALL filtered identity history entries wrt the filters (not only for the current page(s))
-				setRowCount((int) management.countIdentityHistoriesForDomain(getDomainName(), pc));
+				int rc = (int) management.countIdentityHistoriesForDomain(getDomainName(), pc);
+				setRowCount(rc);
+			}
+			else
+			{
+				setRowCount(getLastRowCount()); // see comment in #count()
 			}
 
 			updateResult(result);

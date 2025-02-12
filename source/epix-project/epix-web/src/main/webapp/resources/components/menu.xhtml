@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -56,11 +56,11 @@
 						disabled="#{empty domainSelector.selectedDomain or (domainSelector.selectedDomain.matchingMode.name() == 'NO_DECISION')}"
 						title="#{domainSelector.selectedDomain.matchingMode.name() == 'NO_DECISION' ? msg['resolve.label.menuDisabled'] : ''}" />
 			<p:menuitem value="#{msg['menu.search']}" outcome="/html/internal/search.xhtml" icon="mdi mdi-account-search"
-						class="#{(view.viewId eq '/html/internal/search.xhtml' or (view.viewId eq '/html/internal/add.xhtml' and not empty addController.mpi)) ? 'active' : ''}"
+						class="#{(view.viewId eq '/html/internal/search.xhtml' or view.viewId eq '/html/internal/person.xhtml') ? 'active' : ''}"
 						disabled="#{empty domainSelector.selectedDomain}" />
 			<p:menuitem value="
 				#{msg['menu.add']}" outcome="/html/internal/add.xhtml" icon="mdi mdi-account-plus"
-						class="#{(view.viewId eq '/html/internal/add.xhtml' and empty addController.mpi) ? 'active' : ''}"
+						class="#{view.viewId eq '/html/internal/add.xhtml' ? 'active' : ''}"
 						disabled="#{empty domainSelector.selectedDomain}" />
 		</p:submenu>
 		<p:submenu label="#{msg['menu.batchProcessing']}">

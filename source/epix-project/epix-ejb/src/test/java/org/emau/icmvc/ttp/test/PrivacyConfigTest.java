@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.test;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -55,10 +55,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-public class PrivacyConfigTest
+class PrivacyConfigTest
 {
 	@Test
-	public void testSaltFields()
+	void testSaltFields()
 	{
 		BloomFilterConfig bfc = new BloomFilterConfig();
 		bfc.setAlgorithm("org.emau.icmvc.ttp.deduplication.impl.bloomfilter.DoubleHashingStrategy");
@@ -111,7 +111,7 @@ public class PrivacyConfigTest
 	}
 
 	@Test
-	public void testSaltValues()
+	void testSaltValues()
 	{
 		BloomFilterConfig bfc = new BloomFilterConfig();
 		bfc.setAlgorithm("org.emau.icmvc.ttp.deduplication.impl.bloomfilter.DoubleHashingStrategy");
@@ -165,7 +165,7 @@ public class PrivacyConfigTest
 	}
 
 	@Test
-	public void testSetOfMultipleBloomFiltersOk()
+	void testSetOfMultipleBloomFiltersOk()
 	{
 		final int NUMBER_OF_CONFIGS = 3;
 		List<BloomFilterConfig> configs = new ArrayList<>();
@@ -201,7 +201,7 @@ public class PrivacyConfigTest
 	}
 
 	@Test
-	public void testOverwrite()
+	void testOverwrite()
 	{
 		BloomFilterConfig bfc = new BloomFilterConfig();
 		bfc.setAlgorithm("org.emau.icmvc.ttp.deduplication.impl.bloomfilter.DoubleHashingStrategy");

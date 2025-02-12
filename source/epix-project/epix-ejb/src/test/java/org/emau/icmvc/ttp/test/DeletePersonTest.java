@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.test;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -46,10 +46,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import javax.xml.namespace.QName;
-import javax.xml.ws.Service;
 
+import jakarta.xml.ws.Service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
@@ -66,14 +67,15 @@ import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchForMPIDTO;
 import org.emau.icmvc.ttp.epix.common.model.ResponseEntryDTO;
+import org.emau.icmvc.ttp.epix.common.model.SourceDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
 import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
 import org.emau.icmvc.ttp.epix.service.EPIXService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIf;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -124,14 +126,14 @@ delete from domain where name = 'test-remove-patients';
 
 delete from identifier where value like '9876%';
  */
-@EnabledIf("isEpixManagementServiceAvailable")
+@Tag("Integration")
 public class DeletePersonTest
 {
 	private static final String EPIX_SERVICE_URL = "http://localhost:8080/epix/epixService?wsdl";
 	private static final String EPIX_MANAGEMENT_URL = "http://localhost:8080/epix/epixManagementService?wsdl";
-	private static final String DOMAIN = "test-remove-patients";
-	private static final String SOURCE = "dummy_safe_source";
-	private static final String IDENTIFIER_DOMAIN = "MPI";
+	private static final String DOMAIN = "test-remove-patients-" + UUID.randomUUID().toString();
+	private static final String SOURCE = "dummy_safe_source-" + UUID.randomUUID().toString();
+	private static final String IDENTIFIER_DOMAIN = "MPI-"+ UUID.randomUUID().toString();
 
 	private static EPIXService epixService;
 	private static EPIXManagementService epixManagement;
@@ -242,6 +244,50 @@ public class DeletePersonTest
 	@BeforeEach
 	public void createDomain() throws Exception
 	{
+		// CREATE MPI-DOMAIN
+		try
+		{
+			epixManagement.getIdentifierDomain(IDENTIFIER_DOMAIN);
+		}
+		catch (UnknownObjectException e)
+		{
+			IdentifierDomainDTO idDomain = new IdentifierDomainDTO(IDENTIFIER_DOMAIN, "", UUID.randomUUID().toString(), null, null, "");
+			try
+			{
+				epixManagement.addIdentifierDomain(idDomain);
+			}
+			catch (Exception ex)
+			{
+				throw new RuntimeException(ex);
+			}
+		}
+		catch (InvalidParameterException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+		// CREATE SAFE-SOURCE
+		try
+		{
+			epixManagement.getSource(SOURCE);
+		}
+		catch (UnknownObjectException e)
+		{
+			try
+			{
+				epixManagement.addSource(new SourceDTO(SOURCE, SOURCE, new Date(), null, ""));
+			}
+			catch (Exception ex)
+			{
+				throw new RuntimeException(ex);
+			}
+		}
+		catch (InvalidParameterException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+		// CREATE DOMAIN
 		try
 		{
 			DomainDTO domainDTO = new DomainDTO();
@@ -318,7 +364,7 @@ public class DeletePersonTest
 		contacts.add(contact);
 		IdentityInDTO in = new IdentityInDTO(person.getReferenceIdentity(), contacts);
 		in.setFirstName("Horsti");
-		IdentifierDomainDTO idDomain = new IdentifierDomainDTO("MPI", "", "", null, null, "");
+		IdentifierDomainDTO idDomain = new IdentifierDomainDTO(IDENTIFIER_DOMAIN, "", "", null, null, "");
 		in.getIdentifiers().add(new IdentifierDTO("9876000000000", "dummy description", new Date(), idDomain));
 		epixService.updatePerson(DOMAIN, mpi, in, SOURCE, false, "test update");
 		epixService.updatePerson(DOMAIN, mpi, in, SOURCE, false, "test update");

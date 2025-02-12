@@ -2,7 +2,7 @@
 <!-- ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -41,7 +41,7 @@
 	</session-config>
 
 	<context-param>
-		<param-name>javax.faces.FACELETS_SKIP_COMMENTS</param-name>
+		<param-name>jakarta.faces.FACELETS_SKIP_COMMENTS</param-name>
 		<param-value>true</param-value>
 	</context-param>
 	<context-param>
@@ -53,14 +53,18 @@
 		<param-value>true</param-value>
 	</context-param>
 	<context-param>
-		<param-name>javax.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
+		<param-name>primefaces.SUBMIT</param-name>
+		<param-value>partial</param-value>
+	</context-param>
+	<context-param>
+		<param-name>jakarta.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
 		<param-value>true</param-value>
 	</context-param>
 
 	<!-- JSF -->
 	<servlet>
 		<servlet-name>Faces Servlet</servlet-name>
-		<servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+		<servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 
@@ -98,7 +102,7 @@
 		<location>/html/internal/error.xhtml?code=404</location>
 	</error-page>
 	<error-page>
-		<exception-type>javax.faces.application.ViewExpiredException</exception-type>
+		<exception-type>jakarta.faces.application.ViewExpiredException</exception-type>
 		<location>/html/internal/error.xhtml?code=410</location>
 	</error-page>
 	<error-page>
@@ -166,7 +170,7 @@
 
 	<!-- Faces-Config for template -->
 	<context-param>
-		<param-name>javax.faces.CONFIG_FILES</param-name>
+		<param-name>jakarta.faces.CONFIG_FILES</param-name>
 		<param-value>/WEB-INF/template-faces-config.xml</param-value>
 	</context-param>
 </web-app>

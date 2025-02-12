@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -159,6 +159,10 @@
 
 							<p:column headerText="#{msg['resolve.label.creationDate']}" style="min-width: 203px;" styleClass="no-identity">
 								<h:outputText value="#{_match.possibleMatchCreated}" converter="datetime" />
+								<h:outputText styleClass="mdi mdi-alpha-m-circle-outline"
+											  rendered="#{_match.creationType == 'MANUAL'}"
+											  style="line-height: 0;position: relative;top: 4px;left: 3px;"
+											  title="#{msg['resolve.label.manualPossibleMatch']}" />
 							</p:column>
 							<p:column style="display: none;">
 								<p:rowToggler />
@@ -201,7 +205,7 @@
 											<p:commandButton value="#{msg['resolve.button.keep']} 1"
 															 actionListener="#{resolveController.setAssignTargetId(_match.matchingMPIIdentities.toArray()[0].identity.identityId, 1)}"
 															 update=":reason_dialog" process="@this"
-															 oncomplete="PF('reason_dialog').show();" icon="mdi mdi-call-merge flip-h" />
+															 oncomplete="PF('reason_dialog').show();" icon="mdi mdi-call-merge" />
 											<div>
 												<p:commandButton actionListener="#{resolveController.setAction('SPLIT')}"
 																 icon="mdi mdi-call-split"
@@ -226,14 +230,14 @@
 											<p:commandButton value="#{msg['resolve.button.keep']} 2"
 															 actionListener="#{resolveController.setAssignTargetId(_match.matchingMPIIdentities.toArray()[1].identity.identityId, 2)}"
 															 update=":reason_dialog" process="@this"
-															 oncomplete="PF('reason_dialog').show();" icon="mdi mdi-call-merge" iconPos="right" />
+															 oncomplete="PF('reason_dialog').show();" icon="mdi mdi-call-merge flip-h" />
 										</div>
 									</div>
 									<div class="ui-g possible-match" style="margin:0">
 										<idat-display:person_info i1="#{_match.matchingMPIIdentities.toArray()[0].identity}"
-																i2="#{_match.matchingMPIIdentities.toArray()[1].identity}"
-																mpi1="#{_match.matchingMPIIdentities.toArray()[0].mpiId.value}"
-																mpi2="#{_match.matchingMPIIdentities.toArray()[1].mpiId.value}" />
+																  i2="#{_match.matchingMPIIdentities.toArray()[1].identity}"
+																  mpi1="#{_match.matchingMPIIdentities.toArray()[0].mpiId.value}"
+																  mpi2="#{_match.matchingMPIIdentities.toArray()[1].mpiId.value}" />
 									</div>
 								</h:panelGroup>
 							</p:rowExpansion>
@@ -273,7 +277,7 @@
 					<h:outputLabel for="reasonOption" value="#{msg['resolve.reason']}" style="font-weight: bold; margin: 5px 0" />
 					<p:selectOneRadio id="reasonOption" value="#{resolveController.selectedReason}" layout="custom">
 						<f:selectItems value="#{resolveController.availableDeduplicationReasons}" />
-						<p:ajax event="valueChange" update="@parent" process="@this" partialSubmit="true" />
+						<p:ajax event="valueChange" update="@parent" process="@this" />
 					</p:selectOneRadio>
 
 					<p:panelGrid columns="2" styleClass="no-border">
@@ -285,8 +289,7 @@
 													value="#{resolveController.getDeduplicationReasonDescription(resolveController.reasons.get(_reason).description)}" />
 							</p:column>
 							<p:column rendered="#{_reason == resolveController.otherReasonOption}">
-								<p:inputText id="otherReason_#{_i.index}" value="#{resolveController.otherReason}" />
-								<p:watermark for="otherReason_#{_i.index}" value="#{msg['deduplication.OTHER_REASON_OPTION']}" />
+								<p:inputText id="otherReason_#{_i.index}" value="#{resolveController.otherReason}" placeholder="#{msg['deduplication.OTHER_REASON_OPTION']}" />
 							</p:column>
 						</c:forEach>
 					</p:panelGrid>
@@ -309,9 +312,9 @@
 				</h:form>
 			</p:dialog>
 
-			<p:dialog id="newPossibleMatch" header="#{msg['resolve.label.newPossibleMatch']}" modal="true" widgetVar="newPossibleMatch"
+			<p:dialog id="newPossibleMatch" focus="newPossibleMatch_form:mpi1" header="#{msg['resolve.label.newPossibleMatch']}" modal="true" widgetVar="newPossibleMatch"
 					  closeOnEscape="true">
-				<h:form>
+				<h:form id="newPossibleMatch_form">
 					<p:messages />
 					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
 						<p:outputLabel for="type" value="#{msg['resolve.label.externalPossibleMatchIdType']}" />

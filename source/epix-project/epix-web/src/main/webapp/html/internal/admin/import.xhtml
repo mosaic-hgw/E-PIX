@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -94,19 +94,10 @@
 							<p:column headerText="#{msg['import.label.step2.field']}" width="1">
 								<h:panelGroup layout="block" id="type">
 									<p:selectOneMenu filter="true" filterMatchMode="contains" value="#{importController.webFile.columnTypeMapping[_column]}">
-										<f:selectItems itemLabel="#{importController.getValueFieldLabel(_columnType)}" itemValue="#{_columnType}"
+										<f:selectItems itemLabel="#{epixHelper.getFieldLabel(_columnType)}" itemValue="#{_columnType}"
 													   value="#{importController.webFile.types}" var="_columnType" />
 										<p:ajax event="itemSelect" process="@this" update="main:personsToImport:#{_i}:type, @form:options" />
 									</p:selectOneMenu>
-									<ui:fragment rendered="#{importController.webFile.isLocalIdentifierColumn(_column)}">
-										<h:outputText value="#{msg['import.label.noIdentifierDomains']}" rendered="#{empty importController.identifierDomainsFiltered}" />
-										<p:selectOneMenu rendered="#{not empty importController.identifierDomainsFiltered}"
-														 value="#{importController.webFile.columnTypeMapping[_column]}">
-											<f:selectItem itemDisabled="true" itemLabel="#{cmsg['ui.select.pleaseSelect']}" noSelectionOption="true" />
-											<f:selectItems itemLabel="#{_idDomain.label}" itemValue="#{'localId.'.concat(_idDomain.name)}"
-														   value="#{importController.identifierDomainsFiltered}" var="_idDomain" />
-										</p:selectOneMenu>
-									</ui:fragment>
 								</h:panelGroup>
 							</p:column>
 							<p:column headerText="#{msg['import.label.step2.example']} 1">
@@ -128,7 +119,7 @@
 
 						<p:panelGrid columns="2" columnClasses="ui-grid-col-3,ui-grid-col-9" layout="grid">
 							<p:outputLabel for="source" value="#{msg['import.label.source']}" />
-							<p:selectOneMenu id="source" required="true" value="#{importController.selectedSource}" converter="#{sourceDTOConverter}">
+							<p:selectOneMenu id="source" required="true" value="#{importController.selectedSource}" converter="sourceDTOConverter">
 								<f:selectItem noSelectionOption="true" itemLabel="#{cmsg['ui.select.pleaseSelect']}" itemDisabled="true" />
 								<f:selectItems value="#{importController.sources}" var="_source" itemLabel="#{_source.label}" itemValue="#{_source}" />
 								<p:ajax event="itemSelect" process="@this" />
@@ -183,9 +174,9 @@
 							<f:param value="#{importController.successfulImports.size()}" />
 						</h:outputFormat>
 					</h4>
-					<idat-display:persons_table id="successful_imports" webPersonList="#{importController.successfulImports}" />
+					<idat-display:persons_table id="successful_imports" webPersonList="#{importController.successfulImports}" trimLongValues="false" />
 					<p:commandButton ajax="false" icon="mdi mdi-download" immediate="true" value="#{cmsg['ui.button.download.csv']}">
-						<p:dataExporter fileName="successful_imports" target="successful_imports:persons_list" type="csv" />
+						<p:dataExporter encoding="UTF-16LE" fileName="successful_imports" options="#{props.optionsCSV}" target="successful_imports:persons_list" type="csv" />
 					</p:commandButton>
 				</p:panel>
 				<p:panel rendered="#{!empty importController.failedImports}" style="margin-top: 15px;">
@@ -194,9 +185,9 @@
 							<f:param value="#{importController.failedImports.size()}" />
 						</h:outputFormat>
 					</h4>
-					<idat-display:persons_table id="failed_imports" webPersonList="#{importController.failedImports}" />
+					<idat-display:persons_table id="failed_imports" webPersonList="#{importController.failedImports}" trimLongValues="false" />
 					<p:commandButton ajax="false" icon="mdi mdi-download" immediate="true" value="#{cmsg['ui.button.download.csv']}">
-						<p:dataExporter fileName="failed_imports" target="failed_imports:persons_list" type="csv" />
+						<p:dataExporter encoding="UTF-16LE" fileName="failed_imports" options="#{props.optionsCSV}" target="failed_imports:persons_list" type="csv" />
 					</p:commandButton>
 				</p:panel>
 

@@ -1,4 +1,4 @@
-${ttp.epix.readme.header}
+${ttp.readme.header}
 
 ---
 ## Inhaltsverzeichnis
@@ -206,4 +206,4 @@ docker run --detach \
 
 
 ---
-${ttp.epix.readme.footer}
+${ttp.readme.footer}

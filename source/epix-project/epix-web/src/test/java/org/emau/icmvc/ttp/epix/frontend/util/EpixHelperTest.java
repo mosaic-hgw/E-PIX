@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.util;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.util;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -49,6 +49,7 @@ import org.mockito.Mockito;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -100,7 +101,7 @@ public class EpixHelperTest extends JsfTest
 	}
 
 	@Test
-	void getDefaultValueFieldLabelFromResources()
+	void getNoValueFieldLabelWithoutMapping()
 	{
 		// Arrange
 		EpixHelper epixHelper = new EpixHelper();
@@ -116,6 +117,6 @@ public class EpixHelperTest extends JsfTest
 		String result = epixHelper.getValueFieldLabel(field);
 
 		// Assert
-		assertEquals(bundleDe.getString("common.person." + field), result);
+		assertNull(result);
 	}
 }

@@ -4,7 +4,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -14,7 +14,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -63,15 +63,18 @@
 					<i class="mdi mdi-cog" style="position: absolute;top: 3px;left: 10px"></i>
 					<h:outputText value="#{msg['page.management.domain.settings']}" style="margin-left: 25px" />
 				</f:facet>
-				<p:focus context="tabs" />
-				<p:panel style="margin-top: 3px;">
+				<p:focus context="tabs" for="label" />
+				<p:panel>
 					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
 						<!-- Label -->
 						<p:outputLabel for="label" value="#{msg['model.domain.label']}" />
 						<p:inputText id="label" value="#{cc.attrs.domain.selected.label}" required="true" />
 
 						<!-- Name -->
-						<p:outputLabel for="name" value="#{msg['model.domain.name']}" />
+						<h:panelGroup layout="block">
+							<p:outputLabel for="name" value="#{msg['model.domain.name']}" />
+							<components:tooltip value="#{msg['model.domain.name.hint']}" />
+						</h:panelGroup>
 						<p:inputText id="name" disabled="#{!cc.attrs.domain.new}" value="#{cc.attrs.domain.selected.name}" />
 
 						<!-- Description -->
@@ -82,9 +85,12 @@
 						<h:outputText id="description_counter" styleClass="textCounter" />
 
 						<!-- Safe Source -->
-						<p:outputLabel for="safeSource"
-									   value="#{msg['model.domain.safeSource']}" />
-						<p:selectOneMenu id="safeSource" converter="#{sourceDTOConverter}"
+						<h:panelGroup layout="block">
+							<p:outputLabel for="safeSource"
+										   value="#{msg['model.domain.safeSource']}" />
+							<components:tooltip value="#{msg['model.domain.safeSource.hint']}" />
+						</h:panelGroup>
+						<p:selectOneMenu id="safeSource" converter="sourceDTOConverter"
 										 disabled="#{cc.attrs.domain.selected.inUse}"
 										 filter="true" filterMatchMode="contains"
 										 value="#{cc.attrs.domain.selected.safeSource}">
@@ -105,21 +111,30 @@
 					</h4>
 					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
 						<!-- MPI Generator -->
-						<p:outputLabel for="mpiGenerator"
-									   value="#{msg['model.domain.mpi.generator']}" />
+						<h:panelGroup layout="block">
+							<p:outputLabel for="mpiGenerator"
+										   value="#{msg['model.domain.mpi.generator']}" />
+							<components:tooltip value="#{msg['model.domain.mpi.generator.hint']}" />
+						</h:panelGroup>
 						<p:selectOneMenu id="mpiGenerator" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.mpiGenerator}">
 							<f:selectItems value="#{cc.attrs.domain.mpiGeneratorOptions}" itemLabel="#{managementController.domain.getClassNameFromFullPath(_generator)}" var="_generator" />
 						</p:selectOneMenu>
 
 						<!-- Prefix -->
-						<p:outputLabel for="prefix" value="#{msg['model.domain.mpi.prefix']}" />
-						<p:inputNumber id="prefix" disabled="#{cc.attrs.domain.selected.inUse}" required="true" decimalPlaces="0" minValue="0" value="#{cc.attrs.domain.config.mpiPrefix}"
+						<h:panelGroup layout="block">
+							<p:outputLabel for="prefix" value="#{msg['model.domain.mpi.prefix']}" />
+							<components:tooltip value="#{msg['model.domain.mpi.prefix.hint']}" />
+						</h:panelGroup>
+						<p:inputNumber id="prefix" disabled="#{cc.attrs.domain.selected.inUse}" required="true" decimalPlaces="0" minValue="1" value="#{cc.attrs.domain.config.mpiPrefix}"
 									   thousandSeparator="" />
 
 						<!-- MPI Identifier Domain -->
-						<p:outputLabel for="mpiIdentifierDomain"
-									   value="#{msg['model.domain.mpi.identifierDomain']}" />
-						<p:selectOneMenu id="mpiIdentifierDomain" converter="#{identifierDomainDTOConverter}"
+						<h:panelGroup layout="block">
+							<p:outputLabel for="mpiIdentifierDomain"
+										   value="#{msg['model.domain.mpi.identifierDomain']}" />
+							<components:tooltip value="#{msg['model.domain.mpi.identifierDomain.hint']}" />
+						</h:panelGroup>
+						<p:selectOneMenu id="mpiIdentifierDomain" converter="identifierDomainDTOConverter"
 										 disabled="#{cc.attrs.domain.selected.inUse}"
 										 filter="true" filterMatchMode="contains"
 										 value="#{cc.attrs.domain.selected.mpiDomain}">
@@ -140,9 +155,18 @@
 							<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.identity.identities']}" /></div>
 						</h:panelGroup>
 
+						<!-- parallelMatchingAfter -->
+						<p:outputLabel for="numberOfThreads" value="#{msg['model.domain.matching.numberOfThreads']}" />
+						<p:inputNumber id="numberOfThreads" disabled="#{cc.attrs.domain.selected.inUse}" decimalPlaces="0" minValue="1"
+									   value="#{cc.attrs.domain.config.matchingConfig.numberOfThreads}" />
+
 						<!-- Limit Search -->
-						<p:outputLabel for="limitSearchForLowMemory" value="#{msg['model.domain.limitSearchForLowMemory']}" />
-						<p:selectBooleanCheckbox id="limitSearchForLowMemory" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.limitSearchForLowMemory}" />
+						<h:panelGroup layout="block">
+							<p:outputLabel for="limitSearchForLowMemory" value="#{msg['model.domain.limitSearchForLowMemory']}" />
+							<components:tooltip value="#{msg['model.domain.limitSearchForLowMemory.hint']}" />
+						</h:panelGroup>
+						<p:selectBooleanCheckbox id="limitSearchForLowMemory" disabled="#{cc.attrs.domain.selected.inUse}"
+												 value="#{cc.attrs.domain.config.limitSearchForLowMemory}" />
 					</p:panelGrid>
 				</p:panel>
 			</p:tab>
@@ -152,7 +176,7 @@
 					<i class="mdi mdi-card-account-details" style="position: absolute;top: 3px;left: 10px"></i>
 					<h:outputText value="#{msg['page.management.domain.fields']}" style="margin-left: 25px" />
 				</f:facet>
-				<p:panel style="margin-top: 3px;">
+				<p:panel>
 					<h4>
 						<h:outputText value="#{msg['page.management.domain.fields.mandatory']}" />
 					</h4>
@@ -180,7 +204,7 @@
 							<p:commandButton actionListener="#{cc.attrs.domain.onRemoveValueField(_valueFieldKey)}"
 											 disabled="#{cc.attrs.domain.selected.inUse}"
 											 icon="mdi mdi-delete-empty"
-											 process="@this" partialSubmit="true"
+											 process="@this"
 											 styleClass="secondary"
 											 title="#{cmsg['ui.button.remove']}"
 											 update="@form:tabs:valueFields" />
@@ -189,7 +213,7 @@
 					<p:commandButton actionListener="#{cc.attrs.domain.onNewValueField}"
 									 disabled="#{cc.attrs.domain.selected.inUse}"
 									 icon="mdi mdi-plus"
-									 process="@this" partialSubmit="true"
+									 process="@this"
 									 oncomplete="PF('valueField_dialog').show();"
 									 style="margin-bottom: 10px;"
 									 styleClass="secondary"
@@ -198,15 +222,125 @@
 				</p:panel>
 			</p:tab>
 
+			<p:tab id="validation">
+				<f:facet name="title">
+					<i class="mdi mdi-spellcheck" style="position: absolute;top: 3px;left: 10px"></i>
+					<h:outputText value="#{msg['page.management.domain.validation']}" style="margin-left: 25px" />
+				</f:facet>
+				<p:panel>
+					<!-- Validation -->
+					<h4>
+						<h:outputText value="#{msg['model.domain.validation.validationConfigs']}" />
+						<components:tooltip value="#{msg['model.domain.validation.validationConfigs.hint']}" />
+					</h4>
+
+					<p:treeTable id="validationConfigs" value="#{cc.attrs.domain.validatorTree}" var="_node" nodeVar="_nodeVar" showGridlines="true"
+								 currentPageReportTemplate="#{props.currentPageReport}"
+								 rows="10"
+								 pageLinks="3" paginator="true" paginatorPosition="bottom" paginatorTemplate="#{props.paginatorTemplate}">
+						<p:column style="width: 400px" headerText="#{msg['model.domain.validation.validator.fieldName']}">
+							<h:outputText value="#{msg['common.person.'.concat(_node.validatorConfig.field.name())]}" rendered="#{empty _nodeVar.parent.data.validatorGroup}"
+										  styleClass="font-bold inline-block"
+										  style="padding: 6px 0" />
+							<h:outputText value="#{cmsg['ui.operator.'.concat(_node.validatorGroup.operator.name())]}"
+										  styleClass="tag #{_node.validatorGroup.operator.name() == 'ALL' ? 'tag_green' : ''} #{_node.validatorGroup.operator.name() == 'AT_LEAST_ONE' ? 'tag_black' : ''} #{_node.validatorGroup.operator.name() == 'EXACT_ONE' ? 'tag_lightblack' : ''} #{_node.validatorGroup.operator.name() == 'ALL_OR_NONE' ? 'tag_lightgreen' : ''}"
+										  rendered="#{not empty _node.validatorGroup.operator}" />
+						</p:column>
+						<p:column headerText="#{msg['model.domain.validation.validator.qualifiedClassName']}">
+							<h:outputText
+									value="#{msg['model.domain.validation.validator.'.concat(cc.attrs.domain.getClassNameFromFullPath(_node.validator.qualifiedClassName))]}"
+									rendered="#{not empty _node.validator.qualifiedClassName}" />
+						</p:column>
+						<p:column headerText="#{msg['model.domain.validation.validator.criterion']}" styleClass="white-space-normal" style="word-break: break-word">
+							<h:outputText value="#{_node.validator.criterion}" />
+						</p:column>
+						<p:column styleClass="icons" width="80px">
+							<p:commandButton actionListener="#{cc.attrs.domain.onNewValidator(_node.validatorGroup)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-plus"
+											 oncomplete="PF('validator_dialog').show();"
+											 process="@this"
+											 rendered="#{_node.validatorGroup != null}"
+											 styleClass="secondary"
+											 title="#{msg['page.management.domain.validation.validator.add']}"
+											 update="#{cc.attrs.id}:validator_dialog" />
+							<p:commandButton actionListener="#{cc.attrs.domain.onNewValidatorGroup(_node.validatorGroup)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-plus-box-multiple"
+											 oncomplete="PF('validatorGroup_dialog').show();"
+											 process="@this"
+											 rendered="#{_node.validatorGroup != null}"
+											 styleClass="secondary"
+											 title="#{msg['page.management.domain.validation.validatorGroup.add']}"
+											 update="#{cc.attrs.id}:validatorGroup_dialog" />
+						</p:column>
+						<p:column styleClass="icons" width="80px">
+							<p:commandButton actionListener="#{cc.attrs.domain.onEditValidator(_node.validatorConfig, _node.validator, _nodeVar.parent.data.validatorGroup)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-pencil"
+											 oncomplete="PF('validator_dialog').show();"
+											 process="@this"
+											 rendered="#{_node.validator != null}"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.edit']}"
+											 update="#{cc.attrs.id}:validator_dialog" />
+							<p:commandButton actionListener="#{cc.attrs.domain.onEditValidatorGroup(_node.validatorConfig, _node.validatorGroup, _nodeVar.parent.data.validatorGroup)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 icon="mdi mdi-pencil"
+											 oncomplete="PF('validatorGroup_dialog').show();"
+											 process="@this"
+											 rendered="#{_node.validatorGroup != null}"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.edit']}"
+											 update="#{cc.attrs.id}:validatorGroup_dialog" />
+							<p:commandButton actionListener="#{cc.attrs.domain.onRemoveValidator(_node.validator, _nodeVar.parent.data.validatorGroup)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 rendered="#{_node.validator != null}"
+											 icon="mdi mdi-delete-empty"
+											 process="@this"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.remove']}"
+											 update="@form:tabs:validationConfigs" />
+							<p:commandButton actionListener="#{cc.attrs.domain.onRemoveValidatorGroup(_node.validatorGroup, _nodeVar.parent.data.validatorGroup)}"
+											 disabled="#{cc.attrs.domain.selected.inUse}"
+											 rendered="#{_node.validatorGroup != null}"
+											 icon="mdi mdi-delete-empty"
+											 process="@this"
+											 styleClass="secondary"
+											 title="#{cmsg['ui.button.remove']}"
+											 update="@form:tabs:validationConfigs" />
+						</p:column>
+					</p:treeTable>
+
+					<p:commandButton actionListener="#{cc.attrs.domain.onNewValidator(null)}"
+									 disabled="#{cc.attrs.domain.selected.inUse}"
+									 icon="mdi mdi-plus"
+									 oncomplete="PF('validator_dialog').show();"
+									 process="@this"
+									 styleClass="secondary"
+									 value="#{msg['page.management.domain.validation.validator.new']}"
+									 update="#{cc.attrs.id}:validator_dialog" />
+					<p:commandButton actionListener="#{cc.attrs.domain.onNewValidatorGroup(null)}"
+									 disabled="#{cc.attrs.domain.selected.inUse}"
+									 icon="mdi mdi-plus-box-multiple"
+									 oncomplete="PF('validatorGroup_dialog').show();"
+									 process="@this"
+									 styleClass="secondary"
+									 value="#{msg['page.management.domain.validation.validatorGroup.new']}"
+									 update="#{cc.attrs.id}:validatorGroup_dialog" />
+				</p:panel>
+			</p:tab>
+
 			<p:tab id="preprocessing">
 				<f:facet name="title">
 					<i class="mdi mdi-filter-cog" style="position: absolute;top: 3px;left: 10px"></i>
 					<h:outputText value="#{msg['page.management.domain.preprocessing']}" style="margin-left: 25px" />
 				</f:facet>
-				<p:panel style="margin-top: 3px;">
+				<p:panel>
 					<!-- Preprocessing Fields -->
-					<h4 style="margin-top: 25px;">
+					<h4>
 						<h:outputText value="#{msg['model.domain.preprocessing.fields']}" />
+						<components:tooltip value="#{msg['model.domain.preprocessing.fields.hint']}" />
 					</h4>
 					<p:dataTable id="preprocessingFields" value="#{cc.attrs.domain.config.preprocessingFields}"
 								 var="_field">
@@ -227,14 +361,14 @@
 											 disabled="#{cc.attrs.domain.selected.inUse}"
 											 icon="mdi mdi-pencil"
 											 oncomplete="PF('preprocessingField_dialog').show();"
-											 process="@this" partialSubmit="true"
+											 process="@this"
 											 styleClass="secondary"
 											 title="#{cmsg['ui.button.edit']}"
 											 update="#{cc.attrs.id}:preprocessingField_dialog" />
 							<p:commandButton actionListener="#{cc.attrs.domain.onRemovePreprocessingField(_field)}"
 											 disabled="#{cc.attrs.domain.selected.inUse}"
 											 icon="mdi mdi-delete-empty"
-											 process="@this" partialSubmit="true"
+											 process="@this"
 											 styleClass="secondary"
 											 title="#{cmsg['ui.button.remove']}"
 											 update="@form:tabs:preprocessingFields" />
@@ -244,7 +378,7 @@
 									 disabled="#{cc.attrs.domain.selected.inUse}"
 									 icon="mdi mdi-plus"
 									 oncomplete="PF('preprocessingField_dialog').show();"
-									 process="@this" partialSubmit="true"
+									 process="@this"
 									 style="margin-bottom: 10px;"
 									 styleClass="secondary"
 									 update="#{cc.attrs.id}:preprocessingField_dialog"
@@ -257,16 +391,19 @@
 					<i class="mdi mdi-account-multiple-outline" style="position: absolute;top: 3px;left: 10px"></i>
 					<h:outputText value="#{msg['page.management.domain.matching']}" style="margin-left: 25px" />
 				</f:facet>
-				<p:panel style="margin-top: 3px;">
+				<p:panel>
 					<h4>
 						<h:outputText value="#{msg['page.management.domain.matching']}" />
 					</h4>
 					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
 						<!-- MatchingMode -->
-						<p:outputLabel for="matchingMode" value="#{msg['model.domain.matchingMode']}" />
-						<p:selectOneButton id="matchingMode" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.matchingMode}">
+						<h:panelGroup layout="block">
+							<p:outputLabel for="matchingMode" value="#{msg['model.domain.matchingMode']}" />
+							<components:tooltip value="#{msg['model.domain.matchingMode.hint']}" />
+						</h:panelGroup>
+						<p:selectOneButton id="matchingMode" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.matchingMode}" unselectable="false">
 							<f:selectItems value="#{cc.attrs.domain.matchingModeOptions}" var="_mode" itemLabel="#{msg['model.domain.matchingMode.'.concat(_mode.name())]}" />
-							<p:ajax process="@this" partialSubmit="true" update="matchingConfig" />
+							<p:ajax process="@this" update="matchingConfig" />
 						</p:selectOneButton>
 					</p:panelGrid>
 
@@ -282,7 +419,10 @@
 							<p:selectBooleanCheckbox id="useCEMFIM" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.matchingConfig.useCEMFIM}" />
 
 							<!-- Threshold Possible Match -->
-							<p:outputLabel for="thresholdPossibleMatch" value="#{msg['model.domain.matching.thresholdPossibleMatch']}" />
+							<h:panelGroup layout="block">
+								<p:outputLabel for="thresholdPossibleMatch" value="#{msg['model.domain.matching.thresholdPossibleMatch']}" />
+								<components:tooltip value="#{msg['model.domain.matching.thresholdPossibleMatch.hint']}" />
+							</h:panelGroup>
 							<h:panelGroup layout="block" style="width: fit-content">
 								<h:panelGroup class="ui-inputgroup" layout="block">
 									<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.min']}" /></div>
@@ -294,7 +434,10 @@
 							</h:panelGroup>
 
 							<!-- Threshold Automatic Match -->
-							<p:outputLabel for="thresholdAutomaticMatch" value="#{msg['model.domain.matching.thresholdAutomaticMatch']}" />
+							<h:panelGroup layout="block">
+								<p:outputLabel for="thresholdAutomaticMatch" value="#{msg['model.domain.matching.thresholdAutomaticMatch']}" />
+								<components:tooltip value="#{msg['model.domain.matching.thresholdAutomaticMatch.hint']}" />
+							</h:panelGroup>
 							<h:panelGroup id="thresholdAutomaticMatchGroup" layout="block" styleClass="flex">
 								<div>
 									<h:panelGroup class="ui-inputgroup" layout="block">
@@ -311,7 +454,7 @@
 
 								<div class="ml-3" style="padding-top: 2px">
 									<p:selectBooleanCheckbox id="thresholdAutomaticMatchNever" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.disableAutomaticMatch}">
-										<p:ajax process="@this" partialSubmit="true" resetValues="true" update="thresholdAutomaticMatchGroup" />
+										<p:ajax process="@this" resetValues="true" update="thresholdAutomaticMatchGroup" />
 									</p:selectBooleanCheckbox>
 									<h:outputText value="#{msg['model.domain.matching.threshold.never']}" style="position: relative; top: -2px;" />
 								</div>
@@ -321,6 +464,7 @@
 						<!-- Matching Fields -->
 						<h4 style="margin-top: 25px;">
 							<h:outputText value="#{msg['model.domain.matching.fields']}" />
+							<components:tooltip value="#{msg['model.domain.matching.fields.hint']}" />
 						</h4>
 						<p:dataTable id="matchingFields" value="#{cc.attrs.domain.config.matchingConfig.fields}"
 									 var="_field">
@@ -351,14 +495,14 @@
 												 disabled="#{cc.attrs.domain.selected.inUse}"
 												 icon="mdi mdi-pencil"
 												 oncomplete="PF('matchingField_dialog').show();"
-												 process="@this" partialSubmit="true"
+												 process="@this"
 												 styleClass="secondary"
 												 title="#{cmsg['ui.button.edit']}"
 												 update="#{cc.attrs.id}:matchingField_dialog" />
 								<p:commandButton actionListener="#{cc.attrs.domain.onRemoveMatchingField(_field)}"
 												 disabled="#{cc.attrs.domain.selected.inUse}"
 												 icon="mdi mdi-delete-empty"
-												 process="@this" partialSubmit="true"
+												 process="@this"
 												 styleClass="secondary"
 												 title="#{cmsg['ui.button.remove']}"
 												 update="@form:tabs:matchingFields" />
@@ -368,7 +512,7 @@
 										 disabled="#{cc.attrs.domain.selected.inUse}"
 										 icon="mdi mdi-plus"
 										 oncomplete="PF('matchingField_dialog').show();"
-										 process="@this" partialSubmit="true"
+										 process="@this"
 										 style="margin-bottom: 10px;"
 										 styleClass="secondary"
 										 update="#{cc.attrs.id}:matchingField_dialog"
@@ -390,7 +534,7 @@
 								<p:commandButton actionListener="#{cc.attrs.domain.onRemoveReason(_reason)}"
 												 disabled="#{cc.attrs.domain.selected.inUse}"
 												 icon="mdi mdi-delete-empty"
-												 process="@this" partialSubmit="true"
+												 process="@this"
 												 styleClass="secondary"
 												 title="#{cmsg['ui.button.remove']}"
 												 update="@form:tabs:reasons" />
@@ -400,7 +544,7 @@
 										 disabled="#{cc.attrs.domain.selected.inUse}"
 										 icon="mdi mdi-plus"
 										 oncomplete="PF('reason_dialog').show();"
-										 process="@this" partialSubmit="true"
+										 process="@this"
 										 style="margin-bottom: 10px;"
 										 styleClass="secondary"
 										 update="#{cc.attrs.id}:reason_dialog"
@@ -415,11 +559,14 @@
 					<i class="mdi mdi-sunglasses" style="position: absolute;top: 3px;left: 10px"></i>
 					<h:outputText value="#{msg['page.management.domain.privacy']}" style="margin-left: 25px" />
 				</f:facet>
-				<p:panel style="margin-top: 3px;">
+				<p:panel>
 					<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
 
 						<!-- PersistMode -->
-						<p:outputLabel for="persistMode" value="#{msg['model.domain.persistMode']}" />
+						<h:panelGroup layout="block">
+							<p:outputLabel for="persistMode" value="#{msg['model.domain.persistMode']}" />
+							<components:tooltip value="#{msg['model.domain.persistMode.hint']}" />
+						</h:panelGroup>
 						<p:selectOneMenu id="persistMode" disabled="#{cc.attrs.domain.selected.inUse}" value="#{cc.attrs.domain.config.persistMode}" styleClass="fit-content">
 							<f:selectItems value="#{cc.attrs.domain.persistModeOptions}" var="_option" itemLabel="#{msg['model.domain.persistMode.'.concat(_option.name())]}" />
 						</p:selectOneMenu>
@@ -435,9 +582,9 @@
 							<h:outputText value="#{cc.attrs.domain.getClassNameFromFullPath(_bf.algorithm)}" />
 						</p:column>
 						<p:column headerText="#{msg['model.domain.privacy.bloomFilter.sourceFields']}">
-							<p:repeat value="#{_bf.sourceFields}" var="_sf">
+							<ui:repeat value="#{_bf.sourceFields}" var="_sf">
 								#{msg['common.person.'.concat(_sf.name.name())]}
-							</p:repeat>
+							</ui:repeat>
 						</p:column>
 						<p:column headerText="#{msg['model.domain.privacy.bloomFilter.field']}">
 							#{msg['common.person.'.concat(_bf.field.name())]}
@@ -447,14 +594,14 @@
 											 disabled="#{cc.attrs.domain.selected.inUse}"
 											 icon="mdi mdi-pencil"
 											 oncomplete="PF('bloomFilter_dialog').show();"
-											 process="@this" partialSubmit="true"
+											 process="@this"
 											 styleClass="secondary"
 											 title="#{cmsg['ui.button.edit']}"
 											 update="#{cc.attrs.id}:bloomFilter_dialog" />
 							<p:commandButton actionListener="#{cc.attrs.domain.onRemoveBloomFilter(_bf)}"
 											 disabled="#{cc.attrs.domain.selected.inUse}"
 											 icon="mdi mdi-delete-empty"
-											 process="@this" partialSubmit="true"
+											 process="@this"
 											 styleClass="secondary"
 											 title="#{cmsg['ui.button.remove']}"
 											 update="@form:tabs:bloomFilters" />
@@ -464,7 +611,7 @@
 									 disabled="#{cc.attrs.domain.selected.inUse}"
 									 icon="mdi mdi-plus"
 									 oncomplete="PF('bloomFilter_dialog').show();"
-									 process="@this" partialSubmit="true"
+									 process="@this"
 									 style="margin-bottom: 10px;"
 									 styleClass="secondary"
 									 update="#{cc.attrs.id}:bloomFilter_dialog"
@@ -473,7 +620,7 @@
 			</p:tab>
 		</p:tabView>
 
-		<p:panel rendered="#{managementController.domain.pageMode != 'READ'}">
+		<p:panel rendered="#{managementController.domain.pageMode != 'READ'}" style="margin-top: 15px;">
 			<p:commandButton actionListener="#{managementController.domain.onSaveCurrent}"
 							 icon="mdi mdi-check"
 							 oncomplete="if (args &amp;&amp; args.validationFailed) PF('tabs').select(0); #{cc.attrs.onSubmitFunction}"
@@ -490,9 +637,9 @@
 	</h:form>
 
 	<p:dialog id="valueField_dialog" blockScroll="true"
-			  closeOnEscape="true" header="#{msg['model.domain.valueField']}"
+			  closeOnEscape="true" focus="valueField_dialog_form:valueFieldLabel" header="#{msg['model.domain.valueField']}"
 			  modal="true" responsive="true" widgetVar="valueField_dialog">
-		<h:form rendered="#{not empty cc.attrs.domain.config}">
+		<h:form id="valueField_dialog_form" rendered="#{not empty cc.attrs.domain.config}">
 			<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
 				<p:outputLabel for="valueFieldField" value="#{msg['model.domain.valueField.field']}" />
 				<p:selectOneMenu id="valueFieldField" value="#{cc.attrs.domain.selectedValueFieldField}">
@@ -514,9 +661,9 @@
 	</p:dialog>
 
 	<p:dialog id="reason_dialog" blockScroll="true"
-			  closeOnEscape="true" header="#{msg['model.domain.deduplication.reason']}"
+			  closeOnEscape="true" focus="reason_dialog_form:reasonName" header="#{msg['model.domain.deduplication.reason']}"
 			  modal="true" responsive="true" widgetVar="reason_dialog">
-		<h:form rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedReason}">
+		<h:form id="reason_dialog_form" rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedReason}">
 			<p:messages />
 			<p:panelGrid columnClasses="ui-grid-col-6,ui-grid-col-6" columns="2" layout="grid">
 				<p:outputLabel for="reasonName" value="#{msg['model.domain.deduplication.reason.name']}" />
@@ -532,6 +679,96 @@
 							 update="@form, #{cc.attrs.id}:form:tabs:reasons"
 							 value="#{cmsg['ui.button.add']}" />
 			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('reason_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="validator_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.validation.validator']}"
+			  modal="true" responsive="true" widgetVar="validator_dialog"
+			  style="min-width: 700px">
+		<h:form rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedValidator}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid" styleClass="mb-0">
+				<!-- fieldName -->
+				<p:outputLabel for="fieldName" value="#{msg['model.domain.validation.validator.fieldName']}" />
+				<p:selectOneMenu id="fieldName" disabled="#{cc.attrs.domain.selectedValidatorParent != null}" value="#{cc.attrs.domain.selectedValidatorConfig.field}"
+								 filter="true" filterMatchMode="contains">
+					<f:selectItems value="#{cc.attrs.domain.fieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
+				</p:selectOneMenu>
+
+				<!-- qualifiedClassName -->
+				<p:outputLabel for="qualifiedClassName" value="#{msg['model.domain.validation.validator.qualifiedClassName']}" />
+				<p:selectOneMenu id="qualifiedClassName" value="#{cc.attrs.domain.selectedValidator.qualifiedClassName}"
+								 filter="true" filterMatchMode="contains">
+					<f:selectItem itemLabel="#{cmsg['ui.select.pleaseSelect']}" noSelectionOption="true" />
+					<f:selectItems value="#{cc.attrs.domain.availableQualifiedClassNames}" var="_class"
+								   itemLabel="#{msg['model.domain.validation.validator.'.concat(cc.attrs.domain.getClassNameFromFullPath(_class))]}" />
+					<p:ajax listener="#{cc.attrs.domain.onChangeValidatorClass}" process="@this" partialSubmit="true" update="criterions" />
+				</p:selectOneMenu>
+			</p:panelGrid>
+
+			<!-- criterions -->
+			<p:panelGrid id="criterions" columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid">
+				<p:outputLabel value="#{msg['page.management.domain.validation.validator.hint']}"
+							   rendered="#{not empty cc.attrs.domain.selectedValidator.qualifiedClassName}" />
+				<p:outputLabel escape="false"
+							   value="#{msg['model.domain.validation.validator.'.concat(cc.attrs.domain.getClassNameFromFullPath(cc.attrs.domain.selectedValidator.qualifiedClassName)).concat('.hint')]}"
+							   rendered="#{not empty cc.attrs.domain.selectedValidator.qualifiedClassName}" />
+
+				<p:outputLabel for="string" value="#{msg['model.domain.validation.validator.criterion']}"
+							   rendered="#{cc.attrs.domain.containsCriteria(cc.attrs.domain.selectedValidator.qualifiedClassName)}" />
+
+				<!-- string -->
+				<p:inputText id="string" required="true" value="#{cc.attrs.domain.selectedValidator.criterion}"
+							 rendered="#{cc.attrs.domain.containsStringCriteria(cc.attrs.domain.selectedValidator.qualifiedClassName)}" />
+
+				<!-- number -->
+				<p:inputNumber id="number" required="true" value="#{cc.attrs.domain.selectedValidator.criterion}" decimalPlaces="0"
+							   rendered="#{cc.attrs.domain.containsIntegerCriteria(cc.attrs.domain.selectedValidator.qualifiedClassName)}" />
+
+				<!-- boolean -->
+				<p:selectBooleanCheckbox id="boolean" value="#{cc.attrs.domain.selectedValidator.criterion}"
+										 rendered="#{cc.attrs.domain.containsBooleanCriteria(cc.attrs.domain.selectedValidator.qualifiedClassName)}" />
+			</p:panelGrid>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onSaveValidator}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('validator_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:form:tabs:validationConfigs"
+							 value="#{cmsg['ui.button.save']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('validator_dialog').hide();"
+							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
+		</h:form>
+	</p:dialog>
+
+	<p:dialog id="validatorGroup_dialog" blockScroll="true"
+			  closeOnEscape="true" header="#{msg['model.domain.validation.validatorGroup']}"
+			  modal="true" responsive="true" widgetVar="validatorGroup_dialog"
+			  style="min-width: 700px">
+		<h:form rendered="#{not empty cc.attrs.domain.config and not empty cc.attrs.domain.selectedValidatorGroup}">
+			<p:messages />
+			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid">
+				<!-- fieldName -->
+				<p:outputLabel for="fieldName" value="#{msg['model.domain.validation.validator.fieldName']}" />
+				<p:selectOneMenu id="fieldName" disabled="#{cc.attrs.domain.selectedValidatorParent != null}" value="#{cc.attrs.domain.selectedValidatorConfig.field}"
+								 filter="true" filterMatchMode="contains">
+					<f:selectItems value="#{cc.attrs.domain.fieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
+				</p:selectOneMenu>
+
+				<!-- operator -->
+				<p:outputLabel for="operator" value="#{msg['model.domain.validation.validatorGroup.operator']}" />
+				<p:selectOneMenu id="operator" value="#{cc.attrs.domain.selectedValidatorGroup.operator}">
+					<f:selectItems value="#{cc.attrs.domain.availableOperators}" var="_operator" itemLabel="#{cmsg['ui.operator.'.concat(_operator.name())]}" />
+				</p:selectOneMenu>
+			</p:panelGrid>
+
+			<p:commandButton actionListener="#{cc.attrs.domain.onSaveValidatorGroup}"
+							 icon="mdi mdi-check"
+							 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('validatorGroup_dialog').hide();"
+							 update="@form, #{cc.attrs.id}:form:tabs:validationConfigs"
+							 value="#{cmsg['ui.button.save']}" />
+			<p:commandButton icon="mdi mdi-close" immediate="true" onclick="PF('validatorGroup_dialog').hide();"
 							 styleClass="secondary" value="#{cmsg['ui.button.cancel']}" />
 		</h:form>
 	</p:dialog>
@@ -554,6 +791,7 @@
 			<!-- Simple Transformations -->
 			<h4 style="margin-top: 25px;">
 				<h:outputText value="#{msg['model.domain.preprocessing.simpleTransformations']}" />
+				<components:tooltip value="#{msg['model.domain.preprocessing.simpleTransformations.hint']}" />
 			</h4>
 			<p:dataTable id="simpleTransformations" value="#{cc.attrs.domain.selectedPreprocessingField.simpleTransformationTypes.entrySet()}"
 						 var="_st">
@@ -582,6 +820,7 @@
 			<!-- Complex Transformations -->
 			<h4 style="margin-top: 25px;">
 				<h:outputText value="#{msg['model.domain.preprocessing.complexTransformations']}" />
+				<components:tooltip value="#{msg['model.domain.preprocessing.complexTransformations.hint']}" />
 			</h4>
 			<p:dataTable id="complexTransformations" value="#{cc.attrs.domain.selectedPreprocessingField.complexTransformationClasses}"
 						 var="_ct">
@@ -607,6 +846,7 @@
 			<!-- Simple Filters -->
 			<h4 style="margin-top: 25px;">
 				<h:outputText value="#{msg['model.domain.preprocessing.simpleFilters']}" />
+				<components:tooltip value="#{msg['model.domain.preprocessing.simpleFilters.hint']}" />
 			</h4>
 			<p:dataTable id="simpleFilters" value="#{cc.attrs.domain.selectedPreprocessingField.simpleFilterTypes.entrySet()}"
 						 var="_sf">
@@ -726,19 +966,28 @@
 				</p:selectOneMenu>
 
 				<!-- Algorithm -->
-				<p:outputLabel for="matchingAlgorithm" value="#{msg['model.domain.matching.field.algorithm']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="matchingAlgorithm" value="#{msg['model.domain.matching.field.algorithm']}" />
+					<components:tooltip value="#{msg['model.domain.matching.field.algorithm.hint']}" />
+				</h:panelGroup>
 				<p:selectOneMenu id="matchingAlgorithm" value="#{cc.attrs.domain.selectedMatchingField.algorithm}">
 					<f:selectItems value="#{cc.attrs.domain.matchingAlgorithmOptions}" itemLabel="#{cc.attrs.domain.getClassNameFromFullPath(_algorithm)}" var="_algorithm" />
 				</p:selectOneMenu>
 
 				<!-- Blocking Mode -->
-				<p:outputLabel for="blockingMode" value="#{msg['model.domain.matching.field.blockingMode']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="blockingMode" value="#{msg['model.domain.matching.field.blockingMode']}" />
+					<components:tooltip value="#{msg['model.domain.matching.field.blockingMode.hint']}" />
+				</h:panelGroup>
 				<p:selectOneMenu id="blockingMode" value="#{cc.attrs.domain.selectedMatchingField.blockingMode}">
 					<f:selectItems value="#{cc.attrs.domain.blockingModeOptions}" itemLabel="#{msg['model.domain.matching.field.blockingMode.'.concat(_mode.name())]}" var="_mode" />
 				</p:selectOneMenu>
 
 				<!-- Blocking Threshold -->
-				<p:outputLabel for="blockingThreshold" value="#{msg['model.domain.matching.field.blockingThreshold']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="blockingThreshold" value="#{msg['model.domain.matching.field.blockingThreshold']}" />
+					<components:tooltip value="#{msg['model.domain.matching.field.blockingThreshold.hint']}" />
+				</h:panelGroup>
 				<h:panelGroup layout="block" style="width: fit-content">
 					<h:panelGroup class="ui-inputgroup" layout="block">
 						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.min']}" /></div>
@@ -750,7 +999,10 @@
 				</h:panelGroup>
 
 				<!-- Matching Threshold -->
-				<p:outputLabel for="matchingThreshold" value="#{msg['model.domain.matching.field.matchingThreshold']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="matchingThreshold" value="#{msg['model.domain.matching.field.matchingThreshold']}" />
+					<components:tooltip value="#{msg['model.domain.matching.field.matchingThreshold.hint']}" />
+				</h:panelGroup>
 				<h:panelGroup layout="block" style="width: fit-content">
 					<h:panelGroup class="ui-inputgroup" layout="block">
 						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.threshold.min']}" /></div>
@@ -762,7 +1014,10 @@
 				</h:panelGroup>
 
 				<!-- Weight -->
-				<p:outputLabel for="weight" value="#{msg['model.domain.matching.field.weight']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="weight" value="#{msg['model.domain.matching.field.weight']}" />
+					<components:tooltip value="#{msg['model.domain.matching.field.weight.hint']}" />
+				</h:panelGroup>
 				<h:panelGroup layout="block" style="width: fit-content">
 					<h:panelGroup class="ui-inputgroup" layout="block">
 						<div class="ui-inputgroup-addon"><h:outputText value="#{msg['model.domain.matching.weight.min']}" /></div>
@@ -775,7 +1030,11 @@
 			</p:panelGrid>
 
 			<p:accordionPanel activeIndex="-1">
-				<p:tab title="#{msg['page.management.domain.matching.multipleValues']}">
+				<p:tab>
+					<f:facet name="title">
+						<h:outputText value="#{msg['page.management.domain.matching.multipleValues']}" />
+						<components:tooltip value="#{msg['page.management.domain.matching.multipleValues.hint']}" />
+					</f:facet>
 					<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid">
 						<!-- multipleValuesSeparator -->
 						<p:outputLabel for="multipleValuesSeparator" value="#{msg['model.domain.matching.field.multipleValuesSeparator']}" />
@@ -826,7 +1085,7 @@
 				<p:outputLabel for="bloomFilterAlgorithm" value="#{msg['model.domain.privacy.bloomFilter.algorithm']}" />
 				<p:selectOneMenu id="bloomFilterAlgorithm" value="#{cc.attrs.domain.selectedBloomFilter.algorithm}">
 					<f:selectItems value="#{cc.attrs.domain.bloomFilterAlgorithmOptions}" itemLabel="#{cc.attrs.domain.getClassNameFromFullPath(_algorithm)}" var="_algorithm" />
-					<p:ajax process="@this" partialSubmit="true" update="alphabetPanelGroup, sourceFields" />
+					<p:ajax process="@this" update="alphabetPanelGroup, sourceFields" />
 				</p:selectOneMenu>
 			</p:panelGrid>
 
@@ -849,24 +1108,36 @@
 				</h:panelGroup>
 
 				<!-- ngrams -->
-				<p:outputLabel for="ngrams" value="#{msg['model.domain.privacy.bloomFilter.ngrams']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="ngrams" value="#{msg['model.domain.privacy.bloomFilter.ngrams']}" />
+					<components:tooltip value="#{msg['model.domain.privacy.bloomFilter.ngrams.hint']}" />
+				</h:panelGroup>
 				<p:inputNumber id="ngrams" decimalPlaces="0" minValue="0" required="true" value="#{cc.attrs.domain.selectedBloomFilter.ngrams}" />
 
 				<!-- bitsPerNgram -->
-				<p:outputLabel for="bitsPerNgram" value="#{msg['model.domain.privacy.bloomFilter.bitsPerNgram']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="bitsPerNgram" value="#{msg['model.domain.privacy.bloomFilter.bitsPerNgram']}" />
+					<components:tooltip value="#{msg['model.domain.privacy.bloomFilter.bitsPerNgram.hint']}" />
+				</h:panelGroup>
 				<h:panelGroup class="ui-inputgroup" layout="block">
 					<p:inputNumber id="bitsPerNgram" decimalPlaces="0" minValue="1" required="true" value="#{cc.attrs.domain.selectedBloomFilter.bitsPerNgram}" />
 					<div class="ui-inputgroup-addon"><h:outputText value="#{cmsg['unit.math.bits']}" /></div>
 				</h:panelGroup>
 
 				<!-- fold -->
-				<p:outputLabel for="fold" value="#{msg['model.domain.privacy.bloomFilter.fold']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="fold" value="#{msg['model.domain.privacy.bloomFilter.fold']}" />
+					<components:tooltip value="#{msg['model.domain.privacy.bloomFilter.fold.hint']}" />
+				</h:panelGroup>
 				<p:inputNumber id="fold" decimalPlaces="0" minValue="0" required="true" value="#{cc.attrs.domain.selectedBloomFilter.fold}" />
 
 				<!-- Balanced -->
-				<p:outputLabel for="balanced" value="#{msg['model.domain.privacy.bloomFilter.balanced']}" />
+				<h:panelGroup layout="block">
+					<p:outputLabel for="balanced" value="#{msg['model.domain.privacy.bloomFilter.balanced']}" />
+					<components:tooltip value="#{msg['model.domain.privacy.bloomFilter.balanced.hint']}" />
+				</h:panelGroup>
 				<p:selectBooleanCheckbox id="balanced" value="#{cc.attrs.domain.balanced}">
-					<p:ajax process="@this" partialSubmit="true" update="balancedPanelGroup" />
+					<p:ajax process="@this" update="balancedPanelGroup" />
 				</p:selectBooleanCheckbox>
 			</p:panelGrid>
 
@@ -917,6 +1188,7 @@
 									 update="#{cc.attrs.id}:sourceField_dialog" />
 					<p:commandButton actionListener="#{cc.attrs.domain.onRemoveSourceField(_sf)}"
 									 icon="mdi mdi-delete-empty"
+									 process="@this"
 									 styleClass="secondary"
 									 title="#{cmsg['ui.button.remove']}"
 									 update="@form:sourceFields" />
@@ -949,7 +1221,7 @@
 			<p:panelGrid columnClasses="ui-grid-col-5,ui-grid-col-7" columns="2" layout="grid" style="margin-bottom: 0">
 				<!-- Name -->
 				<p:outputLabel for="sourceField" value="#{msg['model.domain.privacy.bloomFilter.sourceField.name']}" />
-				<p:selectOneMenu id="sourceField" process="@this" partialSubmit="true" required="true" value="#{cc.attrs.domain.selectedSourceField.name}"
+				<p:selectOneMenu id="sourceField" process="@this" required="true" value="#{cc.attrs.domain.selectedSourceField.name}"
 								 filter="true" filterMatchMode="contains">
 					<f:selectItem noSelectionOption="true" itemLabel="#{cmsg['ui.select.pleaseSelect']}" itemDisabled="true" />
 					<f:selectItems value="#{cc.attrs.domain.fieldNameOptions}" var="_field" itemLabel="#{msg['common.person.'.concat(_field.name())]}" />
@@ -971,7 +1243,7 @@
 					<p:selectOneButton value="#{cc.attrs.domain.doubleHashingSaltType}" style="margin-top: 5px" unselectable="false">
 						<f:selectItem itemLabel="#{msg['model.domain.privacy.bloomFilter.sourceField.saltValue']}" itemValue="FIXED" />
 						<f:selectItem itemLabel="#{msg['model.domain.privacy.bloomFilter.sourceField.saltField']}" itemValue="FIELD" />
-						<p:ajax process="sourceFieldSalt" partialSubmit="true" update="sourceFieldSalt" resetValues="true" />
+						<p:ajax process="@this" update="sourceFieldSalt" resetValues="true" />
 					</p:selectOneButton>
 
 					<!-- Fixed salt -->

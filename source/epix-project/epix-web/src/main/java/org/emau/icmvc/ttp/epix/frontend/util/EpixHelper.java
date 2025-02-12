@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.util;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.util;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,16 +39,18 @@ package org.emau.icmvc.ttp.epix.frontend.util;
  * ###license-information-end###
  */
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
-import javax.faces.bean.SessionScoped;
-import javax.faces.context.FacesContext;
-
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.annotation.ManagedProperty;
+import jakarta.faces.context.FacesContext;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
@@ -57,11 +59,14 @@ import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
 
 @SessionScoped
-@ManagedBean(name = "epixHelper")
-public class EpixHelper extends AbstractEpixBean
+@Named( "epixHelper")
+public class EpixHelper extends AbstractEpixBean implements Serializable
 {
+	@Serial
+	private static final long serialVersionUID = -5610771362373794073L;
 	List<IdentifierDomainDTO> cachedFilteredIdentifierDomains;
 
+	@Inject
 	@ManagedProperty(value = "#{domainSelector}")
 	protected DomainSelector domainSelector;
 
@@ -120,14 +125,28 @@ public class EpixHelper extends AbstractEpixBean
 				return domainSelector.getSelectedDomainConfiguration().getValueFieldMapping().get(valueField);
 			}
 		}
-		return getBundle().getString("common.person." + valueField);
+		return null;
+	}
+	
+	public String getFieldLabel(String field)
+	{
+		String result = getValueFieldLabel(field);
+		if (result == null)
+		{
+			result = getIdentifierDomainsFiltered().stream().filter(idd -> ("localId." + idd.getName()).equals(field)).findAny().map(IdentifierDomainDTO::getLabelOrName).orElse(null);
+		}
+		if (result == null && getBundle().containsKey("common.person." + field))
+		{
+			result = getBundle().getString("common.person." + field);
+		}
+		return result;
 	}
 
 	public List<IdentifierDomainDTO> getIdentifierDomainsFiltered()
 	{
 		if (cachedFilteredIdentifierDomains == null)
 		{
-			cachedFilteredIdentifierDomains = managementService.getIdentifierDomains().stream()
+			cachedFilteredIdentifierDomains = getManager().getIdentifierDomains().stream()
 					.filter(identifierDomain -> !identifierDomain.getName().equals(getDomainSelector().getSelectedDomain().getMpiDomain().getName()))
 					.collect(Collectors.toList());
 		}

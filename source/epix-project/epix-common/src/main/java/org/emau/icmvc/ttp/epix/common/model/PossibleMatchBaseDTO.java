@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -44,31 +44,34 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentityLinkCreationType;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 
 public abstract class PossibleMatchBaseDTO implements Serializable
 {
-	private static final long serialVersionUID = -8293993278414725888L;
+	private static final long serialVersionUID = -1942259876030449848L;
 	public static final PossibleMatchPriority DEFAULT_PRIORITY = PossibleMatchPriority.OPEN;
 	protected long linkId;
 	protected double probability;
 	protected Date possibleMatchCreated;
 	protected PossibleMatchPriority priority;
+	protected IdentityLinkCreationType creationType;
 
-	public PossibleMatchBaseDTO()
+	protected PossibleMatchBaseDTO()
 	{}
 
-	public PossibleMatchBaseDTO(long linkId, double probability, Date possibleMatchCreated, PossibleMatchPriority priority)
+	protected PossibleMatchBaseDTO(long linkId, double probability, Date possibleMatchCreated, PossibleMatchPriority priority, IdentityLinkCreationType creationType)
 	{
 		this.linkId = linkId;
 		this.probability = probability;
 		setPossibleMatchCreated(possibleMatchCreated);
 		setPriority(priority);
+		setCreationType(creationType);
 	}
 
-	public PossibleMatchBaseDTO(PossibleMatchBaseDTO dto)
+	protected PossibleMatchBaseDTO(PossibleMatchBaseDTO dto)
 	{
-		this(dto.getLinkId(), dto.getProbability(), dto.getPossibleMatchCreated(), dto.getPriority());
+		this(dto.getLinkId(), dto.getProbability(), dto.getPossibleMatchCreated(), dto.getPriority(), dto.getCreationType());
 	}
 
 	public long getLinkId()
@@ -111,6 +114,16 @@ public abstract class PossibleMatchBaseDTO implements Serializable
 		this.priority = priority != null ? priority : DEFAULT_PRIORITY;
 	}
 
+	public IdentityLinkCreationType getCreationType()
+	{
+		return creationType;
+	}
+
+	public void setCreationType(IdentityLinkCreationType creationType)
+	{
+		this.creationType = creationType;
+	}
+
 	@Override
 	public boolean equals(Object o)
 	{
@@ -147,6 +160,7 @@ public abstract class PossibleMatchBaseDTO implements Serializable
 				.add("probability=" + probability)
 				.add("possibleMatchCreated=" + possibleMatchCreated)
 				.add("priority=" + getPriority())
+				.add("creationType=" + getCreationType())
 				.toString();
 	}
 }

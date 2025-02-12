@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.service;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,15 +39,22 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-end###
  */
 
+import java.util.Date;
 import java.util.List;
 
-import javax.jws.WebService;
-
+import jakarta.jws.WebService;
 import org.emau.icmvc.ttp.epix.common.model.StatisticDTO;
 
 @WebService
 public interface StatisticManager
 {
+	/**
+	 * get first generated statistic
+	 *
+	 * @return first generated stat
+	 */
+	StatisticDTO getFirstStats();
+
 	/**
 	 * get last generated statistic
 	 *
@@ -61,6 +68,8 @@ public interface StatisticManager
 	 * @return list of stats
 	 */
 	List<StatisticDTO> getAllStats();
+
+	List<StatisticDTO> getStatsFromTo(Date from, Date to);
 
 	/**
 	 * creates a new stat entry

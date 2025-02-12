@@ -4,7 +4,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -14,7 +14,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -45,7 +45,8 @@
 	  xmlns:composite="http://java.sun.com/jsf/composite"
 	  xmlns:f="http://java.sun.com/jsf/core"
 	  xmlns:h="http://java.sun.com/jsf/html"
-	  xmlns:p="http://primefaces.org/ui">
+	  xmlns:p="http://primefaces.org/ui"
+	  xmlns:ui="http://java.sun.com/jsf/facelets">
 
 <!-- INTERFACE -->
 <composite:interface>
@@ -62,12 +63,12 @@
 		<p:panel styleClass="h-full">
 			<h:outputText class="font-bold block mb-2 w-full" value="#{cc.attrs.multiple ? msg['common.identifier.localIdentifiers'] : msg['model.identifier.localIdentifier']}" />
 			<h:panelGroup class="formgrid grid mb-3" rendered="#{not empty identifierController.identifiers}">
-				<p:repeat value="#{identifierController.identifiers}" var="_identifier">
+				<ui:repeat value="#{identifierController.identifiers}" var="_identifier">
 					<h:panelGroup class="field col-12 md:col-6">
 						<p:outputLabel for="identifierDomain" value="#{msg['common.identifier.localIdentifierDomain']}" />
 
 						<p:selectOneMenu label="#{msg['import.label.source']}" id="identifierDomain" disabled="#{empty epixHelper.identifierDomainsFiltered}" value="#{_identifier.identifierDomain}"
-										 converter="#{identifierDomainDTOConverter}" required="#{cc.attrs.required and empty param[remove.clientId] and empty param[add.clientId]}"
+										 converter="identifierDomainDTOConverter" required="#{cc.attrs.required and empty param[remove.clientId] and empty param[add.clientId]}"
 										 requiredMessage="#{msg['import.label.pleaseSelectDomain']}" styleClass="w-full">
 							<f:selectItem noSelectionOption="true" itemLabel="#{msg['common.pleaseSelect']}" itemDisabled="true" />
 							<f:selectItems value="#{epixHelper.identifierDomainsFiltered}" var="_domain" itemLabel="#{_domain.label}" itemValue="#{_domain}" />
@@ -80,17 +81,17 @@
 										 required="#{cc.attrs.required and empty param[remove.clientId] and empty param[add.clientId]}"
 										 styleClass="w-full" />
 							<p:commandButton actionListener="#{identifierController.removeIdentifier(_identifier)}" binding="#{remove}" icon="mdi mdi-minus"
-											 immediate="true" process="@parent:@parent:@parent:@parent" partialSubmit="true" styleClass="secondary mt-0" update="@parent:@parent:@parent:@parent"
+											 immediate="true" process="@parent:@parent:@parent:@parent" styleClass="secondary mt-0" update="@parent:@parent:@parent:@parent"
 											 rendered="#{cc.attrs.multiple}" title="#{cmsg['ui.button.remove']}" />
 						</div>
 					</h:panelGroup>
-				</p:repeat>
+				</ui:repeat>
 			</h:panelGroup>
 
 			<p:commandButton value="#{msg['add.label.newIdentifier']}" actionListener="#{identifierController.addIdentifier}"
 							 binding="#{add}"
 							 disabled="#{empty epixHelper.identifierDomainsFiltered}" icon="mdi mdi-plus"
-							 process="identifier" partialSubmit="true" styleClass="secondary" update="identifier" rendered="#{cc.attrs.multiple}" />
+							 process="identifier" styleClass="secondary" update="identifier" rendered="#{cc.attrs.multiple}" />
 			<components:tooltip rendered="#{empty epixHelper.identifierDomainsFiltered}" value="#{msg['page.person.identifier.add.disabled.hint']}" />
 
 		</p:panel>

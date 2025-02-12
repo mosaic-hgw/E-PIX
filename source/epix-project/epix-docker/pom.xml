@@ -8,39 +8,37 @@
     <parent>
         <artifactId>epix-project</artifactId>
         <groupId>org.emau.icmvc.ttp.epix</groupId>
-        <version>2023.1.2</version>
+        <version>2024.3.0</version>
     </parent>
 
     <properties>
-        <_docker.baseImage>docker.icm.med.uni-greifswald.de/mosaicgreifswald/wildfly:latest</_docker.baseImage>
-        <docker.baseImage>mosaicgreifswald/wildfly:26</docker.baseImage>
+        <docker.wildfly.version>34</docker.wildfly.version>
+        <docker.baseImage>mosaicgreifswald/wildfly:${docker.wildfly.version}</docker.baseImage>
         <docker.wildfly.deployments>/entrypoint-wildfly-deployments</docker.wildfly.deployments>
         <docker.wildfly.jboss>/entrypoint-wildfly-cli</docker.wildfly.jboss>
         <docker.wildfly.logs>/entrypoint-wildfly-logs</docker.wildfly.logs>
         <docker.wildfly.addins>/entrypoint-wildfly-addins</docker.wildfly.addins>
-        <docker.wildfly.sqls>/entrypoint-wildfly-sqls</docker.wildfly.sqls>
+        <docker.wildfly.sqls>/entrypoint-mysql-initfiles</docker.wildfly.sqls>
+        <docker.wildfly.dbdata>/entrypoint-mysql-data</docker.wildfly.dbdata>
         <docker.mysql.image>mysql:8</docker.mysql.image>
         <docker.mysql.sqls>/docker-entrypoint-initdb.d</docker.mysql.sqls>
-        <docker.image.name>ths-greifswald.de/${project.shortName}:${project.version}</docker.image.name>
+        <docker.image.name>mosaicgreifswald/${project.shortName}:${project.version}</docker.image.name>
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.emau.icmvc.ttp.epix</groupId>
-            <artifactId>epix-ear</artifactId>
-            <type>ear</type>
-        </dependency>
-        <dependency>
-            <groupId>org.emau.icmvc.ttp.epix</groupId>
-            <artifactId>epix-web</artifactId>
-            <type>war</type>
-        </dependency>
-    </dependencies>
 
     <profiles>
         <profile>
             <id>docker</id>
             <dependencies>
+                <dependency>
+                    <groupId>org.emau.icmvc.ttp.epix</groupId>
+                    <artifactId>epix-ear</artifactId>
+                    <type>ear</type>
+                </dependency>
+                <dependency>
+                    <groupId>org.emau.icmvc.ttp.epix</groupId>
+                    <artifactId>epix-web</artifactId>
+                    <type>war</type>
+                </dependency>
                 <!-- external shared resources -->
                 <dependency>
                     <groupId>org.emau.icmvc.ttp</groupId>
@@ -62,10 +60,12 @@
                     <artifactId>gras-shared-resources</artifactId>
                     <type>jar</type>
                 </dependency>
+                <dependency>
+                    <groupId>org.icmvc.ttp.docker</groupId>
+                    <artifactId>docker-shared-resources</artifactId>
+                    <type>jar</type>
+                </dependency>
             </dependencies>
-            <properties>
-                <excludeTests>CheckDigit, Integration</excludeTests>
-            </properties>
             <build>
                 <plugins>
                     <!-- external tools (noti and gras) -->
@@ -82,6 +82,12 @@
                                 </goals>
                                 <configuration>
                                     <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.icmvc.ttp.docker</groupId>
+                                            <artifactId>docker-shared-resources</artifactId>
+                                            <overWrite>true</overWrite>
+                                            <outputDirectory>${project.build.directory}/_mixed-shared-resources</outputDirectory>
+                                        </artifactItem>
                                         <artifactItem>
                                             <groupId>org.emau.icmvc.ttp</groupId>
                                             <artifactId>noti-shared-resources</artifactId>
@@ -125,194 +131,401 @@
                     </plugin>
 
                     <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>2.6</version>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
                         <executions>
-                            <!-- dockerfile, only gics -->
                             <execution>
-                                <id>copy-sources-for-dockerfile-gics</id>
+                                <id>copy-source-files</id>
                                 <phase>process-classes</phase>
                                 <goals>
-                                    <goal>copy-resources</goal>
+                                    <goal>run</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.directory}/dockerfile</outputDirectory>
-                                    <overwrite>true</overwrite>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.basedir}/src/dockerfile</directory>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/src/commons</directory>
-                                            <excludes>
-                                                <exclude>envs/*</exclude>
-                                                <exclude>addins/*</exclude>
-                                                <exclude>docs/**</exclude>
-                                                <exclude>sqls/*</exclude>
-                                                <exclude>logs/*</exclude>
-                                                <exclude>jboss/*.json</exclude>
-                                            </excludes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/../epix-ear/target/</directory>
-                                            <include>*.ear</include>
-                                            <targetPath>deployments</targetPath>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/../epix-web/target/</directory>
-                                            <include>*.war</include>
-                                            <targetPath>deployments</targetPath>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/../deploy</directory>
-                                            <targetPath>jboss</targetPath>
-                                            <include>*.cli</include>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.build.directory}/classes/META-INF/shared-resources</directory>
-                                            <excludes>
-                                                <exclude>envs/*</exclude>
-                                                <exclude>addins/*</exclude>
-                                                <exclude>demo/*</exclude>
-                                                <exclude>docs/**</exclude>
-                                                <exclude>*sqls/*</exclude>
-                                                <exclude>logs/*</exclude>
-                                                <exclude>jboss/*.json</exclude>
-                                            </excludes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/../</directory>
-                                            <include>LICENSE.txt</include>
-                                        </resource>
-                                        <!-- noti -->
-                                        <resource>
-                                            <directory>${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources</directory>
-                                            <includes>
-                                                <include>deployments/*</include>
-                                                <include>jboss/*</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <!-- compose-wildfly (mysql, wildfly) -->
-                            <execution>
-                                <id>copy-sources-for-compose-wildfly</id>
-                                <phase>process-classes</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/compose-wildfly/</outputDirectory>
-                                    <overwrite>true</overwrite>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.basedir}/src/compose-wildfly</directory>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/src/commons</directory>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/../epix-ear/target/</directory>
-                                            <include>*.ear</include>
-                                            <targetPath>deployments</targetPath>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/../epix-web/target/</directory>
-                                            <include>*.war</include>
-                                            <targetPath>deployments</targetPath>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.build.directory}/classes/META-INF/shared-resources</directory>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.parent.basedir}/</directory>
-                                            <include>LICENSE.txt</include>
-                                        </resource>
-                                        <!-- noti -->
-                                        <resource>
-                                            <directory>${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources</directory>
-                                            <excludes>
-                                                <exclude>*.env</exclude>
-                                                <exclude>envs\*</exclude>
-                                                <exclude>docs/Notification-Service/</exclude>
-                                            </excludes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources</directory>
-                                            <targetPath>envs</targetPath>
-                                            <include>*.env</include>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources/envs</directory>
-                                            <targetPath>envs</targetPath>
-                                            <include>*.env</include>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.parent.basedir}/deploy</directory>
-                                            <targetPath>jboss</targetPath>
-                                            <include>*.cli</include>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                            <!-- compose-image (mysql, wildfly) -->
-                            <execution>
-                                <id>copy-sources-for-compose-image</id>
-                                <phase>process-classes</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/compose-image/</outputDirectory>
-                                    <overwrite>true</overwrite>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.basedir}/src/compose-image</directory>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/src/commons</directory>
-                                            <includes>
-                                                <include>envs/*</include>
-                                                <include>addins/*</include>
-                                                <include>docs/*</include>
-                                                <include>sqls/*</include>
-                                                <include>logs/*</include>
-                                            </includes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.build.directory}/classes/META-INF/shared-resources</directory>
-                                            <exclude>jboss/*</exclude>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.basedir}/../</directory>
-                                            <include>LICENSE.txt</include>
-                                        </resource>
-                                        <!-- noti -->
-                                        <resource>
-                                            <directory>${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources</directory>
-                                            <excludes>
-                                                <exclude>deployments\*</exclude>
-                                                <exclude>jboss\*</exclude>
-                                                <exclude>*.env</exclude>
-                                                <exclude>envs\*</exclude>
-                                                <exclude>docs/Notification-Service/</exclude>
-                                            </excludes>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources</directory>
-                                            <targetPath>envs</targetPath>
-                                            <include>*.env</include>
-                                        </resource>
-                                        <resource>
-                                            <directory>${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources/envs</directory>
-                                            <targetPath>envs</targetPath>
-                                            <include>*.env</include>
-                                        </resource>
-                                    </resources>
+                                    <target>
+                                        <!-- compose-image (mysql, wildfly) -->
+                                        <copy todir="${project.build.directory}/compose-image">
+                                            <fileset dir="${project.basedir}/src/commons">
+                                                <include name="addins/*"/>
+                                                <include name="docs/*"/>
+                                                <include name="envs/*"/>
+                                                <include name="logs/*"/>
+                                                <include name="sqls/*"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-image">
+                                            <fileset dir="${project.basedir}/src/compose-image"/>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-image">
+                                            <fileset dir="${project.build.directory}/classes/META-INF/shared-resources">
+                                                <include name="addins/*"/>
+                                                <include name="demo/*"/>
+                                                <include name="docs/*"/>
+                                                <include name="envs/*"/>
+                                                <include name="sqls/*"/>
+                                                <include name="update_sqls/*"/>
+                                                <include name="*.md"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-image">
+                                            <fileset dir="${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources">
+                                                <include name="addins/*"/>
+                                                <include name="demo/*"/>
+                                                <include name="docs/*"/>
+                                                <include name="envs/*"/>
+                                                <include name="sqls/*"/>
+                                                <include name="update_sqls/*"/>
+                                                <exclude name="envs/ttp_disable_*.env"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-image">
+                                            <fileset dir="${project.basedir}/..">
+                                                <include name="LICENSE.txt"/>
+                                            </fileset>
+                                        </copy>
+                                        <move todir="${project.build.directory}/compose-image/sqls">
+                                            <fileset dir="${project.build.directory}/compose-image/sqls"/>
+                                            <regexpmapper from="^(create_database_.+\.sql)$" to="01_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-image/sqls">
+                                            <fileset dir="${project.build.directory}/compose-image/sqls"/>
+                                            <regexpmapper from="^(init_database_.+\.sql)$" to="02_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-image/update_sqls">
+                                            <fileset dir="${project.build.directory}/compose-image/update_sqls"/>
+                                            <regexpmapper from="^(update_database_.+\.sql)$" to="03_\1"/>
+                                        </move>
+                                        <move toDir="${project.build.directory}/compose-image/demo">
+                                            <fileset dir="${project.build.directory}/compose-image/demo"/>
+                                            <regexpmapper from="^(demo_.+\.sql)$" to="04_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-image/demo">
+                                            <fileset dir="${project.build.directory}/compose-image/demo"/>
+                                            <regexpmapper from="^(init_demo_.+\.sql)$" to="04_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-image/demo">
+                                            <fileset dir="${project.build.directory}/compose-image/demo"/>
+                                            <regexpmapper from="^(data_demo_.+\.sql)$" to="05_\1"/>
+                                        </move>
+
+                                        <!-- compose-loadtest (mysql, wildfly, jmeter) -->
+                                        <copy todir="${project.build.directory}/compose-loadtest">
+                                            <fileset dir="${project.basedir}/src/commons">
+                                                <include name="envs/*"/>
+                                                <include name="logs/*"/>
+                                                <include name="sqls/*"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-loadtest">
+                                            <fileset dir="${project.basedir}/src/compose-loadtest"/>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-loadtest">
+                                            <fileset dir="${project.build.directory}/classes/META-INF/shared-resources">
+                                                <include name="envs/*"/>
+                                                <include name="jboss/*.cli"/>
+                                                <include name="sqls/create_database_*"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-loadtest">
+                                            <fileset dir="${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources">
+                                                <include name="envs/mysql.env"/>
+                                                <include name="envs/*_commons.env"/>
+                                                <include name="jboss/*_commons.cli"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-loadtest/deployments">
+                                            <fileset dir="${project.basedir}/../${project.shortName}-ear/target">
+                                                <include name="*.ear"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-loadtest">
+                                            <fileset dir="${project.basedir}/..">
+                                                <include name="LICENSE.txt"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-loadtest/jmeter">
+                                            <fileset dir="${project.basedir}/../deploy/test">
+                                                <include name="*-LoadTest.jmx"/>
+                                            </fileset>
+                                        </copy>
+                                        <move todir="${project.build.directory}/compose-loadtest/sqls">
+                                            <fileset dir="${project.build.directory}/compose-loadtest/sqls"/>
+                                            <regexpmapper from="^(create_database_.+\.sql)$" to="01_\1"/>
+                                        </move>
+
+<!--                                        &lt;!&ndash; compose-loadtest-image (all-in-one) &ndash;&gt;-->
+<!--                                        <copy todir="${project.build.directory}/compose-loadtest-image">-->
+<!--                                            <fileset dir="${project.basedir}/src/commons">-->
+<!--                                                <include name="envs/*"/>-->
+<!--                                                <include name="logs/*"/>-->
+<!--                                            </fileset>-->
+<!--                                        </copy>-->
+<!--                                        <copy todir="${project.build.directory}/compose-loadtest-image">-->
+<!--                                            <fileset dir="${project.basedir}/src/compose-loadtest">-->
+<!--                                                <exclude name="*.yml"/>-->
+<!--                                            </fileset>-->
+<!--                                        </copy>-->
+<!--                                        <copy todir="${project.build.directory}/compose-loadtest-image">-->
+<!--                                            <fileset dir="${project.basedir}/src/compose-loadtest-image"/>-->
+<!--                                        </copy>-->
+<!--                                        <copy todir="${project.build.directory}/compose-loadtest-image">-->
+<!--                                            <fileset dir="${project.build.directory}/classes/META-INF/shared-resources">-->
+<!--                                                <include name="envs/*"/>-->
+<!--                                            </fileset>-->
+<!--                                        </copy>-->
+<!--                                        <copy todir="${project.build.directory}/compose-loadtest-image">-->
+<!--                                            <fileset dir="${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources">-->
+<!--                                                <include name="envs/mysql.env"/>-->
+<!--                                                <include name="envs/*_commons.env"/>-->
+<!--                                            </fileset>-->
+<!--                                        </copy>-->
+<!--                                        <copy todir="${project.build.directory}/compose-loadtest-image">-->
+<!--                                            <fileset dir="${project.basedir}/..">-->
+<!--                                                <include name="LICENSE.txt"/>-->
+<!--                                            </fileset>-->
+<!--                                        </copy>-->
+<!--                                        <replace dir="${project.build.directory}/compose-loadtest-image/envs">-->
+<!--                                            <include name="ttp_loadtest.env"/>-->
+<!--                                            <replacefilter token="TEST_DB_STATS_DB_HOST=mysql" value="TEST_DB_STATS_DB_HOST=localhost"/>-->
+<!--                                        </replace>-->
+
+                                        <!-- compose-wildfly (mysql, wildfly) -->
+                                        <copy todir="${project.build.directory}/compose-wildfly">
+                                            <fileset dir="${project.basedir}/src/commons"/>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-wildfly">
+                                            <fileset dir="${project.basedir}/src/compose-wildfly"/>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-wildfly">
+                                            <fileset dir="${project.build.directory}/classes/META-INF/shared-resources"/>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-wildfly">
+                                            <fileset dir="${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources">
+                                                <exclude name="scripts/*"/>
+                                                <exclude name="scripts"/>
+                                                <exclude name="envs/ttp_disable_*.env"/>
+                                                <exclude name="*.yml"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-wildfly/deployments">
+                                            <fileset dir="${project.basedir}/../${project.shortName}-ear/target">
+                                                <include name="*.ear"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-wildfly/deployments">
+                                            <fileset dir="${project.basedir}/../${project.shortName}-web/target">
+                                                <include name="*.war"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/compose-wildfly">
+                                            <fileset dir="${project.basedir}/..">
+                                                <include name="LICENSE.txt"/>
+                                            </fileset>
+                                        </copy>
+                                        <move todir="${project.build.directory}/compose-wildfly/sqls">
+                                            <fileset dir="${project.build.directory}/compose-wildfly/sqls"/>
+                                            <regexpmapper from="^(create_database_.+\.sql)$" to="01_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-wildfly/sqls">
+                                            <fileset dir="${project.build.directory}/compose-wildfly/sqls"/>
+                                            <regexpmapper from="^(init_database_.+\.sql)$" to="02_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-wildfly/update_sqls">
+                                            <fileset dir="${project.build.directory}/compose-wildfly/update_sqls"/>
+                                            <regexpmapper from="^(update_database_.+\.sql)$" to="03_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-wildfly/demo">
+                                            <fileset dir="${project.build.directory}/compose-wildfly/demo"/>
+                                            <regexpmapper from="^(demo_.+\.sql)$" to="04_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-wildfly/demo">
+                                            <fileset dir="${project.build.directory}/compose-wildfly/demo"/>
+                                            <regexpmapper from="^(init_demo_.+\.sql)$" to="04_\1"/>
+                                        </move>
+                                        <move todir="${project.build.directory}/compose-wildfly/demo">
+                                            <fileset dir="${project.build.directory}/compose-wildfly/demo"/>
+                                            <regexpmapper from="^(data_demo_.+\.sql)$" to="05_\1"/>
+                                        </move>
+
+                                        <!-- various dockerfiles -->
+                                        <copy todir="${project.build.directory}/dockerfile">
+                                            <fileset dir="${project.basedir}/src/dockerfile"/>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/dockerfile">
+                                            <fileset dir="${project.build.directory}/classes/META-INF/shared-resources">
+                                                <include name="jboss/*"/>
+                                                <include name="sqls/*"/>
+                                                <include name="envs/*"/>
+                                                <include name="demo/*"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/dockerfile">
+                                            <fileset dir="${project.build.directory}/_mixed-shared-resources/META-INF/shared-resources">
+                                                <include name="deployments/*"/>
+                                                <include name="jboss/*.cli"/>
+                                                <include name="sqls/*.sql"/>
+                                                <include name="demo/*.sql"/>
+                                                <include name="envs/*"/>
+                                                <include name="LICENSE.txt"/>
+                                                <exclude name="envs/ttp_disable_*.env"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/dockerfile/jmeter">
+                                            <fileset dir="${project.basedir}/../deploy/test">
+                                                <include name="*-LoadTest.jmx"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/dockerfile/deployments">
+                                            <fileset dir="${project.basedir}/../${project.shortName}-ear/target">
+                                                <include name="*.ear"/>
+                                            </fileset>
+                                        </copy>
+                                        <copy todir="${project.build.directory}/dockerfile/deployments">
+                                            <fileset dir="${project.basedir}/../${project.shortName}-web/target">
+                                                <include name="*.war"/>
+                                            </fileset>
+                                        </copy>
+                                    </target>
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>build-images-external</id>
+            <properties>
+                <docker.host.external>127.0.0.1:2375</docker.host.external>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.43.4</version>
+                        <executions>
+                            <execution>
+                                <id>build-dockerfile</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <verbose>true</verbose> <!-- Aktiviert die ausführliche Logausgabe -->
+                            <skipSave>true</skipSave> <!-- Verhindert das lokale Speichern der tar-Datei -->
+                            <dockerHost>tcp://${docker.host.external}</dockerHost>
+                            <images>
+                                <image>
+                                    <!--suppress UnresolvedMavenProperty -->
+                                    <name>mosaicgreifswald/${project.shortName}:${project.version}</name>
+                                    <build>
+                                        <contextDir>${project.build.directory}/dockerfile</contextDir>
+                                        <dockerFile>Dockerfile</dockerFile>
+                                        <args>
+                                            <TAG>mosaicgreifswald/wildfly:${docker.wildfly.version}</TAG>
+                                        </args>
+                                    </build>
+                                </image>
+                                <image>
+                                    <!--suppress UnresolvedMavenProperty -->
+                                    <name>mosaicgreifswald/${project.shortName}-db:${project.version}</name>
+                                    <build>
+                                        <contextDir>${project.build.directory}/dockerfile</contextDir>
+                                        <dockerFile>Dockerfile.db</dockerFile>
+                                        <args>
+                                            <TAG>mosaicgreifswald/wildfly-db:${docker.wildfly.version}</TAG>
+                                        </args>
+                                    </build>
+                                </image>
+<!--                                <image>-->
+<!--                                    &lt;!&ndash;suppress UnresolvedMavenProperty &ndash;&gt;-->
+<!--                                    <name>mosaicgreifswald/${project.shortName}-loadtest:${project.version}</name>-->
+<!--                                    <build>-->
+<!--                                        <contextDir>${project.build.directory}/dockerfile</contextDir>-->
+<!--                                        <dockerFile>Dockerfile.loadtest</dockerFile>-->
+<!--                                        <args>-->
+<!--                                            <TAG>docker.icm.med.uni-greifswald.de/ths/docker/wildfly-test:${docker.wildfly.version}</TAG>-->
+<!--                                        </args>-->
+<!--                                    </build>-->
+<!--                                </image>-->
+                                <image>
+                                    <!--suppress UnresolvedMavenProperty -->
+                                    <name>mosaicgreifswald/${project.shortName}:${project.version}-scan</name>
+                                    <build>
+                                        <contextDir>${project.build.directory}/dockerfile</contextDir>
+                                        <dockerFile>Dockerfile.scan-image</dockerFile>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>build-images-local</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>build-dockerfile</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <target>
+                                <exec executable="docker" dir="${project.build.directory}/dockerfile" failonerror="true">
+                                    <arg value="build"/>
+                                    <arg value="--build-arg"/>
+                                    <arg value="TAG=mosaicgreifswald/wildfly:${docker.wildfly.version}"/>
+                                    <arg value="--tag"/>
+                                    <arg value="mosaicgreifswald/${project.shortName}:${project.version}"/>
+                                    <arg value="--file"/>
+                                    <arg value="Dockerfile"/>
+                                    <arg value="."/>
+                                </exec>
+                                <exec executable="docker" dir="${project.build.directory}/dockerfile" failonerror="true">
+                                    <arg value="build"/>
+                                    <arg value="--build-arg"/>
+                                    <arg value="TAG=mosaicgreifswald/wildfly-db:${docker.wildfly.version}"/>
+                                    <arg value="--tag"/>
+                                    <arg value="mosaicgreifswald/${project.shortName}-db:${project.version}"/>
+                                    <arg value="--file"/>
+                                    <arg value="Dockerfile.db"/>
+                                    <arg value="."/>
+                                </exec>
+                                <exec executable="docker" dir="${project.build.directory}/dockerfile" failonerror="true">
+                                    <arg value="build"/>
+                                    <arg value="--tag"/>
+                                    <arg value="mosaicgreifswald/${project.shortName}:${project.version}-scan"/>
+                                    <arg value="--file"/>
+                                    <arg value="Dockerfile.scan-image"/>
+                                    <arg value="."/>
+                                </exec>
+                                <exec executable="docker" dir="${project.build.directory}/dockerfile" failonerror="true">
+                                    <arg value="build"/>
+                                    <arg value="--build-arg"/>
+                                    <arg value="TAG=docker.icm.med.uni-greifswald.de/ths/docker/wildfly-test:${docker.wildfly.version}"/>
+                                    <arg value="--tag"/>
+                                    <arg value="docker.icm.med.uni-greifswald.de/ths/docker/${project.shortName}-loadtest:${project.version}"/>
+                                    <arg value="--file"/>
+                                    <arg value="Dockerfile.loadtest"/>
+                                    <arg value="."/>
+                                </exec>
+                            </target>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -367,7 +580,7 @@
                 <version>3.3.0</version>
                 <executions>
                     <execution>
-                        <id>create-epix-shared-resources</id>
+                        <id>create-shared-resources</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>add-resource</goal>
@@ -386,11 +599,6 @@
                                     <directory>${project.parent.basedir}/deploy</directory>
                                     <targetPath>META-INF/shared-resources/update_sqls</targetPath>
                                     <include>update_database_*.sql</include>
-                                </resource>
-                                <resource>
-                                    <directory>${project.parent.basedir}/deploy</directory>
-                                    <targetPath>META-INF/shared-resources/jboss</targetPath>
-                                    <include>*${project.shortName}*.cli</include>
                                 </resource>
                                 <resource>
                                     <directory>${project.parent.basedir}/deploy</directory>
@@ -442,7 +650,19 @@
                         </goals>
                         <configuration>
                             <file>${project.parent.basedir}/deploy/ReleaseNotes.md</file>
-                            <outputFile>${project.build.directory}/classes/META-INF/shared-resources/ReleaseNotes_${project.parent.name}.md</outputFile>
+                            <outputFile>${project.build.directory}/classes/META-INF/shared-resources/ReleaseNotes-${project.parent.name}-${project.version}.md</outputFile>
+                            <replacements/>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>version-cli</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                        <configuration>
+                            <file>${project.parent.basedir}/deploy/configure_wildfly_${project.shortName}.cli</file>
+                            <outputFile>${project.build.directory}/classes/META-INF/shared-resources/jboss/configure_wildfly_${project.shortName}-${project.version}.cli</outputFile>
                             <replacements/>
                         </configuration>
                     </execution>
@@ -453,7 +673,7 @@
                             <goal>replace</goal>
                         </goals>
                         <configuration>
-                            <file>${project.parent.basedir}/epix-web/src/main/webapp/WEB-INF/web.xml</file>
+                            <file>${project.parent.basedir}/${project.shortName}-web/src/main/webapp/WEB-INF/web.xml</file>
                             <outputFile>${project.build.directory}/classes/META-INF/shared-resources/jboss/${project.shortName}_gras_web.xml</outputFile>
                             <replacements>
                                 <replacement>
@@ -482,7 +702,7 @@
                             <goal>replace</goal>
                         </goals>
                         <configuration>
-                            <file>${project.parent.basedir}/epix-web/src/main/webapp/WEB-INF/web.xml</file>
+                            <file>${project.parent.basedir}/${project.shortName}-web/src/main/webapp/WEB-INF/web.xml</file>
                             <outputFile>${project.build.directory}/classes/META-INF/shared-resources/jboss/${project.shortName}_oidc_web.xml</outputFile>
                             <replacements>
                                 <replacement>
@@ -511,7 +731,7 @@
                             <goal>replace</goal>
                         </goals>
                         <configuration>
-                            <file>${project.parent.basedir}/epix-web/src/main/webapp/WEB-INF/jboss-web.xml</file>
+                            <file>${project.parent.basedir}/${project.shortName}-web/src/main/webapp/WEB-INF/jboss-web.xml</file>
                             <outputFile>${project.build.directory}/classes/META-INF/shared-resources/jboss/${project.shortName}_gras_jboss-web.xml</outputFile>
                             <replacements>
                                 <replacement>
@@ -548,7 +768,7 @@
                             <replacements>
                                 <!-- project -->
                                 <replacement>
-                                    <token>(\$\{EPIX_VERSION}|%EPIX_VERSION%|\$\{project.version})</token>
+                                    <token>(\$\{${project.upperName}_VERSION}|%${project.upperName}_VERSION%|\$\{project.version})</token>
                                     <value>${project.version}</value>
                                 </replacement>
                                 <replacement>
@@ -574,6 +794,10 @@
                                     <value>${docker.image.name}</value>
                                 </replacement>
                                 <replacement>
+                                    <token>\$\{docker.wildfly.version}</token>
+                                    <value>${docker.wildfly.version}</value>
+                                </replacement>
+                                <replacement>
                                     <token>\$\{docker.wildfly.deployments}</token>
                                     <value>${docker.wildfly.deployments}</value>
                                 </replacement>
@@ -588,6 +812,14 @@
                                 <replacement>
                                     <token>\$\{docker.wildfly.addins}</token>
                                     <value>${docker.wildfly.addins}</value>
+                                </replacement>
+                                <replacement>
+                                    <token>\$\{docker.wildfly.sqls}</token>
+                                    <value>${docker.wildfly.sqls}</value>
+                                </replacement>
+                                <replacement>
+                                    <token>\$\{docker.wildfly.dbdata}</token>
+                                    <value>${docker.wildfly.dbdata}</value>
                                 </replacement>
                                 <replacement>
                                     <token>%MYSQL_INIT%</token>
@@ -621,17 +853,17 @@
 
                                 <!-- header and footer for md-files -->
                                 <replacement>
-                                    <token>\$\{ttp.epix.readme.header}</token>
+                                    <token>\$\{ttp.readme.header}</token>
                                     <!--suppress UnresolvedMavenProperty -->
                                     <value>![context](https://user-images.githubusercontent.com/12081369/49164561-a4481500-f32f-11e8-9f0d-fa7a730f4b9d.png)
 
-Current Docker-Version of E-PIX: ${project.version} (${build.monthYear})       &lt;br/&gt;
-Current Docker-Version of TTP-FHIR-Gateway: 2023.1.2 (October 2023), Details from [ReleaseNotes](https://www.ths-greifswald.de/fhirgw/releasenotes/2023-1-2)
+Current Docker-Version of E-PIX: ${project.version} (${build.monthYear})&lt;br/&gt;
+Current Docker-Version of TTP-FHIR-Gateway: 2024.3.0 (Dec. 2024), Details from [ReleaseNotes](https://www.ths-greifswald.de/ttpfhirgw/releasenotes/2024-3-0)
 
                                     </value>
                                 </replacement>
                                 <replacement>
-                                    <token>\$\{ttp.epix.readme.footer}</token>
+                                    <token>\$\{ttp.readme.footer}</token>
                                     <!--suppress UnresolvedMavenProperty -->
                                     <value># Additional Information #
 Selected functionalities of E-PIX were developed as part of the following research projects:

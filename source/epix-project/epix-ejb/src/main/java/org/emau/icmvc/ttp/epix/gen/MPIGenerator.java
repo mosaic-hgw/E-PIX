@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.gen;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.gen;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -53,9 +53,29 @@ import org.emau.icmvc.ttp.epix.persistence.model.Identifier;
  */
 public abstract class MPIGenerator
 {
-	protected Logger logger = LogManager.getLogger(MPIGenerator.class);
+	protected Logger logger = LogManager.getLogger(getClass());
 
-	public abstract Identifier generate(Domain domain, long counter, Timestamp timestamp);
+	public abstract String getMPIDescription();
+
+	public final Identifier generate(Domain domain, long counter, Timestamp timestamp)
+	{
+		int mpiPrefix = Integer.parseInt(domain.getMatchingConfiguration().getMpiPrefix());
+		String mpiIdValue = generate(counter, mpiPrefix);
+		return new Identifier(domain.getMpiDomain(), mpiIdValue, getMPIDescription(), timestamp);
+	}
+
+	public abstract String generate(long counter, int mpiPrefix);
+
+	public abstract String generatePrefix(int mpiPrefix);
+
+	public final long toCounter(Domain domain, Identifier identifier)
+	{
+		String mpiIdValue = identifier.getValue();
+		String mpiPrefix = domain.getMatchingConfiguration().getMpiPrefix();
+		return toCounter(mpiIdValue, Integer.parseInt(mpiPrefix));
+	}
+
+	public abstract long toCounter(String mpiValue, int mpiPrefix);
 
 	public abstract boolean checkConsistence(String value);
 }

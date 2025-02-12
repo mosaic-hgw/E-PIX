@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -43,34 +43,33 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
 import java.util.List;
 
 import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
-import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
 import org.icmvc.ttp.web.controller.Text;
 
 public interface ICRUDObject<T>
 {
-	void init(EPIXManagementService managementService, EpixHelper epixHelper, Text text);
+	void init(EpixHelper epixHelper, Text text);
 
-	public void reload();
+	void reload();
 
-	public void onShowDetails(T object);
+	void onShowDetails(T object);
 
-	public void onNew();
+	void onNew();
 
-	public void onEdit(T object);
+	void onEdit(T object);
 
-	public void onCancel();
+	void onCancel();
 
-	public boolean isEditable(T object);
+	boolean isEditable(T object);
 
-	public void onSaveCurrent();
+	void onSaveCurrent();
 
-	public void onDeleteCurrent();
+	void onDeleteCurrent();
 
-	public List<T> getAll();
+	List<T> getAll();
 
-	public boolean isNew();
+	boolean isNew();
 
-	public T getSelected();
+	T getSelected();
 
-	public void setSelected(T selected);
+	void setSelected(T selected);
 }

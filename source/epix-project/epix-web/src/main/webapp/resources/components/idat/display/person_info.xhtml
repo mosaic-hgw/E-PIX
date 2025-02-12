@@ -4,7 +4,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -14,7 +14,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -56,10 +56,17 @@
 
 <!-- IMPLEMENTATION -->
 <composite:implementation>
-	<c:person_info_row label="#{msg['common.person.MPI']}" value="#{cc.attrs.mpi1}" compareValue="#{cc.attrs.mpi2}" showCompareValue="#{cc.attrs.showI2}" compare="false" />
+	<c:person_info_row label="#{msg['common.person.MPI']}"
+					   value="#{cc.attrs.mpi1}" compareValue="#{cc.attrs.mpi2}"
+					   showCompareValue="#{cc.attrs.showI2}" compare="false"
+					   link="person.xhtml?domain=#{epixHelper.domainSelector.selectedDomainName}&amp;mpi=#{cc.attrs.mpi1}"
+					   compareLink="person.xhtml?domain=#{epixHelper.domainSelector.selectedDomainName}&amp;mpi=#{cc.attrs.mpi2}" />
 	<c:person_info_row label="#{msg['resolve.label.lastUpdate']}" value="#{cc.attrs.i1.identityLastEdited}"
 					   compareValue="#{cc.attrs.i2.identityLastEdited}" datePattern="#{cmsg['ui.date.pattern.datetime']}" showCompareValue="#{cc.attrs.showI2}" compare="false"
 					   rendered="#{cc.attrs.showMeta}" />
+	<c:person_info_row label="#{msg['model.identity.source']}" value="#{cc.attrs.i1.source.labelOrName}"
+					   compareValue="#{cc.attrs.i2.source.labelOrName}" showCompareValue="#{cc.attrs.showI2}" compare="false"
+					   rendered="#{cc.attrs.showMeta}"/>
 
 	<ui:fragment rendered="#{not empty cc.attrs.i1.identifiers and not empty cc.attrs.i2.identifiers}">
 		<div class="ui-g-12 ui-md-4 ui-lg-2 label">

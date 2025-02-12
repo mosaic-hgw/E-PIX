@@ -1,10 +1,10 @@
 ![context](https://user-images.githubusercontent.com/12081369/49164561-a4481500-f32f-11e8-9f0d-fa7a730f4b9d.png)
 
-Current Docker-Version of E-PIX: 2023.1.2 (Okt. 2023)       <br/>
-Current Docker-Version of TTP-FHIR-Gateway: 2023.1.2 (October 2023), Details from [ReleaseNotes](https://www.ths-greifswald.de/ttpfhirgw/releasenotes/2023-1-2)
+Current Docker-Version of E-PIX: 2024.3.0 (Dez. 2024)<br/>
+Current Docker-Version of TTP-FHIR-Gateway: 2024.3.0 (Dec. 2024), Details from [ReleaseNotes](https://www.ths-greifswald.de/ttpfhirgw/releasenotes/2024-3-0)
 
 # About #
-The Record Linkage and ID Management solution E-PIX (Enterprise Identifier Cross Referencing) applies the propabilistic Fellegi-Sunter-algorithm and the Levenshtein distance to avoid duplicate participant entries. The independent software module facilitates participant management and multisite-aggregation of medical research data. Additionally, the correction of potential synonym errors is supported (i.e. false-negative record linkage).
+The Record Linkage and ID Management solution E-PIX (Enterprise Identifier Cross-Referencing) applies the propabilistic Fellegi-Sunter-algorithm and the Levenshtein distance to avoid duplicate participant entries. The independent software module facilitates participant management and multisite-aggregation of medical research data. Additionally, the correction of potential synonym errors is supported (i.e. false-negative record linkage).
 
 # Download #
 
@@ -55,6 +55,22 @@ Access to relevant application and database servers of the Trusted Third Party t
 * Access restriction at URL level with Basic Authentication (e.g. with NGINX or Apache)
 * use of Keycloak to restrict access to Web-Frontends and technical interfaces
 
+${ttp.epix.readme.footer}
+
+# Screenshots #
+
+Record Linkage
+
+![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Dublettenaufl%C3%B6sung.png)
+
+Processing of Lists
+
+![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Listenverarbeitung.png)
+
+Adding Patients
+
+![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Personen-erfassen.png)
+
 # Additional Information #
 Selected functionalities of E-PIX were developed as part of the following research projects:
 - MIRACUM (funded by the German Federal Ministry of Education and Research 01ZZ1801M)
@@ -70,7 +86,7 @@ Selected functionalities of E-PIX were developed as part of the following resear
 
 ## License ##
 **License:** AGPLv3, https://www.gnu.org/licenses/agpl-3.0.en.html <br/>
-**Copyright:** 2009 - 2023 University Medicine Greifswald <br/>
+**Copyright:** 2009 - 2024 University Medicine Greifswald <br/>
 **Contact:** https://www.ths-greifswald.de/kontakt/
 
 ## Publications ##
@@ -81,17 +97,3 @@ Selected functionalities of E-PIX were developed as part of the following resear
 
 ## Supported languages ##
 German, English
-
-# Screenshots #
-
-Record Linkage
-
-![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Dublettenaufl%C3%B6sung.png)
-
-Processing of Lists
-
-![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Listenverarbeitung.png)
-
-Adding Patients
-
-![context](https://raw.githubusercontent.com/mosaic-hgw/E-PIX/master/docker/standard/screenshots/E-PIX-Screenshot-Personen-erfassen.png)

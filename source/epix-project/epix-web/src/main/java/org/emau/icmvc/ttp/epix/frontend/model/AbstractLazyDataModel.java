@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -49,8 +49,7 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-import javax.faces.context.FacesContext;
-
+import jakarta.faces.context.FacesContext;
 import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
@@ -68,20 +67,26 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 {
+	// helper
 	protected final transient Logger logger = LoggerFactory.getLogger(getClass());
-	protected final transient EPIXService service;
-	protected final transient EPIXManagementService management;
 	protected final transient HistoryHelper historyHelper;
 	protected final transient DomainSelector domainSelector;
-	protected final transient List<T> resultList;
-	protected final transient Map<Long, T> resultMap;
 
-	protected final String birthDateFormat;
-	protected final String creationTimeFormat;
+	// services
+	protected final transient EPIXService service;
+	protected final transient EPIXManagementService management;
+
+	// caching
+	protected final transient List<T> lastResultList;
+	protected final transient Map<Long, T> lastResultMap;
 	private transient long lastAccess;
 	private transient String lastDomain;
 	private transient PaginationConfig lastConfig;
 	private transient int lastRowCount; // filtered but unpaged
+
+	// config
+	protected final String birthDateFormat;
+	protected final String creationTimeFormat;
 
 	public AbstractLazyDataModel(EPIXService service, DomainSelector domainSelector, String birthDateFormat, String creationTimeFormat)
 	{
@@ -99,8 +104,8 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 		this.management = management;
 		this.historyHelper = historyHelper;
 		this.domainSelector = domainSelector;
-		this.resultList = new ArrayList<>();
-		this.resultMap = new LinkedHashMap<>();
+		this.lastResultList = new ArrayList<>();
+		this.lastResultMap = new LinkedHashMap<>();
 		this.birthDateFormat = birthDateFormat;
 		this.creationTimeFormat = creationTimeFormat;
 	}
@@ -115,7 +120,7 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 	@Override
 	public T getRowData(String rowKey)
 	{
-		return resultMap.get(Long.parseLong(rowKey));
+		return lastResultMap.get(Long.parseLong(rowKey));
 	}
 
 	@Override
@@ -125,34 +130,44 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 	}
 
 	/**
-	 * Registers the current result list.
-	 * @param entities the current result list
+	 * Registers the current result list. This method must be called from {@link #load(int, int, Map, Map)}
+	 * but AFTER the mandatory {@link #setRowCount(int)} has been called. See also comments at {@link #count(Map)}.
+	 *
+	 * @param filteredAndPagedEntities
+	 * 		the current filtered and paged result list
 	 */
-	protected void updateResult(List<T> entities)
+	protected void updateResult(List<T> filteredAndPagedEntities)
 	{
-		synchronized (resultList)
+		synchronized (lastResultList)
 		{
-			resultList.clear();
-			resultList.addAll(entities);
-			resultMap.clear();
-			entities.forEach(e -> resultMap.put(toId(e), e));
+			lastResultList.clear();
+			lastResultList.addAll(filteredAndPagedEntities);
+			lastResultMap.clear();
+			filteredAndPagedEntities.forEach(e -> lastResultMap.put(toId(e), e));
+			lastRowCount = getRowCount();
 		}
 
-		logger.debug("load: got {} (of overall {}) filtered entities for the current page (IDs={})", resultMap.size(), lastRowCount, resultMap.keySet());
+		logger.debug("load: got {} (of overall {} filtered) entities for the current page (IDs={})", lastResultMap.size(), lastRowCount, lastResultMap.keySet());
 	}
 
 	/**
-	 * Returns the last result (as an unmodifiable list) which has been registered with {@link #updateResult(List)}.
-	 * @return the last result (as an unmodifiable list)
+	 * {@return the last result (as an unmodifiable list) which has been registered with {@link #updateResult(List) }}
 	 */
 	protected List<T> getLastResult()
 	{
-		return Collections.unmodifiableList(resultList);
+		return Collections.unmodifiableList(lastResultList);
 	}
 
 	/**
-	 * Returns the currently selected domain name
-	 * @return the currently selected domain name
+	 * {@return the row count as set with the previous call to {@link #updateResult(List) }}
+	 */
+	public final int getLastRowCount()
+	{
+		return lastRowCount;
+	}
+
+	/**
+	 * {@return the currently selected domain name}
 	 */
 	public String getDomainName()
 	{
@@ -240,11 +255,11 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 		{
 			if (time - lastAccess < 3000 && isSameQuery(config))
 			{
-				logger.debug("return cached result");
+				logger.debug("return cached result: have {} (of overall {} filtered) entities for the current page (IDs={})", lastResultMap.size(), lastRowCount, lastResultMap.keySet());
 				return true;
 			}
 
-			logger.debug("query fresh result");
+			logger.debug("query fresh result...");
 
 		}
 		finally
@@ -285,8 +300,7 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 	}
 
 	/**
-	 * Returns the resource bundle from the {@link FacesContext}.
-	 * @return the resource bundle from the {@link FacesContext}
+	 * {@return the resource bundle from the {@link FacesContext}}
 	 */
 	protected ResourceBundle getBundle()
 	{
@@ -334,20 +348,5 @@ public abstract class AbstractLazyDataModel<T> extends LazyDataModel<T>
 	@Override
 	public int count(Map<String, FilterMeta> filterBy) {
 		return 0;
-	}
-
-	@Override
-	public void setRowCount(int rowCount)
-	{
-		lastRowCount = rowCount;
-		super.setRowCount(rowCount);
-	}
-
-	/**
-	 * {@return the row count as set with the previous call to {@link #setRowCount(int)}}
-	 */
-	public final int getLastRowCount()
-	{
-		return lastRowCount;
 	}
 }

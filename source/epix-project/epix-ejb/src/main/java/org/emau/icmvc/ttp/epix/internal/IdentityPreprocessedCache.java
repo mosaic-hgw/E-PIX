@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.internal;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.internal;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -64,8 +64,8 @@ import org.emau.icmvc.ttp.deduplication.model.MatchResult;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIErrorCode;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
-import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.pdqquery.model.SearchMask;
 import org.emau.icmvc.ttp.epix.persistence.model.IdentityPreprocessed;
 
@@ -77,6 +77,7 @@ import org.emau.icmvc.ttp.epix.persistence.model.IdentityPreprocessed;
 public class IdentityPreprocessedCache
 {
 	private static final Logger logger = LogManager.getLogger(IdentityPreprocessedCache.class);
+	private static final String EMPTY_STRING = "";
 	private static final String SPACE_STRING = " ";
 	private static final String ZERO2_FORMAT_STRING = "%02d";
 	private static final String ZERO2_STRING = "00";
@@ -99,7 +100,7 @@ public class IdentityPreprocessedCache
 		parallelMatchAfter = config.getMatching().getParallelMatchingAfter();
 		numberOfThreads = config.getMatching().getNumberOfThreads();
 		threadPool = Executors.newFixedThreadPool(numberOfThreads);
-		logger.info("parallelization: " + numberOfThreads + " threads after " + parallelMatchAfter + " entries");
+		logger.info("parallelization: {} threads after {} entries", numberOfThreads, parallelMatchAfter);
 		lowMemory = config.isLowMemory();
 		if (lowMemory)
 		{
@@ -150,7 +151,7 @@ public class IdentityPreprocessedCache
 		{
 			logger.info("multi value fields configured");
 		}
-		logger.info("configured " + fieldsForBlocking.length + " blocking and " + fieldsForMatching.length + " matching fields");
+		logger.info("configured {} blocking and {} matching fields", fieldsForBlocking.length, fieldsForMatching.length);
 	}
 
 	public void destroy()
@@ -168,14 +169,14 @@ public class IdentityPreprocessedCache
 				matchingCache.put(identityPreprocessed.getIdentityId(),
 						new PreprocessedCacheObject(identityPreprocessed, fieldsForBlocking, fieldsForMatching, multiValueFields));
 			}
-			logger.debug("added " + matchingCache.size() + " entries to matching cache");
+			logger.debug("added {} entries to matching cache", matchingCache.size());
 			if (!lowMemory)
 			{
 				for (IdentityPreprocessed identityPreprocessed : identityPreprocessedList)
 				{
 					ipCache.put(identityPreprocessed.getIdentityId(), identityPreprocessed);
 				}
-				logger.debug("added " + ipCache.size() + " entries to IdentityPreprocessed cache");
+				logger.debug("added {} entries to IdentityPreprocessed cache", ipCache.size());
 			}
 		}
 		finally
@@ -615,12 +616,12 @@ public class IdentityPreprocessedCache
 		return new PreprocessedCacheObject(identityPP, fieldsForBlocking, fieldsForMatching, multiValueFields);
 	}
 
-	public LongList findPersonIdsByPDQ(SearchMask mask, IdentityPreprocessed maskIdentityPreprocessed, LongList personIds)
+	public LongList findPersonIdsByPDQ(SearchMask mask, IdentityPreprocessed maskIP, LongList personIds, boolean limitSearch)
 	{
 		if (logger.isDebugEnabled())
 		{
 			StringBuilder sb = new StringBuilder("findPersonIdsByPDQ with ");
-			sb.append(maskIdentityPreprocessed);
+			sb.append(maskIP);
 			if (!personIds.isEmpty())
 			{
 				sb.append(" and person ids ");
@@ -643,31 +644,18 @@ public class IdentityPreprocessedCache
 		}
 		else if (mask.isAnd())
 		{
-			result = findPersonIdsByPDQWithAnd(mask, maskIdentityPreprocessed, personIds);
+			result = findPersonIdsByPDQWithAnd(mask, maskIP, personIds, limitSearch);
 		}
 		else
 		{
-			result = findPersonIdsByPDQWithOr(mask, maskIdentityPreprocessed, personIds);
+			result = findPersonIdsByPDQWithOr(mask, maskIP, personIds, limitSearch);
 		}
-		logger.debug("found " + result.size() + " persons");
+		logger.debug("found {} persons", result.size());
 		return result;
 	}
 
-	public boolean isEmpty()
-	{
-		rwl.readLock().lock();
-		try
-		{
-			return matchingCache.isEmpty();
-		}
-		finally
-		{
-			rwl.readLock().unlock();
-		}
-	}
-
 	// unschoen, aber wird bei umstellung auf eav eh anders
-	private LongList findPersonIdsByPDQWithAnd(SearchMask mask, IdentityPreprocessed maskIdentityPreprocessed, LongList personIds)
+	private LongList findPersonIdsByPDQWithAnd(SearchMask mask, IdentityPreprocessed maskIP, LongList personIds, boolean limitSearch)
 	{
 		LongList result = new LongArrayList();
 		// hack, damit der not-empty-code nicht auch noch in IdentityPreprocessed dupliziert werden muss
@@ -680,12 +668,36 @@ public class IdentityPreprocessedCache
 			}
 			// wenn personIds leer und suchmaske ohne ids leer, dann abbruch - die funktion wuerde sonst alle personen zurueckliefern
 			IdentityInDTO dummyIdentity = mask.getIdentity();
-			dummyIdentity.setIdentifiers(new ArrayList<IdentifierDTO>());
+			dummyIdentity.setIdentifiers(new ArrayList<>());
 			SearchMask dummyMask = new SearchMask(mask.getDomainName(), dummyIdentity, mask.isAnd(), mask.getYearOfBirth(), mask.getMonthOfBirth(),
 					mask.getDayOfBirth(), mask.getMaxResults());
 			if (!dummyMask.hasSearchValues())
 			{
 				return result;
+			}
+			if (limitSearch)
+			{
+				// ueberpruefen, ob wenigstens ein matchfeld eine sucheingabe enthaelt; gender nicht generell mitnehmen, da == ' '
+				boolean searchfieldValuesForLimitedSearch = Character.MIN_VALUE != maskIP.getGender() && ' ' != maskIP.getGender();
+				for (Field element : fieldsForMatching)
+				{
+					FieldName fieldName = element.getName();
+					try
+					{
+						if (!fieldName.equals(FieldName.gender))
+						{
+							searchfieldValuesForLimitedSearch |= !maskIP.getFieldValue(fieldName).isEmpty();
+						}
+					}
+					catch (MPIException e)
+					{
+						logger.error("{} for domain {}", e.getLocalizedMessage(), maskIP.getDomainName(), e);
+					}
+				}
+				if (!searchfieldValuesForLimitedSearch)
+				{
+					return result;
+				}
 			}
 		}
 		String maskDay = String.format(ZERO2_FORMAT_STRING, mask.getDayOfBirth());
@@ -710,7 +722,14 @@ public class IdentityPreprocessedCache
 		rwl.readLock().lock();
 		try
 		{
-			cacheArray = ipCache.values().toArray();
+			if (limitSearch)
+			{
+				cacheArray = matchingCache.values().toArray();
+			}
+			else
+			{
+				cacheArray = ipCache.values().toArray();
+			}
 		}
 		finally
 		{
@@ -718,123 +737,54 @@ public class IdentityPreprocessedCache
 		}
 		for (Object element : cacheArray)
 		{
-			IdentityPreprocessed cachedIdentityPreprocessed = (IdentityPreprocessed) element;
-			// contains fuer empty string liefert true, daher kein test auf empty
-			if (!personIds.isEmpty() && !personIds.contains(cachedIdentityPreprocessed.getPersonId()))
+			String birthDate = EMPTY_STRING;
+			if (limitSearch)
 			{
-				continue;
+				PreprocessedCacheObject candidatePPCO = (PreprocessedCacheObject) element;
+				if (!personIds.isEmpty() && !personIds.contains(candidatePPCO.getPersonId()))
+				{
+					continue;
+				}
+				else if (result.contains(candidatePPCO.getPersonId()))
+				{
+					continue;
+				}
+				if (!checkMatchWithPPCOAnd(candidatePPCO, maskIP))
+				{
+					continue;
+				}
+				for (int i = 0; i < fieldsForMatching.length; i++)
+				{
+					if (fieldsForMatching[i].getName() == FieldName.birthDate)
+					{
+						birthDate = candidatePPCO.getMatchFieldValue(candidatePPCO.getCountForMultiValueForMatching(i));
+						break;
+					}
+				}
 			}
-			else if (result.contains(cachedIdentityPreprocessed.getPersonId()))
+			else
 			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getFirstName().contains(maskIdentityPreprocessed.getFirstName()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getMiddleName().contains(maskIdentityPreprocessed.getMiddleName()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getLastName().contains(maskIdentityPreprocessed.getLastName()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getPrefix().contains(maskIdentityPreprocessed.getPrefix()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getSuffix().contains(maskIdentityPreprocessed.getSuffix()))
-			{
-				continue;
-			}
-			else if (Character.MIN_VALUE != maskIdentityPreprocessed.getGender() && ' ' != maskIdentityPreprocessed.getGender()
-					&& !(cachedIdentityPreprocessed.getGender() == maskIdentityPreprocessed.getGender()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getBirthPlace().contains(maskIdentityPreprocessed.getBirthPlace()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getRace().contains(maskIdentityPreprocessed.getRace()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getReligion().contains(maskIdentityPreprocessed.getReligion()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getMothersMaidenName().contains(maskIdentityPreprocessed.getMothersMaidenName()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getDegree().contains(maskIdentityPreprocessed.getDegree()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getMotherTongue().contains(maskIdentityPreprocessed.getMotherTongue()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getNationality().contains(maskIdentityPreprocessed.getNationality()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getCivilStatus().contains(maskIdentityPreprocessed.getCivilStatus()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue1().contains(maskIdentityPreprocessed.getValue1()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue2().contains(maskIdentityPreprocessed.getValue2()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue3().contains(maskIdentityPreprocessed.getValue3()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue4().contains(maskIdentityPreprocessed.getValue4()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue5().contains(maskIdentityPreprocessed.getValue5()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue6().contains(maskIdentityPreprocessed.getValue6()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue7().contains(maskIdentityPreprocessed.getValue7()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue8().contains(maskIdentityPreprocessed.getValue8()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue9().contains(maskIdentityPreprocessed.getValue9()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getValue10().contains(maskIdentityPreprocessed.getValue10()))
-			{
-				continue;
-			}
-			else if (!cachedIdentityPreprocessed.getBirthDate().contains(maskIdentityPreprocessed.getBirthDate()))
-			{
-				continue;
-			}
+				IdentityPreprocessed cachedIPP = (IdentityPreprocessed) element;
+				if (!personIds.isEmpty() && !personIds.contains(cachedIPP.getPersonId()))
+				{
+					continue;
+				}
+				else if (result.contains(cachedIPP.getPersonId()))
+				{
+					continue;
+				}
 
-			if (cachedIdentityPreprocessed.getBirthDate().length() == 8)
+				if (!checkMatchWithIPPAnd(cachedIPP, maskIP))
+				{
+					continue;
+				}
+				birthDate = cachedIPP.getBirthDate();
+			}
+			if (birthDate.length() == 8)
 			{
 				if (useDay)
 				{
-					String day = cachedIdentityPreprocessed.getBirthDate().substring(6, 8);
+					String day = birthDate.substring(6, 8);
 					if (!day.equals(maskDay))
 					{
 						continue;
@@ -842,7 +792,7 @@ public class IdentityPreprocessedCache
 				}
 				if (useMonth)
 				{
-					String month = cachedIdentityPreprocessed.getBirthDate().substring(4, 6);
+					String month = birthDate.substring(4, 6);
 					if (!month.equals(maskMonth))
 					{
 						continue;
@@ -850,7 +800,7 @@ public class IdentityPreprocessedCache
 				}
 				if (useYear)
 				{
-					String year = cachedIdentityPreprocessed.getBirthDate().substring(0, 4);
+					String year = birthDate.substring(0, 4);
 					if (!year.equals(maskYear))
 					{
 						continue;
@@ -861,18 +811,25 @@ public class IdentityPreprocessedCache
 			{
 				continue;
 			}
-
-			result.add(cachedIdentityPreprocessed.getPersonId());
+			if (limitSearch)
+			{
+				result.add(((PreprocessedCacheObject) element).getPersonId());
+			}
+			else
+			{
+				result.add(((IdentityPreprocessed) element).getPersonId());
+			}
 			if (result.size() == mask.getMaxResults())
 			{
 				break;
 			}
 		}
 		return result;
+
 	}
 
 	// unschoen, aber wird bei umstellung auf eav eh anders
-	private LongList findPersonIdsByPDQWithOr(SearchMask mask, IdentityPreprocessed maskIdentityPreprocessed, LongList personIds)
+	private LongList findPersonIdsByPDQWithOr(SearchMask mask, IdentityPreprocessed maskIP, LongList personIds, boolean limitSearch)
 	{
 		LongList result = new LongArrayList();
 		String maskDay = String.format(ZERO2_FORMAT_STRING, mask.getDayOfBirth());
@@ -897,7 +854,14 @@ public class IdentityPreprocessedCache
 		rwl.readLock().lock();
 		try
 		{
-			cacheArray = ipCache.values().toArray();
+			if (limitSearch)
+			{
+				cacheArray = matchingCache.values().toArray();
+			}
+			else
+			{
+				cacheArray = ipCache.values().toArray();
+			}
 		}
 		finally
 		{
@@ -905,206 +869,405 @@ public class IdentityPreprocessedCache
 		}
 		for (Object element : cacheArray)
 		{
-			IdentityPreprocessed cachedIdentityPreprocessed = (IdentityPreprocessed) element;
-			if (result.size() > 0 && result.size() == mask.getMaxResults())
+			if (result.size() == mask.getMaxResults())
 			{
 				break;
 			}
-			if (personIds.contains(cachedIdentityPreprocessed.getPersonId()))
+			String birthDate = EMPTY_STRING;
+			if (limitSearch)
 			{
-				if (!result.contains(cachedIdentityPreprocessed.getPersonId()))
+				PreprocessedCacheObject candidatePPCO = (PreprocessedCacheObject) element;
+				if (personIds.contains(candidatePPCO.getPersonId()))
 				{
-					result.add(cachedIdentityPreprocessed.getPersonId());
+					if (!result.contains(candidatePPCO.getPersonId()))
+					{
+						result.add(candidatePPCO.getPersonId());
+					}
+					continue;
 				}
-				continue;
+				else if (result.contains(candidatePPCO.getPersonId()))
+				{
+					continue;
+				}
+				if (checkMatchWithPPCOOr(candidatePPCO, maskIP))
+				{
+					result.add(candidatePPCO.getPersonId());
+					continue;
+				}
+				for (int i = 0; i < fieldsForMatching.length; i++)
+				{
+					if (fieldsForMatching[i].getName() == FieldName.birthDate)
+					{
+						birthDate = candidatePPCO.getMatchFieldValue(candidatePPCO.getCountForMultiValueForMatching(i));
+						break;
+					}
+				}
 			}
-			else if (result.contains(cachedIdentityPreprocessed.getPersonId()))
+			else
 			{
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getFirstName().isEmpty()
-					&& cachedIdentityPreprocessed.getFirstName().contains(maskIdentityPreprocessed.getFirstName()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getMiddleName().isEmpty()
-					&& cachedIdentityPreprocessed.getMiddleName().contains(maskIdentityPreprocessed.getMiddleName()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getLastName().isEmpty()
-					&& cachedIdentityPreprocessed.getLastName().contains(maskIdentityPreprocessed.getLastName()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getPrefix().isEmpty()
-					&& cachedIdentityPreprocessed.getPrefix().contains(maskIdentityPreprocessed.getPrefix()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getSuffix().isEmpty()
-					&& cachedIdentityPreprocessed.getSuffix().contains(maskIdentityPreprocessed.getSuffix()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (Character.MIN_VALUE != maskIdentityPreprocessed.getGender()
-					&& cachedIdentityPreprocessed.getGender() == maskIdentityPreprocessed.getGender())
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getBirthPlace().isEmpty()
-					&& cachedIdentityPreprocessed.getBirthPlace().contains(maskIdentityPreprocessed.getBirthPlace()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getRace().isEmpty()
-					&& cachedIdentityPreprocessed.getRace().contains(maskIdentityPreprocessed.getRace()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getReligion().isEmpty()
-					&& cachedIdentityPreprocessed.getReligion().contains(maskIdentityPreprocessed.getReligion()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getMothersMaidenName().isEmpty()
-					&& cachedIdentityPreprocessed.getMothersMaidenName().contains(maskIdentityPreprocessed.getMothersMaidenName()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getDegree().isEmpty()
-					&& cachedIdentityPreprocessed.getDegree().contains(maskIdentityPreprocessed.getDegree()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getMotherTongue().isEmpty()
-					&& cachedIdentityPreprocessed.getMotherTongue().contains(maskIdentityPreprocessed.getMotherTongue()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getNationality().isEmpty()
-					&& cachedIdentityPreprocessed.getNationality().contains(maskIdentityPreprocessed.getNationality()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getCivilStatus().isEmpty()
-					&& cachedIdentityPreprocessed.getCivilStatus().contains(maskIdentityPreprocessed.getCivilStatus()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue1().isEmpty()
-					&& cachedIdentityPreprocessed.getValue1().contains(maskIdentityPreprocessed.getValue1()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue2().isEmpty()
-					&& cachedIdentityPreprocessed.getValue2().contains(maskIdentityPreprocessed.getValue2()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue3().isEmpty()
-					&& cachedIdentityPreprocessed.getValue3().contains(maskIdentityPreprocessed.getValue3()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue4().isEmpty()
-					&& cachedIdentityPreprocessed.getValue4().contains(maskIdentityPreprocessed.getValue4()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue5().isEmpty()
-					&& cachedIdentityPreprocessed.getValue5().contains(maskIdentityPreprocessed.getValue5()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue6().isEmpty()
-					&& cachedIdentityPreprocessed.getValue6().contains(maskIdentityPreprocessed.getValue6()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue7().isEmpty()
-					&& cachedIdentityPreprocessed.getValue7().contains(maskIdentityPreprocessed.getValue7()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue8().isEmpty()
-					&& cachedIdentityPreprocessed.getValue8().contains(maskIdentityPreprocessed.getValue8()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue9().isEmpty()
-					&& cachedIdentityPreprocessed.getValue9().contains(maskIdentityPreprocessed.getValue9()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getValue10().isEmpty()
-					&& cachedIdentityPreprocessed.getValue10().contains(maskIdentityPreprocessed.getValue10()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
-			}
-			else if (!maskIdentityPreprocessed.getBirthDate().isEmpty()
-					&& cachedIdentityPreprocessed.getBirthDate().contains(maskIdentityPreprocessed.getBirthDate()))
-			{
-				result.add(cachedIdentityPreprocessed.getPersonId());
-				continue;
+				IdentityPreprocessed cachedIPP = (IdentityPreprocessed) element;
+				if (personIds.contains(cachedIPP.getPersonId()))
+				{
+					if (!result.contains(cachedIPP.getPersonId()))
+					{
+						result.add(cachedIPP.getPersonId());
+					}
+					continue;
+				}
+				else if (result.contains(cachedIPP.getPersonId()))
+				{
+					continue;
+				}
+				if (checkMatchWithIPPOr(cachedIPP, maskIP))
+				{
+					result.add(cachedIPP.getPersonId());
+					continue;
+				}
+				birthDate = cachedIPP.getBirthDate();
 			}
 
-			if (cachedIdentityPreprocessed.getBirthDate().length() == 8)
+			if (birthDate.length() == 8)
 			{
+				boolean found = false;
 				if (useDay)
 				{
-					String day = cachedIdentityPreprocessed.getBirthDate().substring(6, 8);
+					String day = birthDate.substring(6, 8);
 					if (day.equals(maskDay))
 					{
-						result.add(cachedIdentityPreprocessed.getPersonId());
-						continue;
+						found = true;
 					}
 				}
 				else if (useMonth)
 				{
-					String month = cachedIdentityPreprocessed.getBirthDate().substring(4, 6);
+					String month = birthDate.substring(4, 6);
 					if (month.equals(maskMonth))
 					{
-						result.add(cachedIdentityPreprocessed.getPersonId());
-						continue;
+						found = true;
 					}
 				}
 				else if (useYear)
 				{
-					String year = cachedIdentityPreprocessed.getBirthDate().substring(0, 4);
+					String year = birthDate.substring(0, 4);
 					if (year.equals(maskYear))
 					{
-						result.add(cachedIdentityPreprocessed.getPersonId());
-						continue;
+						found = true;
+					}
+				}
+				if (found)
+				{
+					if (limitSearch)
+					{
+						result.add(((PreprocessedCacheObject) element).getPersonId());
+					}
+					else
+					{
+						result.add(((IdentityPreprocessed) element).getPersonId());
 					}
 				}
 			}
 		}
 		return result;
+	}
+
+	private boolean checkMatchWithPPCOAnd(PreprocessedCacheObject candidatePPCO, IdentityPreprocessed maskIP)
+	{
+		for (int i = 0; i < fieldsForMatching.length; i++)
+		{
+			try
+			{
+				FieldName fieldName = fieldsForMatching[i].getName();
+				if (FieldName.gender.equals(fieldName))
+				{
+					if (Character.MIN_VALUE != maskIP.getGender() && ' ' != maskIP.getGender()
+							&& !candidatePPCO.getMatchFieldValue(candidatePPCO.getCountForMultiValueForMatching(i)).equals(String.valueOf(maskIP.getGender())))
+					{
+						return false;
+					}
+				}
+				else
+				{
+					if (!candidatePPCO.getMatchFieldValue(candidatePPCO.getCountForMultiValueForMatching(i)).contains(maskIP.getFieldValue(fieldName)))
+					{
+						return false;
+					}
+				}
+			}
+			catch (MPIException e)
+			{
+				logger.error(e.getLocalizedMessage() + " for domain " + maskIP.getDomainName(), e);
+			}
+		}
+		return true;
+	}
+
+	private boolean checkMatchWithIPPAnd(IdentityPreprocessed cachedIPP, IdentityPreprocessed maskIP)
+	{
+		// contains fuer empty string liefert true, daher kein test auf empty
+		if (!cachedIPP.getFirstName().contains(maskIP.getFirstName()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getMiddleName().contains(maskIP.getMiddleName()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getLastName().contains(maskIP.getLastName()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getPrefix().contains(maskIP.getPrefix()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getSuffix().contains(maskIP.getSuffix()))
+		{
+			return false;
+		}
+		else if (Character.MIN_VALUE != maskIP.getGender() && ' ' != maskIP.getGender()
+				&& cachedIPP.getGender() != maskIP.getGender())
+		{
+			return false;
+		}
+		else if (!cachedIPP.getBirthPlace().contains(maskIP.getBirthPlace()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getRace().contains(maskIP.getRace()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getReligion().contains(maskIP.getReligion()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getMothersMaidenName().contains(maskIP.getMothersMaidenName()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getDegree().contains(maskIP.getDegree()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getMotherTongue().contains(maskIP.getMotherTongue()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getNationality().contains(maskIP.getNationality()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getCivilStatus().contains(maskIP.getCivilStatus()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue1().contains(maskIP.getValue1()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue2().contains(maskIP.getValue2()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue3().contains(maskIP.getValue3()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue4().contains(maskIP.getValue4()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue5().contains(maskIP.getValue5()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue6().contains(maskIP.getValue6()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue7().contains(maskIP.getValue7()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue8().contains(maskIP.getValue8()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue9().contains(maskIP.getValue9()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getValue10().contains(maskIP.getValue10()))
+		{
+			return false;
+		}
+		else if (!cachedIPP.getBirthDate().contains(maskIP.getBirthDate()))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	private boolean checkMatchWithPPCOOr(PreprocessedCacheObject candidatePPCO, IdentityPreprocessed maskIP)
+	{
+		for (int i = 0; i < fieldsForMatching.length; i++)
+		{
+			try
+			{
+				FieldName fieldName = fieldsForMatching[i].getName();
+				if (FieldName.gender.equals(fieldName))
+				{
+					if (Character.MIN_VALUE != maskIP.getGender() && ' ' != maskIP.getGender()
+							&& candidatePPCO.getMatchFieldValue(candidatePPCO.getCountForMultiValueForMatching(i)).equals(String.valueOf(maskIP.getGender())))
+					{
+						return true;
+					}
+				}
+				else
+				{
+					String value = maskIP.getFieldValue(fieldName);
+					if (!value.isEmpty() && candidatePPCO.getMatchFieldValue(candidatePPCO.getCountForMultiValueForMatching(i)).contains(value))
+					{
+						return true;
+					}
+				}
+			}
+			catch (MPIException e)
+			{
+				logger.error( "{} for domain {}", e.getLocalizedMessage(), maskIP.getDomainName(), e);
+			}
+		}
+		return false;
+
+	}
+
+	private boolean checkMatchWithIPPOr(IdentityPreprocessed cachedIPP, IdentityPreprocessed maskIP)
+	{
+		if (!maskIP.getFirstName().isEmpty()
+				&& cachedIPP.getFirstName().contains(maskIP.getFirstName()))
+		{
+			return true;
+		}
+		else if (!maskIP.getMiddleName().isEmpty()
+				&& cachedIPP.getMiddleName().contains(maskIP.getMiddleName()))
+		{
+			return true;
+		}
+		else if (!maskIP.getLastName().isEmpty()
+				&& cachedIPP.getLastName().contains(maskIP.getLastName()))
+		{
+			return true;
+		}
+		else if (!maskIP.getPrefix().isEmpty()
+				&& cachedIPP.getPrefix().contains(maskIP.getPrefix()))
+		{
+			return true;
+		}
+		else if (!maskIP.getSuffix().isEmpty()
+				&& cachedIPP.getSuffix().contains(maskIP.getSuffix()))
+		{
+			return true;
+		}
+		else if (Character.MIN_VALUE != maskIP.getGender()
+				&& cachedIPP.getGender() == maskIP.getGender())
+		{
+			return true;
+		}
+		else if (!maskIP.getBirthPlace().isEmpty()
+				&& cachedIPP.getBirthPlace().contains(maskIP.getBirthPlace()))
+		{
+			return true;
+		}
+		else if (!maskIP.getRace().isEmpty()
+				&& cachedIPP.getRace().contains(maskIP.getRace()))
+		{
+			return true;
+		}
+		else if (!maskIP.getReligion().isEmpty()
+				&& cachedIPP.getReligion().contains(maskIP.getReligion()))
+		{
+			return true;
+		}
+		else if (!maskIP.getMothersMaidenName().isEmpty()
+				&& cachedIPP.getMothersMaidenName().contains(maskIP.getMothersMaidenName()))
+		{
+			return true;
+		}
+		else if (!maskIP.getDegree().isEmpty()
+				&& cachedIPP.getDegree().contains(maskIP.getDegree()))
+		{
+			return true;
+		}
+		else if (!maskIP.getMotherTongue().isEmpty()
+				&& cachedIPP.getMotherTongue().contains(maskIP.getMotherTongue()))
+		{
+			return true;
+		}
+		else if (!maskIP.getNationality().isEmpty()
+				&& cachedIPP.getNationality().contains(maskIP.getNationality()))
+		{
+			return true;
+		}
+		else if (!maskIP.getCivilStatus().isEmpty()
+				&& cachedIPP.getCivilStatus().contains(maskIP.getCivilStatus()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue1().isEmpty()
+				&& cachedIPP.getValue1().contains(maskIP.getValue1()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue2().isEmpty()
+				&& cachedIPP.getValue2().contains(maskIP.getValue2()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue3().isEmpty()
+				&& cachedIPP.getValue3().contains(maskIP.getValue3()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue4().isEmpty()
+				&& cachedIPP.getValue4().contains(maskIP.getValue4()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue5().isEmpty()
+				&& cachedIPP.getValue5().contains(maskIP.getValue5()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue6().isEmpty()
+				&& cachedIPP.getValue6().contains(maskIP.getValue6()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue7().isEmpty()
+				&& cachedIPP.getValue7().contains(maskIP.getValue7()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue8().isEmpty()
+				&& cachedIPP.getValue8().contains(maskIP.getValue8()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue9().isEmpty()
+				&& cachedIPP.getValue9().contains(maskIP.getValue9()))
+		{
+			return true;
+		}
+		else if (!maskIP.getValue10().isEmpty()
+				&& cachedIPP.getValue10().contains(maskIP.getValue10()))
+		{
+			return true;
+		}
+		else if (!maskIP.getBirthDate().isEmpty()
+				&& cachedIPP.getBirthDate().contains(maskIP.getBirthDate()))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	// fuer die parallelisierung

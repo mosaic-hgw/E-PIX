@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -40,19 +40,23 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  */
 
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
+import java.io.Serial;
+import java.io.Serializable;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.management.DomainBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.management.IdentifierDomainBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.management.SourceBean;
 
 @ViewScoped
-@ManagedBean(name = "managementController")
-public class ManagementController extends AbstractEpixWebBean
+@Named( "managementController")
+public class ManagementController extends AbstractEpixWebBean implements Serializable
 {
+	@Serial
+	private static final long serialVersionUID = 7536563585698378503L;
 	private final DomainBean domain = new DomainBean();
 	private final SourceBean source = new SourceBean();
 	private final IdentifierDomainBean identifierDomain = new IdentifierDomainBean();
@@ -61,9 +65,9 @@ public class ManagementController extends AbstractEpixWebBean
 	private void init()
 	{
 		domain.setDomainSelector(getDomainSelector());
-		domain.init(managementService, epixHelper, text);
-		source.init(managementService, epixHelper, text);
-		identifierDomain.init(managementService, epixHelper, text);
+		domain.init(epixHelper, text);
+		source.init(epixHelper, text);
+		identifierDomain.init(epixHelper, text);
 	}
 
 	public DomainBean getDomain()

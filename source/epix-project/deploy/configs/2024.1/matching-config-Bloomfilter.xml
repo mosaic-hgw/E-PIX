@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ###license-information-start###
+  E-PIX - Enterprise Patient Identifier Cross-referencing
+  __
+  Copyright (C) 2009 - 2019 The MOSAIC Project - Institut fuer Community
+  							Medicine der
+  							Universitaetsmedizin Greifswald -
+  							mosaic-projekt@uni-greifswald.de
+  							concept and implementation
+  							c. schack, l. geidel, d. langner, g. koetzschke
+  							web client
+  							a. blumentritt
+  							please cite our publications
+  							http://dx.doi.org/10.3414/ME14-01-0133
+  							http://dx.doi.org/10.1186/s12967-015-0545-6
+  __
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ###license-information-end###
+  -->
+
+<ma:MatchingConfiguration xmlns:ma="http://www.ttp.icmvc.emau.org/deduplication/config/model"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.ttp.icmvc.emau.org/deduplication/config/model matching-config-2.9.0.xsd ">
+	<matching-mode>MATCHING_IDENTITIES</matching-mode>
+	<mpi-generator>org.emau.icmvc.ttp.epix.gen.impl.EAN13Generator</mpi-generator>
+	<mpi-prefix>1001</mpi-prefix>
+	<use-notifications>false</use-notifications>
+	<limit-search-to-reduce-memory-consumption>false</limit-search-to-reduce-memory-consumption>
+	<persist-mode>PRIVACY_PRESERVING</persist-mode>
+
+	<required-fields>
+		<name>firstName</name>
+		<name>lastName</name>
+		<name>birthDate</name>
+		<name>gender</name>
+	</required-fields>
+	<value-fields-mapping>
+		<value6>RandomHashingStrategy</value6>
+		<value8>DoubleHashingStrategy</value8>
+	</value-fields-mapping>
+	<privacy>
+		<bloomfilter-config>
+			<algorithm>org.emau.icmvc.ttp.deduplication.impl.bloomfilter.RandomHashingStrategy</algorithm>
+			<field>value6</field>
+			<length>1000</length>
+			<ngrams>2</ngrams>
+			<bits-per-ngram>15</bits-per-ngram>
+			<fold>1</fold>
+			<alphabet>ABCDEFGHIJKLMNOPQRSTUVWXYZ .-0123456789mfoux</alphabet>
+			<balanced>
+				<seed>4623829476</seed>
+			</balanced>
+			<source-field>
+				<name>firstName</name>
+				<seed>456542343</seed>
+			</source-field>
+			<source-field>
+				<name>lastName</name>
+				<seed>374027465</seed>
+			</source-field>
+			<source-field>
+				<name>gender</name>
+				<seed>29465653282</seed>
+			</source-field>
+		</bloomfilter-config>
+		<bloomfilter-config>
+			<algorithm>org.emau.icmvc.ttp.deduplication.impl.bloomfilter.DoubleHashingStrategy</algorithm>
+			<field>value8</field>
+			<length>500</length>
+			<ngrams>2</ngrams>
+			<bits-per-ngram>15</bits-per-ngram>
+			<source-field>
+				<name>firstName</name>
+				<salt-field>birthDate</salt-field>
+			</source-field>
+			<source-field>
+				<name>lastName</name>
+				<salt-field>birthDate</salt-field>
+			</source-field>
+			<source-field>
+				<name>birthDate</name>
+				<salt-value>ah36K340F3#x3790</salt-value>
+			</source-field>
+			<source-field>
+				<name>gender</name>
+				<salt-value>Q2fh-Fk2#CjP+s5#</salt-value>
+			</source-field>
+		</bloomfilter-config>
+	</privacy>
+	<preprocessing-config>
+		<preprocessing-field>
+			<field-name>firstName</field-name>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>?</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>Dr.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>Prof.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>med.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>rer.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>nat.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>Ing.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>Dipl.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>,</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>-</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<complex-transformation-type xsi:type="ma:ComplexTransformation">
+				<qualified-class-name>org.emau.icmvc.ttp.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name>
+			</complex-transformation-type>
+			<complex-transformation-type xsi:type="ma:ComplexTransformation">
+				<qualified-class-name>org.emau.icmvc.ttp.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name>
+			</complex-transformation-type>
+			<complex-transformation-type>
+				<qualified-class-name>org.emau.icmvc.ttp.deduplication.preprocessing.impl.CharNormalizationTransformation</qualified-class-name>
+			</complex-transformation-type>
+			<simple-filter-type xsi:type="ma:SimpleFilter">
+				<pass-alphabet>ABCDEFGHIJKLMNOPQRSTUVWXYZ .-0123456789</pass-alphabet>
+				<replace-character></replace-character>
+			</simple-filter-type>
+		</preprocessing-field>
+		<preprocessing-field>
+			<field-name>lastName</field-name>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>?</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>Dr.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>Prof.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>med.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>rer.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>nat.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>Ing.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>Dipl.</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>,</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern> </input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<simple-transformation-type xsi:type="ma:SimpleTransformation">
+				<input-pattern>-</input-pattern>
+				<output-pattern></output-pattern>
+			</simple-transformation-type>
+			<complex-transformation-type xsi:type="ma:ComplexTransformation">
+				<qualified-class-name>org.emau.icmvc.ttp.deduplication.preprocessing.impl.ToUpperCaseTransformation</qualified-class-name>
+			</complex-transformation-type>
+			<complex-transformation-type xsi:type="ma:ComplexTransformation">
+				<qualified-class-name>org.emau.icmvc.ttp.deduplication.preprocessing.impl.CharsMutationTransformation</qualified-class-name>
+			</complex-transformation-type>
+			<complex-transformation-type>
+				<qualified-class-name>org.emau.icmvc.ttp.deduplication.preprocessing.impl.CharNormalizationTransformation</qualified-class-name>
+			</complex-transformation-type>
+			<simple-filter-type xsi:type="ma:SimpleFilter">
+				<pass-alphabet>ABCDEFGHIJKLMNOPQRSTUVWXYZ .-0123456789</pass-alphabet>
+				<replace-character></replace-character>
+			</simple-filter-type>
+		</preprocessing-field>
+	</preprocessing-config>
+	<matching>
+		<threshold-possible-match>2.99</threshold-possible-match>
+		<threshold-automatic-match>14.5</threshold-automatic-match>
+		<use-cemfim>false</use-cemfim>
+		<parallel-matching-after>1000</parallel-matching-after>
+		<number-of-threads-for-matching>4</number-of-threads-for-matching>
+		<field>
+			<name>value6</name>
+			<matching-threshold>0.8</matching-threshold>
+			<weight>8</weight>
+			<algorithm>org.emau.icmvc.ttp.deduplication.impl.SorensenDiceCoefficientCoded</algorithm>
+		</field>
+		<field>
+			<name>value8</name>
+			<matching-threshold>0.8</matching-threshold>
+			<weight>6</weight>
+			<algorithm>org.emau.icmvc.ttp.deduplication.impl.JaccardSimilarityAlgorithmCoded</algorithm>
+		</field>
+	</matching>
+</ma:MatchingConfiguration>

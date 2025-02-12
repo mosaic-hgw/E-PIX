@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.internal;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.internal;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -53,6 +53,7 @@ import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.deduplication.PreprocessingStrategy;
 import org.emau.icmvc.ttp.deduplication.PrivacyStrategy;
 import org.emau.icmvc.ttp.deduplication.ValidateRequiredStrategy;
+import org.emau.icmvc.ttp.deduplication.ValidationStrategy;
 import org.emau.icmvc.ttp.deduplication.model.DeduplicationResult;
 import org.emau.icmvc.ttp.deduplication.model.MatchResult;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
@@ -64,6 +65,7 @@ import org.emau.icmvc.ttp.epix.pdqquery.model.SearchMask;
 import org.emau.icmvc.ttp.epix.persistence.model.Domain;
 import org.emau.icmvc.ttp.epix.persistence.model.Identity;
 import org.emau.icmvc.ttp.epix.persistence.model.IdentityPreprocessed;
+import org.emau.icmvc.ttp.utils.ValidatorResult;
 
 /**
  *
@@ -178,6 +180,29 @@ public class DomainCache
 				logger.error(message);
 				throw new InvalidParameterException("domain.config", message);
 			}
+		}
+		finally
+		{
+			rwl.writeLock().unlock();
+		}
+	}
+
+	public void updateDomainStrategies(Domain domain) throws UnknownObjectException, InvalidParameterException
+	{
+		if (domain == null)
+			return;
+
+		rwl.writeLock().lock();
+		try
+		{
+			DomainCacheEntry dcEntry = cache.get(domain.getName());
+			if (dcEntry == null)
+			{
+				String message = "domain not found: " + domain.getName();
+				throw new UnknownObjectException(message, UnknownObjectType.DOMAIN, domain.getName());
+			}
+
+			 dcEntry.updateStrategies(domain);
 		}
 		finally
 		{
@@ -424,10 +449,11 @@ public class DomainCache
 		try
 		{
 			DomainCacheEntry dcEntry = getCacheEntry(mask.getDomainName());
+			boolean limitSearch = dcEntry.getDomain().getConfigurationContainer().isLimitSearchForLowMemory();
 			IdentityPreprocessed maskIdentityPreprocessed;
 			maskIdentityPreprocessed = dcEntry.preprocess(new Identity(mask.getIdentity(), new ArrayList<>(), new ArrayList<>(), null, null, false,
 					new Timestamp(System.currentTimeMillis())));
-			return dcEntry.getIpCache().findPersonIdsByPDQ(mask, maskIdentityPreprocessed, personIds);
+			return dcEntry.getIpCache().findPersonIdsByPDQ(mask, maskIdentityPreprocessed, personIds, limitSearch);
 		}
 		finally
 		{
@@ -512,6 +538,21 @@ public class DomainCache
 		}
 	}
 
+	public ValidatorResult validateIdentity(String domainName, Identity identity)
+			throws UnknownObjectException, MPIException
+	{
+		rwl.readLock().lock();
+		try
+		{
+			DomainCacheEntry dcEntry = getCacheEntry(domainName);
+			return dcEntry.validateIdentity(identity);
+		}
+		finally
+		{
+			rwl.readLock().unlock();
+		}
+	}
+
 	private DomainCacheEntry getCacheEntry(String domainName) throws UnknownObjectException
 	{
 		DomainCacheEntry dcEntry;
@@ -545,10 +586,11 @@ public class DomainCache
 	private final class DomainCacheEntry
 	{
 		private final Domain domain;
-		private final IdentityPreprocessedCache ipCache;
-		private final PreprocessingStrategy preprocessor;
-		private final PrivacyStrategy privacyStrategy;
-		private final ValidateRequiredStrategy validateRequiredStrategy;
+		private IdentityPreprocessedCache ipCache;
+		private PreprocessingStrategy preprocessor;
+		private PrivacyStrategy privacyStrategy;
+		private ValidateRequiredStrategy validateRequiredStrategy;
+		private ValidationStrategy validationStrategy;
 
 		public DomainCacheEntry(Domain domain, long personCount) throws InvalidParameterException
 		{
@@ -559,7 +601,18 @@ public class DomainCache
 			domain.setPersonCount(personCount);
 			validateRequiredStrategy = new ValidateRequiredStrategy(domain.getMatchingConfiguration().getRequiredFields());
 			privacyStrategy = new PrivacyStrategy(domain.getMatchingConfiguration().getPrivacy());
-			logger.info("cache for " + domain.getName() + " initialised");
+			validationStrategy = new ValidationStrategy(domain.getMatchingConfiguration().getValidation());
+			logger.info("cache for {} initialised", domain.getName());
+		}
+
+		public void updateStrategies(Domain domain) throws InvalidParameterException
+		{
+			preprocessor = new PreprocessingStrategy(domain.getMatchingConfiguration().getPreprocessingConfig());
+			ipCache = new IdentityPreprocessedCache(domain.getMatchingConfiguration());
+			validateRequiredStrategy = new ValidateRequiredStrategy(domain.getMatchingConfiguration().getRequiredFields());
+			privacyStrategy = new PrivacyStrategy(domain.getMatchingConfiguration().getPrivacy());
+			validationStrategy = new ValidationStrategy(domain.getMatchingConfiguration().getValidation());
+			logger.info("cache for {} updated", domain.getName());
 		}
 
 		public void addIPs(List<IdentityPreprocessed> ips) throws MPIException
@@ -602,6 +655,11 @@ public class DomainCache
 		public Identity removePII(Identity identity)
 		{
 			return privacyStrategy.removePII(identity);
+		}
+
+		public ValidatorResult validateIdentity(Identity identity) throws MPIException
+		{
+			return validationStrategy.validate(identity);
 		}
 
 		public Domain getDomain()

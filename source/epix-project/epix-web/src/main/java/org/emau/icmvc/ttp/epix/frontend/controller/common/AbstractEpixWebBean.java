@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,18 +39,23 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-end###
  */
 
+import java.text.MessageFormat;
 import java.util.List;
 
-import javax.faces.bean.ManagedProperty;
-
+import jakarta.faces.annotation.ManagedProperty;
+import jakarta.inject.Inject;
+import org.emau.icmvc.ttp.epix.common.exception.ValidatorException;
 import org.emau.icmvc.ttp.epix.common.model.DomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.SourceDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
 import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
+import org.emau.icmvc.ttp.epix.service.EPIXService;
 
 public abstract class AbstractEpixWebBean extends AbstractEpixBean
 {
+	@Inject
 	@ManagedProperty(value = "#{epixHelper}")
 	protected EpixHelper epixHelper;
 
@@ -84,7 +89,7 @@ public abstract class AbstractEpixWebBean extends AbstractEpixBean
 
 	public List<SourceDTO> getSources()
 	{
-		return managementService.getSources();
+		return getManager().getSources();
 	}
 
 	public DomainDTO getSelectedDomain()
@@ -95,14 +100,6 @@ public abstract class AbstractEpixWebBean extends AbstractEpixBean
 	public boolean isUseNotifications()
 	{
 		return getDomainSelector().getSelectedDomainConfiguration().isUseNotifications();
-	}
-
-	public void logMessage(String message, Severity severity) {
-		super.logMessage(message, severity);
-	}
-
-	public void logMessage(String message, Severity severity, boolean scrollToTop) {
-		super.logMessage(message, severity, scrollToTop);
 	}
 
 	public void setEpixHelper(EpixHelper epixHelper)
@@ -118,5 +115,36 @@ public abstract class AbstractEpixWebBean extends AbstractEpixBean
 	public String getDeduplicationReasonDescription(String description)
 	{
 		return getBundle().containsKey("deduplication." + description) ? getBundle().getString("deduplication." + description) : description;
+	}
+	
+	public void handleValidatorException(ValidatorException e)
+	{
+		logger.warn(e.getLocalizedMessage());
+		for (String field : e.getInvalidFields())
+		{
+			String fieldLabel = epixHelper.getFieldLabel(field);
+			getSelectedDomain().getConfigObjects().getValidation().getValidationConfigs().stream().filter(vc -> vc.getField().equals(FieldName.valueOf(field))).forEach(vc ->
+					{
+						if (vc.getValidator() != null)
+						{
+							String className = vc.getValidator().getQualifiedClassName().substring(vc.getValidator().getQualifiedClassName().lastIndexOf(".") + 1);
+							Object[] args = {fieldLabel, getBundle().getString("model.domain.validation.validator." + className) + (vc.getValidator().getCriterion() != null ? ": " + vc.getValidator().getCriterion() : "")};
+							logMessage(new MessageFormat(getBundle().getString("page.person.message.warn.validatorFailed")).format(args), Severity.WARN);
+						}
+						if (vc.getValidatorGroup() != null)
+						{
+							int rules = vc.getValidatorGroup().getValidators() != null ? vc.getValidatorGroup().getValidators().size() : 0;
+							rules += vc.getValidatorGroup().getValidatorGroups() != null ? vc.getValidatorGroup().getValidatorGroups().size() : 0;
+							Object[] args = {fieldLabel, rules, getCommonBundle().getString("ui.operator." + vc.getValidatorGroup().getOperator())};
+							logMessage(new MessageFormat(getBundle().getString("page.person.message.warn.validatorGroupFailed")).format(args), Severity.WARN);
+						}
+					}
+			);
+		}
+	}
+
+	public EPIXService getServiceWithAutomaticNotification()
+	{
+		return getServiceWithAutomaticNotification(isUseNotifications());
 	}
 }

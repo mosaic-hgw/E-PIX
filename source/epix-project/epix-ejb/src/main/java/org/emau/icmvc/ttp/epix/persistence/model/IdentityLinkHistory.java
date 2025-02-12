@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -44,24 +44,24 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-import javax.persistence.Cacheable;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.persistence.TableGenerator;
-
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.TableGenerator;
 import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchHistoryDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentityLinkCreationType;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
 
 /**
@@ -80,7 +80,7 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchSolution;
 public class IdentityLinkHistory implements Serializable
 {
 	@Serial
-	private static final long serialVersionUID = -3738318289858418589L;
+	private static final long serialVersionUID = -1707528096983725189L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "identitylink_history_index")
 	private long id;
@@ -110,6 +110,11 @@ public class IdentityLinkHistory implements Serializable
 	@JoinColumn(name = "dest_person")
 	private Person destPerson;
 	private String user;
+	@Column(name = "initial_create_timestamp", nullable = false)
+	private Timestamp initialCreateTimestamp;
+	@Column(name = "type")
+	@Enumerated(EnumType.STRING)
+	private IdentityLinkCreationType creationType;
 
 	public IdentityLinkHistory()
 	{
@@ -136,6 +141,8 @@ public class IdentityLinkHistory implements Serializable
 		this.historyTimestamp = timestamp;
 		this.identityLinkId = identitylink.getId();
 		this.user = user;
+		this.initialCreateTimestamp = identitylink.getCreateTimestamp();
+		this.creationType = identitylink.getCreationType();
 	}
 
 	public long getId()
@@ -268,10 +275,30 @@ public class IdentityLinkHistory implements Serializable
 		this.user = user;
 	}
 
+	public Timestamp getInitialCreateTimestamp()
+	{
+		return initialCreateTimestamp;
+	}
+
+	public void setInitialCreateTimestamp(Timestamp initialCreateTimestamp)
+	{
+		this.initialCreateTimestamp = initialCreateTimestamp;
+	}
+
+	public IdentityLinkCreationType getCreationType()
+	{
+		return creationType;
+	}
+
+	public void setCreationType(IdentityLinkCreationType creationType)
+	{
+		this.creationType = creationType;
+	}
+
 	public PossibleMatchHistoryDTO toDTO()
 	{
 		return new PossibleMatchHistoryDTO(id, srcIdentity.getId(), destIdentity.getId(), identityLinkId, threshold, algorithm, historyTimestamp,
-				updatedIdentity != null ? updatedIdentity.getId() : -1, srcPerson.getId(), destPerson.getId(), event, comment, user);
+				updatedIdentity != null ? updatedIdentity.getId() : -1, srcPerson.getId(), destPerson.getId(), event, comment, user, initialCreateTimestamp, creationType);
 	}
 
 	@Override
@@ -313,6 +340,8 @@ public class IdentityLinkHistory implements Serializable
 				+ (destPerson != null ? ", destPersonID=" + destPerson.getId() : "")
 				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
 				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
+			    + ", initialCreateTimestamp=" + initialCreateTimestamp
+			    + ", creationType=" + creationType
 				+ "]";
 	}
 }

@@ -1,0 +1,2142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="E-PIX-LoadTest">
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="############################ connection ############################" elementType="Argument">
+            <stringProp name="Argument.name">############################ connection ############################</stringProp>
+            <stringProp name="Argument.value"></stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_SOAP_PROTOCOL" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_SOAP_PROTOCOL</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;EPIX_SOAP_PROTOCOL&quot;) ?: &quot;${__P(EPIX_SOAP_PROTOCOL,http)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_SOAP_HOST" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_SOAP_HOST</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;EPIX_SOAP_HOST&quot;) ?: &quot;${__P(EPIX_SOAP_HOST,wildfly)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_SOAP_PORT" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_SOAP_PORT</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;EPIX_SOAP_PORT&quot;) ?: &quot;${__P(EPIX_SOAP_PORT,8080)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_SOAP_CONTEXT" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_SOAP_CONTEXT</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;EPIX_SOAP_CONTEXT&quot;) ?: &quot;${__P(EPIX_SOAP_CONTEXT,epix)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_SOAP_SERVICE" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_SOAP_SERVICE</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;EPIX_SOAP_SERVICE&quot;) ?: &quot;${__P(EPIX_SOAP_SERVICE,epixService)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_SOAP_MANAGEMENT" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_SOAP_MANAGEMENT</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;EPIX_SOAP_MANAGEMENT&quot;) ?: &quot;${__P(EPIX_SOAP_MANAGEMENT,epixManagementService)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_FHIR_SERVICE" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_FHIR_SERVICE</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;EPIX_FHIR_SERVICE&quot;) ?: &quot;${__P(EPIX_FHIR_SERVICE,epixFhirService)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="############################ domain-config ############################" elementType="Argument">
+            <stringProp name="Argument.name">############################ domain-config ############################</stringProp>
+            <stringProp name="Argument.value"></stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DOMAIN" elementType="Argument">
+            <stringProp name="Argument.name">DOMAIN</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_DOMAIN&quot;) ?: &quot;${__P(TEST_DOMAIN,dummy)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="AGGREGATE_REPORT" elementType="Argument">
+            <stringProp name="Argument.name">AGGREGATE_REPORT</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_AGGREGATE_REPORT&quot;) ?: &quot;${__P(TEST_AGGREGATE_REPORT,~/epix_loadtest_report.csv)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_DOMAIN_CONFIG_FILE" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_DOMAIN_CONFIG_FILE</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_EPIX_DOMAIN_CONFIG_FILE&quot;) ?: &quot;${__P(TEST_EPIX_DOMAIN_CONFIG_FILE,~/domain-config.xml)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="EPIX_IMPORT_FILE" elementType="Argument">
+            <stringProp name="Argument.name">EPIX_IMPORT_FILE</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_EPIX_IMPORT_FILE&quot;) ?: &quot;${__P(TEST_EPIX_IMPORT_FILE,~/epix_loadtest_import.csv)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="############################ threading ############################" elementType="Argument">
+            <stringProp name="Argument.name">############################ threading ############################</stringProp>
+            <stringProp name="Argument.value"></stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="THREADS" elementType="Argument">
+            <stringProp name="Argument.name">THREADS</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_THREADS&quot;) ?: &quot;${__P(TEST_THREADS,10)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="RAMP_UP" elementType="Argument">
+            <stringProp name="Argument.name">RAMP_UP</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_RAMP_UP&quot;) ?: &quot;${__P(TEST_RAMP_UP,2)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="LOOPS" elementType="Argument">
+            <stringProp name="Argument.name">LOOPS</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_LOOPS&quot;) ?: &quot;${__P(TEST_LOOPS,20)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="PACKAGE_SIZE" elementType="Argument">
+            <stringProp name="Argument.name">PACKAGE_SIZE</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_PACKAGE_SIZE&quot;) ?: &quot;${__P(TEST_PACKAGE_SIZE,500)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="NEXT_REQUEST_TIME" elementType="Argument">
+            <stringProp name="Argument.name">NEXT_REQUEST_TIME</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_NEXT_REQUEST_TIME&quot;) ?: &quot;${__P(TEST_NEXT_REQUEST_TIME,0)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="ABORT_ON_RESPONSE_ERROR" elementType="Argument">
+            <stringProp name="Argument.name">ABORT_ON_RESPONSE_ERROR</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_ABORT_ON_RESPONSE_ERROR&quot;) ?: &quot;${__P(TEST_ABORT_ON_RESPONSE_ERROR,true)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="############################ additional-testing ############################" elementType="Argument">
+            <stringProp name="Argument.name">############################ additional-testing ############################</stringProp>
+            <stringProp name="Argument.value"></stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="RESTART_WILDFLY_EVERY_X_LOOPS" elementType="Argument">
+            <stringProp name="Argument.name">RESTART_WILDFLY_EVERY_X_LOOPS</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_RESTART_WILDFLY_EVERY_X_LOOPS&quot;) ?: &quot;${__P(TEST_RESTART_WILDFLY_EVERY_X_LOOPS,0)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="RESTART_WILDFLY_MIN_COUNT" elementType="Argument">
+            <stringProp name="Argument.name">RESTART_WILDFLY_MIN_COUNT</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_RESTART_WILDFLY_MIN_COUNT&quot;) ?: &quot;${__P(TEST_RESTART_WILDFLY_MIN_COUNT,0)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="RESTART_WILDFLY_ADMIN_USER" elementType="Argument">
+            <stringProp name="Argument.name">RESTART_WILDFLY_ADMIN_USER</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_RESTART_WILDFLY_ADMIN_USER&quot;) ?: &quot;${__P(TEST_RESTART_WILDFLY_ADMIN_USER,admin)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="RESTART_WILDFLY_ADMIN_PASSWORD" elementType="Argument">
+            <stringProp name="Argument.name">RESTART_WILDFLY_ADMIN_PASSWORD</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_RESTART_WILDFLY_ADMIN_PASSWORD&quot;) ?: &quot;${__P(TEST_RESTART_WILDFLY_ADMIN_PASSWORD,wildfly_password)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="############################ additional-testing ############################" elementType="Argument">
+            <stringProp name="Argument.name">############################ additional-testing ############################</stringProp>
+            <stringProp name="Argument.value"></stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="GET_IDATS_EVERY_X_LOOPS" elementType="Argument">
+            <stringProp name="Argument.name">GET_IDATS_EVERY_X_LOOPS</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_GET_IDATS_EVERY_X_LOOPS&quot;) ?: &quot;${__P(TEST_GET_IDATS_EVERY_X_LOOPS,0)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="GET_IDATS_HOW_MANY" elementType="Argument">
+            <stringProp name="Argument.name">GET_IDATS_HOW_MANY</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_GET_IDATS_HOW_MANY&quot;) ?: &quot;${__P(TEST_GET_IDATS_HOW_MANY,1000)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="############################ db-stats-logging ############################" elementType="Argument">
+            <stringProp name="Argument.name">############################ db-stats-logging ############################</stringProp>
+            <stringProp name="Argument.value"></stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_STATS_LOGGING_EVERY_X_LOOPS" elementType="Argument">
+            <stringProp name="Argument.name">DB_STATS_LOGGING_EVERY_X_LOOPS</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_DB_STATS_LOGGING_EVERY_X_LOOPS&quot;) ?: &quot;${__P(TEST_DB_STATS_LOGGING_EVERY_X_LOOPS,0)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_STATS_DB_HOST" elementType="Argument">
+            <stringProp name="Argument.name">DB_STATS_DB_HOST</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_DB_STATS_DB_HOST&quot;) ?: &quot;${__P(TEST_DB_STATS_DB_HOST,mysql)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_STATS_DB_PORT" elementType="Argument">
+            <stringProp name="Argument.name">DB_STATS_DB_PORT</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_DB_STATS_DB_PORT&quot;) ?: &quot;${__P(TEST_DB_STATS_DB_PORT,3306)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_STATS_DB_NAME" elementType="Argument">
+            <stringProp name="Argument.name">DB_STATS_DB_NAME</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_DB_STATS_DB_NAME&quot;) ?: &quot;${__P(TEST_DB_STATS_DB_NAME,gics)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_STATS_DB_USER" elementType="Argument">
+            <stringProp name="Argument.name">DB_STATS_DB_USER</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_DB_STATS_DB_USER&quot;) ?: &quot;${__P(TEST_DB_STATS_DB_USER,gics_user)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="DB_STATS_DB_PASSWORD" elementType="Argument">
+            <stringProp name="Argument.name">DB_STATS_DB_PASSWORD</stringProp>
+            <stringProp name="Argument.value">${__groovy(System.getenv(&quot;TEST_DB_STATS_DB_PASSWORD&quot;) ?: &quot;${__P(TEST_DB_STATS_DB_PASSWORD,gics_password)}&quot;)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <SetupThreadGroup guiclass="SetupThreadGroupGui" testclass="SetupThreadGroup" testname="setUp">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </SetupThreadGroup>
+      <hashTree>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="set individual variables"/>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set individual variables" enabled="false">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">false</stringProp>
+            <stringProp name="script">// CONNECTION /////////////////////////////////////////////////////////////////////////////////////////
+//vars.put(&quot;EPIX_SOAP_PROTOCOL&quot;,              &quot;http&quot;);
+vars.put(&quot;EPIX_SOAP_HOST&quot;,                  &quot;192.168.56.101&quot;);
+//vars.put(&quot;EPIX_SOAP_PORT&quot;,                  &quot;20412&quot;);
+//vars.put(&quot;EPIX_SOAP_CONTEXT&quot;,               &quot;&quot;);
+//vars.put(&quot;EPIX_SOAP_MANAGEMENT&quot;,            &quot;${EPIX_SOAP_SERVICE}&quot;);
+//vars.put(&quot;EPIX_SOAP_SERVICE&quot;,               &quot;&quot;);
+//vars.put(&quot;EPIX_FHIR_SERVICE&quot;,               &quot;&quot;);
+
+// DOMAIN-CONFIGURATION ///////////////////////////////////////////////////////////////////////////////
+vars.put(&quot;DOMAIN&quot;,                          &quot;${__UUID()}&quot;);
+vars.put(&quot;EPIX_DOMAIN_CONFIG_FILE&quot;,         &quot;loadtest-domain-config.xml&quot;);
+//vars.put(&quot;EPIX_IMPORT_FILE&quot;,                &quot;2023-09-02_0-4mio.csv&quot;);
+
+// TEST-CONFIGURATION /////////////////////////////////////////////////////////////////////////////////
+vars.put(&quot;THREADS&quot;,                         &quot;1&quot;);
+vars.put(&quot;RAMP_UP&quot;,                         &quot;0&quot;);
+vars.put(&quot;LOOPS&quot;,                           &quot;5&quot;);
+//vars.put(&quot;NEXT_REQUEST_TIME&quot;,               &quot;0&quot;);
+vars.put(&quot;PACKAGE_SIZE&quot;,                    &quot;5&quot;);
+vars.put(&quot;ABORT_ON_RESPONSE_ERROR&quot;,         &quot;true&quot;);
+
+// RESTART-CONFIGURATION //////////////////////////////////////////////////////////////////////////////
+vars.put(&quot;RESTART_WILDFLY_EVERY_X_LOOPS&quot;,   &quot;0&quot;);
+vars.put(&quot;RESTART_WILDFLY_MIN_COUNT&quot;,       &quot;0&quot;);
+vars.put(&quot;RESTART_WILDFLY_ADMIN_USER&quot;,      &quot;admin&quot;);
+vars.put(&quot;RESTART_WILDFLY_ADMIN_PASSWORD&quot;,  &quot;wildfly_password&quot;);
+
+// GET-PSNs-TEST //////////////////////////////////////////////////////////////////////////////////////
+vars.put(&quot;GET_IDATS_EVERY_X_LOOPS&quot;,         &quot;0&quot;);
+vars.put(&quot;GET_IDATS_HOW_MANY&quot;,              &quot;500&quot;);
+
+// DB-STATS-LOGGING ///////////////////////////////////////////////////////////////////////////////////
+vars.put(&quot;DB_STATS_LOGGING_EVERY_X_LOOPS&quot;,  &quot;0&quot;);
+vars.put(&quot;DB_STATS_DB_HOST&quot;,                &quot;192.168.56.101&quot;);
+vars.put(&quot;DB_STATS_DB_PORT&quot;,                &quot;3306&quot;);
+vars.put(&quot;DB_STATS_DB_NAME&quot;,                &quot;epix&quot;);
+vars.put(&quot;DB_STATS_DB_USER&quot;,                &quot;root&quot;);
+vars.put(&quot;DB_STATS_DB_PASSWORD&quot;,            &quot;root&quot;);
+</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+        </hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="log configuration before start">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">false</stringProp>
+          <stringProp name="script">String out = 	&quot;#\n&quot; +
+	&quot;# CONFIGURATION\n&quot; +
+	&quot;# =============\n&quot; + 
+	&quot;# EPIX_SOAP_PROTOCOL              = ${EPIX_SOAP_PROTOCOL}\n&quot; + 
+	&quot;# EPIX_SOAP_HOST                  = ${EPIX_SOAP_HOST}\n&quot; + 
+	&quot;# EPIX_SOAP_PORT                  = ${EPIX_SOAP_PORT}\n&quot; + 
+	&quot;# EPIX_SOAP_CONTEXT               = ${EPIX_SOAP_CONTEXT}\n&quot; +
+	&quot;# EPIX_SOAP_MANAGEMENT            = ${EPIX_SOAP_MANAGEMENT}\n&quot; +
+	&quot;# EPIX_SOAP_SERVICE               = ${EPIX_SOAP_SERVICE}\n&quot; +
+	&quot;# EPIX_FHIR_SERVICE               = ${EPIX_FHIR_SERVICE}\n&quot; +
+	&quot;#\n&quot; +
+	&quot;# EPIX_DOMAIN_CONFIG_FILE         = ${EPIX_DOMAIN_CONFIG_FILE}\n&quot; +
+	&quot;# EPIX_IMPORT_FILE                = ${EPIX_IMPORT_FILE}\n&quot; +
+	&quot;#\n&quot; +
+	&quot;# THREADS                         = ${THREADS}\n&quot; +
+	&quot;# RAMP_UP                         = ${RAMP_UP}\n&quot; +
+	&quot;# LOOPS                           = ${LOOPS}\n&quot; +
+	&quot;# PACKAGE_SIZE                    = ${PACKAGE_SIZE}\n&quot; +
+	&quot;# NEXT_REQUEST_TIME               = ${NEXT_REQUEST_TIME}\n&quot; +
+	&quot;# ABORT_ON_RESPONSE_ERROR         = ${ABORT_ON_RESPONSE_ERROR}\n&quot; +
+	&quot;#\n&quot; +
+	&quot;# RESTART_WILDFLY_EVERY_X_LOOPS   = ${RESTART_WILDFLY_EVERY_X_LOOPS} (enabled if grater than 0)\n&quot; +
+	&quot;# RESTART_WILDFLY_MIN_COUNT       = ${RESTART_WILDFLY_MIN_COUNT}\n&quot; +
+	&quot;# RESTART_WILDFLY_ADMIN_USER      = ${RESTART_WILDFLY_ADMIN_USER}\n&quot; +
+	&quot;# RESTART_WILDFLY_ADMIN_PASSWORD  = ${RESTART_WILDFLY_ADMIN_PASSWORD}\n&quot; +
+	&quot;#\n&quot; +
+	&quot;# GET_IDATS_EVERY_X_LOOPS         = ${GET_IDATS_EVERY_X_LOOPS} (enabled if grater than 0)\n&quot; +
+	&quot;# GET_IDATS_HOW_MANY              = ${GET_IDATS_HOW_MANY}\n&quot; +
+	&quot;#\n&quot; +
+	&quot;# DB_STATS_LOGGING_EVERY_X_LOOPS  = ${DB_STATS_LOGGING_EVERY_X_LOOPS} (enabled if grater than 0)\n&quot; +
+	&quot;# DB_STATS_DB_HOST                = ${DB_STATS_DB_HOST}\n&quot; +
+	&quot;# DB_STATS_DB_PORT                = ${DB_STATS_DB_PORT}\n&quot; +
+	&quot;# DB_STATS_DB_NAME                = ${DB_STATS_DB_NAME}\n&quot; +
+	&quot;# DB_STATS_DB_USER                = ${DB_STATS_DB_USER}\n&quot; +
+	&quot;# DB_STATS_DB_PASSWORD            = ${DB_STATS_DB_PASSWORD}\n&quot; +
+	&quot;#&quot;;
+System.out.println(out);
+log.info(&quot;\n&quot;+out);</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set variables and properties">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">false</stringProp>
+          <stringProp name="script">import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+
+Pattern pattern = Pattern.compile(&quot;(1|yes|on|true)&quot;);
+Matcher matcher = pattern.matcher(&quot;${ABORT_ON_RESPONSE_ERROR}&quot;.toLowerCase());
+props.put(&quot;ABORT_ON_RESPONSE_ERROR&quot;, matcher.find().toString());
+props.put(&quot;EPIX_IMPORT_FILE&quot;, &quot;${EPIX_IMPORT_FILE}&quot;);
+props.put(&quot;DOMAIN&quot;, &quot;${DOMAIN}&quot;);
+
+props.put(&quot;IDENTITY_COUNT&quot;,     &quot;0&quot;);
+props.put(&quot;RESULT_COUNT&quot;,       &quot;0&quot;);
+props.put(&quot;TEST_TIME&quot;,          ${__time(&quot;yyyy-MM-dd HH:mm:ss.SSS&quot;)});
+props.put(&quot;WILDFLY_RESTARTING&quot;, &quot;false&quot;);
+props.put(&quot;THREADS&quot;,            &quot;${THREADS}&quot;);
+props.put(&quot;RAMP_UP&quot;,            &quot;${RAMP_UP}&quot;);
+props.put(&quot;LOOPS&quot;,              &quot;${LOOPS}&quot;);
+</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="create domain from xml"/>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="add idat-domain">
+            <stringProp name="HTTPSampler.domain">${EPIX_SOAP_HOST}</stringProp>
+            <stringProp name="HTTPSampler.port">${EPIX_SOAP_PORT}</stringProp>
+            <stringProp name="HTTPSampler.protocol">${EPIX_SOAP_PROTOCOL}</stringProp>
+            <stringProp name="HTTPSampler.path">${EPIX_SOAP_CONTEXT}/${EPIX_SOAP_MANAGEMENT}</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;soapenv:Envelope xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:ser=&quot;http://service.epix.ttp.icmvc.emau.org/&quot;&gt;&#xd;
+   &lt;soapenv:Header/&gt;&#xd;
+   &lt;soapenv:Body&gt;&#xd;
+      &lt;ser:addDomain&gt;&#xd;
+         &lt;domain&gt;&#xd;
+            &lt;config&gt;&lt;![CDATA[${__FileToString(${EPIX_DOMAIN_CONFIG_FILE},,)}]]&gt;&lt;/config&gt;&#xd;
+            &lt;description&gt;${EPIX_DOMAIN_CONFIG_FILE}&lt;/description&gt;&#xd;
+            &lt;entryDate&gt;2020-06-10T08:00:00.000+02:00&lt;/entryDate&gt;&#xd;
+            &lt;inUse&gt;true&lt;/inUse&gt;&#xd;
+            &lt;label&gt;${DOMAIN}&lt;/label&gt;&#xd;
+            &lt;matchingMode&gt;MATCHING_IDENTITIES&lt;/matchingMode&gt;&#xd;
+            &lt;mpiDomain&gt;&#xd;
+               &lt;entryDate&gt;2020-05-25T13:25:46.942+02:00&lt;/entryDate&gt;&#xd;
+               &lt;label&gt;MPI&lt;/label&gt;&#xd;
+               &lt;name&gt;MPI&lt;/name&gt;&#xd;
+               &lt;oid&gt;1.2.276.0.76.3.1.132.1.1.1&lt;/oid&gt;&#xd;
+               &lt;updateDate&gt;2020-05-25T13:25:46.942+02:00&lt;/updateDate&gt;&#xd;
+            &lt;/mpiDomain&gt;&#xd;
+            &lt;name&gt;${DOMAIN}&lt;/name&gt;&#xd;
+            &lt;safeSource&gt;&#xd;
+               &lt;description&gt;dummy because of the default-property &quot;safe_source&quot; in table domain&lt;/description&gt;&#xd;
+               &lt;entryDate&gt;2020-05-25T13:25:47.446+02:00&lt;/entryDate&gt;&#xd;
+               &lt;label&gt;dummy_safe_source&lt;/label&gt;&#xd;
+               &lt;name&gt;dummy_safe_source&lt;/name&gt;&#xd;
+               &lt;updateDate&gt;2020-05-25T13:25:47.446+02:00&lt;/updateDate&gt;&#xd;
+            &lt;/safeSource&gt;&#xd;
+            &lt;updateDate&gt;2020-05-28T08:00:00.000+02:00&lt;/updateDate&gt;&#xd;
+         &lt;/domain&gt;&#xd;
+      &lt;/ser:addDomain&gt;&#xd;
+   &lt;/soapenv:Body&gt;&#xd;
+&lt;/soapenv:Envelope&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="test StatusCode200">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="49586">200</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.custom_message"></stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="show request if unexpected code">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">false</stringProp>
+              <stringProp name="script">import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import org.xml.sax.InputSource;
+
+String formatXml(String xml) {
+   try {
+       final Transformer serializer = SAXTransformerFactory.newInstance().newTransformer();
+       serializer.setOutputProperty(OutputKeys.INDENT, &quot;yes&quot;);
+       serializer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, &quot;yes&quot;);
+       serializer.setOutputProperty(&quot;{http://xml.apache.org/xslt}indent-amount&quot;, &quot;2&quot;);
+       final StreamResult res = new StreamResult(new ByteArrayOutputStream());            
+       serializer.transform(new SAXSource(new InputSource(new ByteArrayInputStream(xml.getBytes()))), res);
+       return new String(((ByteArrayOutputStream)res.getOutputStream()).toByteArray());
+   } catch (Exception e) {
+       return xml;
+   }
+}
+
+if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;==&quot;true&quot; &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	if (!prev.getResponseDataAsString().startsWith(&quot;java.net.SocketException: Socket closed&quot;)) {
+		String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: soap-error (name: &quot;+prev.getSampleLabel()+&quot;, response-code:&quot;+prev.getResponseCode()+&quot;)&quot;;
+		out += &quot;\n--- last request: ---\n&quot; + formatXml(prev.getSamplerData());
+		out += &quot;\n--- last response: ---\n&quot; + formatXml(prev.getResponseDataAsString());
+		log.info(out);
+		System.out.println(out);
+	}
+	ctx.getEngine().stopTest();
+}</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="(opt) stats-logging-table">
+          <stringProp name="IfController.condition">${__groovy(${DB_STATS_LOGGING_EVERY_X_LOOPS}&gt;0)}</stringProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+        </IfController>
+        <hashTree>
+          <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="create stats-logging-table"/>
+          <hashTree>
+            <IfController guiclass="IfControllerPanel" testclass="IfController" testname="If Controller">
+              <stringProp name="IfController.condition">__groovy(vars.get(&quot;_CONN_STATS&quot;) == null)</stringProp>
+              <boolProp name="IfController.evaluateAll">false</boolProp>
+              <boolProp name="IfController.useExpression">false</boolProp>
+            </IfController>
+            <hashTree>
+              <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="connect stats-db">
+                <boolProp name="autocommit">true</boolProp>
+                <stringProp name="checkQuery">SELECT 1</stringProp>
+                <stringProp name="connectionAge">5000</stringProp>
+                <stringProp name="dataSource">_CONN_STATS</stringProp>
+                <stringProp name="dbUrl">jdbc:mysql://${DB_STATS_DB_HOST}:${DB_STATS_DB_PORT}/${DB_STATS_DB_NAME}?useSSL=false&amp;allowPublicKeyRetrieval=true</stringProp>
+                <stringProp name="driver">com.mysql.cj.jdbc.Driver</stringProp>
+                <boolProp name="keepAlive">false</boolProp>
+                <stringProp name="password">${DB_STATS_DB_PASSWORD}</stringProp>
+                <stringProp name="poolMax">10</stringProp>
+                <stringProp name="timeout">10000</stringProp>
+                <stringProp name="transactionIsolation">DEFAULT</stringProp>
+                <stringProp name="trimInterval">60000</stringProp>
+                <stringProp name="username">${DB_STATS_DB_USER}</stringProp>
+                <boolProp name="preinit">false</boolProp>
+                <stringProp name="initQuery"></stringProp>
+                <stringProp name="connectionProperties"></stringProp>
+              </JDBCDataSource>
+              <hashTree/>
+            </hashTree>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="create stats-table">
+              <stringProp name="dataSource">_CONN_STATS</stringProp>
+              <stringProp name="queryType">Update Statement</stringProp>
+              <stringProp name="query">CREATE TABLE IF NOT EXISTS `jmeter_stats` (
+	`id` INT NOT NULL AUTO_INCREMENT,
+	`timestamp` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+	`starttime` timestamp(3) NULL,
+	`key` VARCHAR(255) NOT NULL,
+	`value` VARCHAR(2000) NOT NULL,
+	PRIMARY KEY (`id`),
+	INDEX `datetime` (`timestamp`),
+	INDEX `starttime` (`starttime`),
+	UNIQUE INDEX `timestamp_key` (`timestamp`, `key`)
+)
+COLLATE=&apos;utf8mb4_unicode_ci&apos;
+;
+</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="queryTimeout"></stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultSetHandler">Store as String</stringProp>
+            </JDBCSampler>
+            <hashTree>
+              <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="abort on response error (sql)">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">false</stringProp>
+                <stringProp name="script">if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;==&quot;true&quot; &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: sql-error (name: &quot;+prev.getSampleLabel()+&quot;, create:&quot;+prev.getResponseCode()+&quot;)&quot;;
+	out += &quot;\n--- last request: ---\n&quot; + prev.getSamplerData(); // https://stackoverflow.com/a/31139098
+	out += &quot;\n--- last response: ---\n&quot; + prev.getResponseDataAsString(); // https://stackoverflow.com/a/40610509
+	log.info(out);
+	System.out.println(out);
+	ctx.getEngine().stopTest();
+}</stringProp>
+              </JSR223PostProcessor>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+          <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="get deployment-name" enabled="false"/>
+          <hashTree>
+            <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Set HTTP-Header">
+              <collectionProp name="HeaderManager.headers">
+                <elementProp name="" elementType="Header">
+                  <stringProp name="Header.name">Content-Type</stringProp>
+                  <stringProp name="Header.value">application/json; charset=utf-8</stringProp>
+                </elementProp>
+              </collectionProp>
+            </HeaderManager>
+            <hashTree/>
+            <AuthManager guiclass="AuthPanel" testclass="AuthManager" testname="HTTP Authorization Manager">
+              <collectionProp name="AuthManager.auth_list">
+                <elementProp name="" elementType="Authorization">
+                  <stringProp name="Authorization.url">${COMDIS_PROTOCOL}://${COMDIS_HOST}</stringProp>
+                  <stringProp name="Authorization.username">${RESTART_WILDFLY_ADMIN_USER}</stringProp>
+                  <stringProp name="Authorization.password">${RESTART_WILDFLY_ADMIN_PASSWORD}</stringProp>
+                  <stringProp name="Authorization.domain"></stringProp>
+                  <stringProp name="Authorization.realm"></stringProp>
+                  <stringProp name="Authorization.mechanism">DIGEST</stringProp>
+                </elementProp>
+              </collectionProp>
+              <boolProp name="AuthManager.controlledByThreadGroup">false</boolProp>
+            </AuthManager>
+            <hashTree/>
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="read-resource">
+              <stringProp name="TestPlan.comments">https://wildscribe.github.io/WildFly/16.0/index.html#op-read-resource</stringProp>
+              <stringProp name="HTTPSampler.domain">${EPIX_SOAP_HOST}</stringProp>
+              <stringProp name="HTTPSampler.port">9990</stringProp>
+              <stringProp name="HTTPSampler.protocol">${EPIX_SOAP_PROTOCOL}</stringProp>
+              <stringProp name="HTTPSampler.path">management</stringProp>
+              <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+              <stringProp name="HTTPSampler.method">POST</stringProp>
+              <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+              <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+              <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                    <stringProp name="Argument.value">{&#xd;
+	&quot;operation&quot;:	&quot;read-resource&quot;,&#xd;
+	&quot;attribute&quot;:	&quot;deployment&quot;&#xd;
+}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+            </HTTPSamplerProxy>
+            <hashTree>
+              <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="test StatusCode200">
+                <collectionProp name="Asserion.test_strings">
+                  <stringProp name="49586">200</stringProp>
+                </collectionProp>
+                <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+                <boolProp name="Assertion.assume_success">true</boolProp>
+                <intProp name="Assertion.test_type">16</intProp>
+                <stringProp name="Assertion.custom_message"></stringProp>
+              </ResponseAssertion>
+              <hashTree/>
+              <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="get DEPLOYMENTS">
+                <stringProp name="JSONPostProcessor.referenceNames">DEPLOYMENTS</stringProp>
+                <stringProp name="JSONPostProcessor.jsonPathExprs">$.result.deployment</stringProp>
+                <stringProp name="JSONPostProcessor.match_numbers"></stringProp>
+              </JSONPostProcessor>
+              <hashTree/>
+              <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="abort on response error (wf)">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="script">if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;.equals(&quot;true&quot;) &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: wf-error (name: &quot;+prev.getSampleLabel()+&quot;, last values:&quot;+prev.getResponseCode()+&quot;)&quot;;
+	out += &quot;\n--- last request: ---\n&quot; + prev.getSamplerData(); // https://stackoverflow.com/a/31139098
+	out += &quot;\n--- last response: ---\n&quot; + prev.getResponseDataAsString(); // https://stackoverflow.com/a/40610509
+	log.info(out);
+	System.out.println(out);
+	ctx.getEngine().stopTest();
+}</stringProp>
+              </JSR223PostProcessor>
+              <hashTree/>
+            </hashTree>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="regex DEPLOYMENTS">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">//import java.util.regex.Pattern;
+//import java.util.regex.Matcher;
+
+//Pattern pattern = Pattern.compile(&quot;\&quot;(.+).ear&quot;);
+//Matcher matcher = pattern.matcher(vars.get(&quot;DEPLOYMENT&quot;));
+//if (matcher.find()) vars.put(&quot;DEPLOYMENT&quot;, matcher.group(1));
+//log.info(&quot;### DEPLOYMENT: &quot;+vars.get(&quot;DEPLOYMENT&quot;));
+//System.out.println(&quot;### DEPLOYMENT: &quot;+vars.get(&quot;DEPLOYMENT&quot;));
+
+vars.put(&quot;DEPLOYMENTS&quot;, vars.get(&quot;DEPLOYMENTS&quot;).replace(&quot;:null&quot;,&quot;&quot;).replace(&quot;{&quot;,&quot;&quot;).replace(&quot;}&quot;,&quot;&quot;).replace(&quot;\&quot;&quot;,&quot;&quot;));
+log.info(&quot;### DEPLOYMENTS: &quot;+vars.get(&quot;DEPLOYMENTS&quot;));
+System.out.println(&quot;### DEPLOYMENTS: &quot;+vars.get(&quot;DEPLOYMENTS&quot;));
+</stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+          </hashTree>
+          <GenericController guiclass="LogicControllerGui" testclass="GenericController" testname="write first stats-values per thread"/>
+          <hashTree>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="get interesting variables">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">false</stringProp>
+              <stringProp name="script">def keySet = [
+	&quot;TEST_CONFIGURATION&quot;, &quot;DEPLOYMENT&quot;, &quot;DEPLOYMENTS&quot;, &quot;IDENTITY_COUNT&quot;
+];
+String out = &quot;&quot;;
+
+// Methode zur Erstellung des Key-Value-Paares
+String addKey(String key) {
+    def value = vars.get(key) != null ? vars.get(key) : props.get(key)
+    if (value != null) {
+        return &quot;(&apos;&quot;+props.get(&quot;TEST_TIME&quot;)+&quot;&apos;,&apos;${key}&apos;,&apos;${value}&apos;)&quot;
+    }
+    return &quot;&quot;
+}
+
+// Erstellen der Key-Value-Paare
+for (key in keySet) {
+    def result = addKey(key)
+    if (result) {
+        out += result + &quot;,&quot;
+    }
+}
+
+// Entfernen des letzten Kommas und Setzen der Variable
+//if (out) {
+    out = out.substring(0, out.length() - 1)
+    log.info(out)
+    vars.put(&quot;STAT_KEY_VALUE_PAIRS&quot;, out)
+//}</stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="write first stats-values">
+              <stringProp name="dataSource">_CONN_STATS</stringProp>
+              <stringProp name="queryType">Update Statement</stringProp>
+              <stringProp name="query">INSERT IGNORE INTO `jmeter_stats` (`starttime`,`key`,`value`) VALUES ${STAT_KEY_VALUE_PAIRS};
+</stringProp>
+              <stringProp name="queryArguments"></stringProp>
+              <stringProp name="queryArgumentsTypes"></stringProp>
+              <stringProp name="variableNames"></stringProp>
+              <stringProp name="resultVariable"></stringProp>
+              <stringProp name="queryTimeout"></stringProp>
+              <stringProp name="resultSetMaxRows"></stringProp>
+              <stringProp name="resultSetHandler">Store as String</stringProp>
+            </JDBCSampler>
+            <hashTree>
+              <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="abort on response error (sql)">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">false</stringProp>
+                <stringProp name="script">if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;==&quot;true&quot; &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: sql-error (name: &quot;+prev.getSampleLabel()+&quot;, create:&quot;+prev.getResponseCode()+&quot;)&quot;;
+	out += &quot;\n--- last request: ---\n&quot; + prev.getSamplerData(); // https://stackoverflow.com/a/31139098
+	out += &quot;\n--- last response: ---\n&quot; + prev.getResponseDataAsString(); // https://stackoverflow.com/a/40610509
+	log.info(out);
+	System.out.println(out);
+	ctx.getEngine().stopTest();
+}</stringProp>
+              </JSR223PostProcessor>
+              <hashTree/>
+              <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+                <boolProp name="ResultCollector.error_logging">false</boolProp>
+                <objProp>
+                  <name>saveConfig</name>
+                  <value class="SampleSaveConfiguration">
+                    <time>true</time>
+                    <latency>true</latency>
+                    <timestamp>true</timestamp>
+                    <success>true</success>
+                    <label>true</label>
+                    <code>true</code>
+                    <message>true</message>
+                    <threadName>true</threadName>
+                    <dataType>true</dataType>
+                    <encoding>false</encoding>
+                    <assertions>true</assertions>
+                    <subresults>true</subresults>
+                    <responseData>false</responseData>
+                    <samplerData>false</samplerData>
+                    <xml>false</xml>
+                    <fieldNames>true</fieldNames>
+                    <responseHeaders>false</responseHeaders>
+                    <requestHeaders>false</requestHeaders>
+                    <responseDataOnError>false</responseDataOnError>
+                    <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+                    <assertionsResultsToSave>0</assertionsResultsToSave>
+                    <bytes>true</bytes>
+                    <sentBytes>true</sentBytes>
+                    <url>true</url>
+                    <threadCounts>true</threadCounts>
+                    <idleTime>true</idleTime>
+                    <connectTime>true</connectTime>
+                  </value>
+                </objProp>
+                <stringProp name="filename"></stringProp>
+              </ResultCollector>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+        </hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="--------- start test ---------">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">log.info(Label);
+System.out.println(Label);</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="loadtest">
+        <stringProp name="ThreadGroup.num_threads">${__P(THREADS)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${__P(RAMP_UP)}</stringProp>
+        <longProp name="ThreadGroup.delay">2</longProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">${__P(LOOPS)}</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="only loop=1">
+          <stringProp name="IfController.condition">${__groovy(vars.getIteration() == 1)}</stringProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+        </IfController>
+        <hashTree>
+          <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="set individual variables">
+            <collectionProp name="ModuleController.node_path">
+              <stringProp name="764597751">Test Plan</stringProp>
+              <stringProp name="632063950">E-PIX-LoadTest</stringProp>
+              <stringProp name="109328029">setUp</stringProp>
+              <stringProp name="-1861648978">set individual variables</stringProp>
+            </collectionProp>
+          </ModuleController>
+          <hashTree/>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="&gt;&gt; set variables per thread">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">
+vars.put(&quot;TEST_TIME&quot;,               props.get(&quot;TEST_TIME&quot;));
+vars.put(&quot;ABORT_ON_RESPONSE_ERROR&quot;, props.get(&quot;ABORT_ON_RESPONSE_ERROR&quot;));
+vars.put(&quot;EPIX_IMPORT_FILE&quot;,        props.get(&quot;EPIX_IMPORT_FILE&quot;));
+vars.put(&quot;DOMAIN&quot;,                  props.get(&quot;DOMAIN&quot;));
+
+//log.info(&quot;\n#\n# DOMAIN: ${DOMAIN}&quot;+
+//&quot;\n# DB_STATS_DB_URL: &quot;+vars.get(&quot;DB_STATS_DB_URL&quot;)+&quot;\n#&quot;);</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+        </hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set variables">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">
+// check optional loops ////////////////////////////////////////////////////////////////////////////////////
+vars.put(&quot;LOOP_COUNT&quot;, &quot;&quot; + vars.getIteration());
+
+
+vars.put(&quot;LOOP_FOR_RESTART_WF&quot;, &quot;&quot; + (${__threadNum}==1 &amp;&amp; ${RESTART_WILDFLY_EVERY_X_LOOPS}&gt;0 &amp;&amp; Integer.parseInt(props.get(&quot;IDENTITY_COUNT&quot;))&gt;=${RESTART_WILDFLY_MIN_COUNT} &amp;&amp; vars.getIteration() % ${RESTART_WILDFLY_EVERY_X_LOOPS}==0));
+vars.put(&quot;LOOP_FOR_STATISTICS&quot;, &quot;&quot; + (${__threadNum}==1 &amp;&amp; ${DB_STATS_LOGGING_EVERY_X_LOOPS}&gt;0 &amp;&amp; vars.getIteration() % ${DB_STATS_LOGGING_EVERY_X_LOOPS}==0));
+vars.put(&quot;LOOP_FOR_GETPERSONS&quot;, &quot;&quot; + (${__threadNum}==1 &amp;&amp; ${GET_IDATS_EVERY_X_LOOPS}&gt;0 &amp;&amp; vars.getIteration() % ${GET_IDATS_EVERY_X_LOOPS}==0));
+
+vars.remove(&quot;WILDFLY_RESTART_TIME&quot;);
+vars.remove(&quot;EPIX_GETPERSONSFORDOMAIN_TIME&quot;);
+
+//String out = &quot;### THREAD:&quot;+${__threadNum}+&quot;, LOOP:&quot;+vars.getIteration()+&quot;, DOMAIN:&quot;+vars.get(&quot;CURRENT_DOMAIN&quot;)+&quot;, COUNT:&quot;+${__P(IDENTITY_COUNT)};
+//log.info(out);
+//System.out.println(out);
+</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="create one IDAT" enabled="false">
+          <stringProp name="LoopController.loops">1</stringProp>
+        </LoopController>
+        <hashTree>
+          <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="false">
+            <stringProp name="filename">${EPIX_IMPORT_FILE}</stringProp>
+            <stringProp name="fileEncoding">UTF-8</stringProp>
+            <stringProp name="variableNames">BIRTHDATE,BIRTHPLACE,CIVILSTATUS,DEGREE,FIRSTNAME,GENDER,LASTNAME,NATIONALITY,PREFIX,RACE,RELIGION,VALUE1,VALUE2,VALUE8,SOURCE_NAME,COMMENT,DOMAIN_NAME,IDENTIFIER_1,IDENTIFIER_2,CONTACT</stringProp>
+            <boolProp name="ignoreFirstLine">true</boolProp>
+            <stringProp name="delimiter">;</stringProp>
+            <boolProp name="quotedData">true</boolProp>
+            <boolProp name="recycle">false</boolProp>
+            <boolProp name="stopThread">true</boolProp>
+            <stringProp name="shareMode">shareMode.thread</stringProp>
+          </CSVDataSet>
+          <hashTree/>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set individual idat-variables">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">false</stringProp>
+            <stringProp name="script">// CLEARING /////////////////////////////////////////////////////////////////////////////////////////
+vars.remove(&quot;IDENTIFIERS_OBJ&quot;);
+vars.remove(&quot;IDENTITY_OBJ&quot;);
+vars.remove(&quot;IDENTITY&quot;);
+
+// IDENTITY /////////////////////////////////////////////////////////////////////////////////////////
+vars.put(&quot;BIRTHDATE&quot;,          &quot;${__RandomDate(,1900-01-01,2000-12-31,,)}&quot;);
+//vars.put(&quot;BIRTHPLACE&quot;,         &quot;&quot;);
+//vars.put(&quot;CIVILSTATUS&quot;,        &quot;&quot;);
+//vars.put(&quot;DEGREE&quot;,             &quot;&quot;);
+vars.put(&quot;FIRSTNAME&quot;,          &quot;${__RandomString(1,BCDFGHJKLMNPRSTVWXZ)}${__RandomString(1,aeiou)}${__RandomString(1,bcdfgkjlmnprstw)}${__RandomString(1,aeiou)}${__RandomString(1,bdfgklmnprstw)}&quot;);
+vars.put(&quot;GENDER&quot;,             &quot;${__RandomString(1,MFOU)}&quot;);
+vars.put(&quot;LASTNAME&quot;,           &quot;${__RandomString(1,BCDFGHJKLMNPRSTVWXZ)}${__RandomString(1,aeiou)}${__RandomString(1,bcdfgkjlmnprstw)}${__RandomString(1,aeiou)}${__RandomString(1,bdfgklmnprstw)}&quot;);
+//vars.put(&quot;NATIONALITY&quot;,        &quot;&quot;);
+//vars.put(&quot;PREFIX&quot;,             &quot;&quot;);
+//vars.put(&quot;RACE&quot;,               &quot;&quot;);
+//vars.put(&quot;RELIGION&quot;,           &quot;&quot;);
+//vars.put(&quot;VALUE1&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE2&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE3&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE4&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE5&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE6&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE7&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE8&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE9&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE10&quot;,            &quot;&quot;);
+vars.put(&quot;SOURCE_NAME&quot;,        &quot;dummy_safe_source&quot;);
+//vars.put(&quot;COMMENT&quot;,            &quot;&quot;);
+
+// IDENTIFIER ///////////////////////////////////////////////////////////////////////////////////////
+//vars.put(&quot;DOMAIN_NAME&quot;,        &quot;&quot;);
+//vars.put(&quot;IDENTIFIER_1&quot;,       &quot;&quot;);
+//vars.put(&quot;IDENTIFIER_2&quot;,       &quot;&quot;);
+
+// CONTACT //////////////////////////////////////////////////////////////////////////////////////////</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="build identity">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.apache.xerces.dom.DocumentImpl;
+
+boolean isSet(String value) {
+    def variable = vars.get(value)
+    return variable != null &amp;&amp; variable.length() &gt; 0 &amp;&amp; !variable.startsWith(&apos;${&apos;)
+}
+
+Document doc = new DocumentImpl();
+Element root = doc.createElement(&quot;root&quot;);
+doc.appendChild(root);
+
+//-------------------------------------------
+// identifier sap-patid
+if (isSet(&quot;IDENTIFIER_1&quot;)) {
+	String[] ids = vars.get(&quot;IDENTIFIER_1&quot;).split(&quot;,&quot;);
+	for (int i=0; i&lt;ids.length; i++) {
+		root.appendChild(identifier = doc.createElement(&quot;identifier&quot;));
+		identifier.appendChild(identifierDomain = doc.createElement(&quot;identifierDomain&quot;));
+		identifierDomain.appendChild(name = doc.createElement(&quot;name&quot;));
+		name.appendChild(doc.createTextNode(&quot;sap.pat_id&quot;));
+		identifier.appendChild(value = doc.createElement(&quot;value&quot;));
+		value.appendChild(doc.createTextNode(ids[i]));
+	}
+}
+
+// identifier sap-caseid
+if (isSet(&quot;IDENTIFIER_2&quot;)) {
+	String[] ids = vars.get(&quot;IDENTIFIER_2&quot;).split(&quot;,&quot;);
+	for (int i=0; i&lt;ids.length; i++) {
+		root.appendChild(identifier = doc.createElement(&quot;identifier&quot;));
+		identifier.appendChild(identifierDomain = doc.createElement(&quot;identifierDomain&quot;));
+		identifierDomain.appendChild(name = doc.createElement(&quot;name&quot;));
+		name.appendChild(doc.createTextNode(&quot;sap.case_id&quot;));
+		identifier.appendChild(value = doc.createElement(&quot;value&quot;));
+		value.appendChild(doc.createTextNode(ids[i]));
+	}
+}
+
+NodeList identifiers = root.getChildNodes();
+//-------------------------------------------
+
+doc = new DocumentImpl();
+Element node = null;
+Element identity = doc.createElement(&quot;identity&quot;);
+doc.appendChild(identity);
+
+//-------------------------------------------
+if (isSet(&quot;BIRTHDATE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;birthDate&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;BIRTHDATE&quot;).split(&quot; &quot;)[0]));
+}
+if (isSet(&quot;BIRTHPLACE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;birthPlace&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;BIRTHPLACE&quot;)));
+}
+if (isSet(&quot;CIVILSTATUS&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;civilStatus&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;CIVILSTATUS&quot;)));
+}
+if (isSet(&quot;DEGREE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;degree&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;DEGREE&quot;)));
+}
+if (isSet(&quot;EXTERNALDATE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;externalDate&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;EXTERNALDATE&quot;)));
+}
+if (isSet(&quot;FIRSTNAME&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;firstName&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;FIRSTNAME&quot;)));
+}
+if (isSet(&quot;GENDER&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;gender&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;GENDER&quot;)));
+}
+if (isSet(&quot;LASTNAME&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;lastName&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;LASTNAME&quot;)));
+}
+if (isSet(&quot;MIDDLENAME&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;middleName&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;MIDDLENAME&quot;)));
+}
+if (isSet(&quot;MOTHERTONGUE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;motherTongue&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;MOTHERTONGUE&quot;)));
+}
+if (isSet(&quot;MOTHERSMAIDENNAME&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;mothersMaidenName&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;MOTHERSMAIDENNAME&quot;)));
+}
+if (isSet(&quot;NATIONALITY&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;nationality&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;NATIONALITY&quot;)));
+}
+if (isSet(&quot;PREFIX&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;prefix&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;PREFIX&quot;)));
+}
+if (isSet(&quot;RACE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;race&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;RACE&quot;)));
+}
+if (isSet(&quot;RELIGION&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;religion&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;RELIGION&quot;)));
+}
+if (isSet(&quot;SUFFIX&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;suffix&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;SUFFIX&quot;)));
+}
+
+// value1-10
+for (i=1; i&lt;=10; i++) if (isSet(&quot;VALUE&quot;+i)) {
+	identity.appendChild(node = doc.createElement(&quot;value&quot;+i));
+	node.appendChild(doc.createTextNode(vars.get(&quot;VALUE&quot;+i)));
+}
+
+// identifiers
+for (int i = 0; i &lt; identifiers.getLength(); i++) {
+	Node identifier = identifiers.item(i);
+	if (identifier.getNodeType() == Node.ELEMENT_NODE) {
+		identity.appendChild(node = doc.importNode(identifier, true));
+		doc.renameNode(node, null, &quot;identifiers&quot;);
+	}
+}
+
+// contacts
+if (isSet(&quot;CONTACT&quot;)) {
+	String[] fields = vars.get(&quot;CONTACT&quot;).split(&quot;,&quot;);
+	int i = 0;
+	identity.appendChild(contacts = doc.createElement(&quot;contacts&quot;));
+	contacts.appendChild(node = doc.createElement(&quot;city&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;country&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;countryCode&quot;));	node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;district&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;email&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	//contacts.appendChild(node = doc.createElement(&quot;externalDate&quot;));	node.appendChild(doc.createTextNode(fields[i++]));
+	//contacts.appendChild(node = doc.createElement(&quot;municipalityKey&quot;));	node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;phone&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;state&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;street&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;zipCode&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+}
+
+//-------------------------------------------
+
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+// Configure transformer
+TransformerFactory tf = TransformerFactory.newInstance();
+Transformer transformer = tf.newTransformer();
+transformer.setOutputProperty(OutputKeys.INDENT, &quot;yes&quot;);
+transformer.setOutputProperty(&quot;{http://xml.apache.org/xslt}indent-amount&quot;, &quot;2&quot;);
+transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, &quot;yes&quot;);
+
+// Transform document to string with 8 spaces prefix for each line
+StringWriter stringWriter = new StringWriter();
+StreamResult streamResult = new StreamResult(stringWriter);
+DOMSource domSource = new DOMSource(doc);
+transformer.transform(domSource, streamResult);
+String stringOut = stringWriter.toString();
+
+// Add 9 spaces to the beginning of each line
+StringBuilder indentedStringOut = new StringBuilder();
+String[] lines = stringOut.split(&quot;\n&quot;);
+for (String line : lines) {
+    indentedStringOut.append(&quot;         &quot;).append(line).append(&quot;\n&quot;);
+}
+
+// Convert the result to string
+String finalOutput = indentedStringOut.toString();
+
+// Output the final result
+vars.put(&quot;IDENTITY&quot;, finalOutput);
+
+props.put(&quot;IDENTITY_COUNT&quot;, &quot;&quot; + (Integer.parseInt(props.get(&quot;IDENTITY_COUNT&quot;)) + 1));
+</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="epix-srv - addPerson">
+            <stringProp name="HTTPSampler.domain">${EPIX_SOAP_HOST}</stringProp>
+            <stringProp name="HTTPSampler.port">${EPIX_SOAP_PORT}</stringProp>
+            <stringProp name="HTTPSampler.protocol">${EPIX_SOAP_PROTOCOL}</stringProp>
+            <stringProp name="HTTPSampler.contentEncoding">utf-8</stringProp>
+            <stringProp name="HTTPSampler.path">${EPIX_SOAP_CONTEXT}/${EPIX_SOAP_SERVICE}</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;!-- thread:${__threadNum} loop:${LOOP_COUNT} --&gt;&#xd;
+&lt;soapenv:Envelope xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:ser=&quot;http://service.epix.ttp.icmvc.emau.org/&quot;&gt;&#xd;
+   &lt;soapenv:Header/&gt;&#xd;
+   &lt;soapenv:Body&gt;&#xd;
+      &lt;ser:requestMPI&gt;&#xd;
+         &lt;domainName&gt;${DOMAIN}&lt;/domainName&gt;&#xd;
+         &lt;sourceName&gt;${SOURCE_NAME}&lt;/sourceName&gt;&#xd;
+         &lt;!--Optional:--&gt;&#xd;
+         ${__groovy((vars.get(&apos;COMMENT&apos;)) ?&apos;&lt;comment&gt;${COMMENT}&lt;/comment&gt;&apos; :&apos;&apos;)}&#xd;
+${__groovy(vars.get(&apos;IDENTITY&apos;))}&#xd;
+      &lt;/ser:requestMPI&gt;&#xd;
+   &lt;/soapenv:Body&gt;&#xd;
+&lt;/soapenv:Envelope&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="test StatusCode200">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="49586">200</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.custom_message"></stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="show request if unexpected code">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import org.xml.sax.InputSource;
+
+String formatXml(String xml) {
+   try {
+       final Transformer serializer = SAXTransformerFactory.newInstance().newTransformer();
+       serializer.setOutputProperty(OutputKeys.INDENT, &quot;yes&quot;);
+       serializer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, &quot;yes&quot;);
+       serializer.setOutputProperty(&quot;{http://xml.apache.org/xslt}indent-amount&quot;, &quot;2&quot;);
+       final StreamResult res = new StreamResult(new ByteArrayOutputStream());            
+       serializer.transform(new SAXSource(new InputSource(new ByteArrayInputStream(xml.getBytes()))), res);
+       return new String(((ByteArrayOutputStream)res.getOutputStream()).toByteArray());
+   } catch (Exception e) {
+       return xml;
+   }
+}
+
+if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;==&quot;true&quot; &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	if (!prev.getResponseDataAsString().startsWith(&quot;java.net.SocketException: Socket closed&quot;)) {
+		String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: soap-error (name: &quot;+prev.getSampleLabel()+&quot;, response-code:&quot;+prev.getResponseCode()+&quot;)&quot;;
+		out += &quot;\n--- last request: ---\n&quot; + formatXml(prev.getSamplerData());
+		out += &quot;\n--- last response: ---\n&quot; + formatXml(prev.getResponseDataAsString());
+		log.info(out);
+		System.out.println(out);
+	}
+	ctx.getEngine().stopTest();
+}</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+            <XPathExtractor guiclass="XPathExtractorGui" testclass="XPathExtractor" testname="set RESULT_MPI">
+              <stringProp name="XPathExtractor.default">0</stringProp>
+              <stringProp name="XPathExtractor.refname">RESULT_MPI</stringProp>
+              <stringProp name="XPathExtractor.matchNumber">-1</stringProp>
+              <stringProp name="XPathExtractor.xpathQuery">/Envelope/Body/requestMPIResponse/return/person/mpiId/identifierDomain/value</stringProp>
+              <boolProp name="XPathExtractor.validate">false</boolProp>
+              <boolProp name="XPathExtractor.tolerant">false</boolProp>
+              <boolProp name="XPathExtractor.namespace">false</boolProp>
+            </XPathExtractor>
+            <hashTree/>
+            <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Constant Timer" enabled="true">
+              <stringProp name="ConstantTimer.delay">${NEXT_REQUEST_TIME}</stringProp>
+            </ConstantTimer>
+            <hashTree/>
+            <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report">
+              <boolProp name="ResultCollector.error_logging">false</boolProp>
+              <objProp>
+                <name>saveConfig</name>
+                <value class="SampleSaveConfiguration">
+                  <time>false</time>
+                  <latency>true</latency>
+                  <timestamp>true</timestamp>
+                  <success>true</success>
+                  <label>true</label>
+                  <code>false</code>
+                  <message>false</message>
+                  <threadName>true</threadName>
+                  <dataType>false</dataType>
+                  <encoding>false</encoding>
+                  <assertions>false</assertions>
+                  <subresults>false</subresults>
+                  <responseData>false</responseData>
+                  <samplerData>false</samplerData>
+                  <xml>false</xml>
+                  <fieldNames>true</fieldNames>
+                  <responseHeaders>false</responseHeaders>
+                  <requestHeaders>false</requestHeaders>
+                  <responseDataOnError>false</responseDataOnError>
+                  <saveAssertionResultsFailureMessage>false</saveAssertionResultsFailureMessage>
+                  <assertionsResultsToSave>0</assertionsResultsToSave>
+                </value>
+              </objProp>
+              <stringProp name="filename">${AGGREGATE_REPORT}</stringProp>
+            </ResultCollector>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="create multiple IDATs">
+          <stringProp name="LoopController.loops">1</stringProp>
+        </LoopController>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="clear IDENTITIES">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">false</stringProp>
+            <stringProp name="script">vars.put(&quot;IDENTITIES&quot;, &quot;&quot;);</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+            <stringProp name="LoopController.loops">${PACKAGE_SIZE}</stringProp>
+          </LoopController>
+          <hashTree>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set individual idat-variables">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">false</stringProp>
+              <stringProp name="script">// CLEARING /////////////////////////////////////////////////////////////////////////////////////////
+vars.remove(&quot;IDENTIFIERS_OBJ&quot;);
+vars.remove(&quot;IDENTITY_OBJ&quot;);
+
+// IDENTITY /////////////////////////////////////////////////////////////////////////////////////////
+vars.put(&quot;BIRTHDATE&quot;,          &quot;${__RandomDate(,1930-01-01,2000-12-31,,)}&quot;);
+//vars.put(&quot;BIRTHPLACE&quot;,         &quot;&quot;);
+//vars.put(&quot;CIVILSTATUS&quot;,        &quot;&quot;);
+//vars.put(&quot;DEGREE&quot;,             &quot;&quot;);
+vars.put(&quot;FIRSTNAME&quot;,          &quot;${__RandomString(1,BCDFGHJKLMNPRSTVWXZ)}${__RandomString(1,aeiou)}${__RandomString(1,bcdfgkjlmnprstw)}${__RandomString(1,aeiou)}${__RandomString(1,bdfgklmnprstw)}&quot;);
+vars.put(&quot;GENDER&quot;,             &quot;${__RandomString(1,MFOU)}&quot;);
+vars.put(&quot;LASTNAME&quot;,           &quot;${__RandomString(1,BCDFGHJKLMNPRSTVWXZ)}${__RandomString(1,aeiou)}${__RandomString(1,bcdfgkjlmnprstw)}${__RandomString(1,aeiou)}${__RandomString(1,bdfgklmnprstw)}&quot;);
+//vars.put(&quot;NATIONALITY&quot;,        &quot;&quot;);
+//vars.put(&quot;PREFIX&quot;,             &quot;&quot;);
+//vars.put(&quot;RACE&quot;,               &quot;&quot;);
+//vars.put(&quot;RELIGION&quot;,           &quot;&quot;);
+vars.put(&quot;VALUE1&quot;,             &quot;A123456780&quot;);
+//vars.put(&quot;VALUE2&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE3&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE4&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE5&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE6&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE7&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE8&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE9&quot;,             &quot;&quot;);
+//vars.put(&quot;VALUE10&quot;,            &quot;&quot;);
+vars.put(&quot;SOURCE_NAME&quot;,        &quot;dummy_safe_source&quot;);
+//vars.put(&quot;COMMENT&quot;,            &quot;&quot;);
+
+// IDENTIFIER ///////////////////////////////////////////////////////////////////////////////////////
+//vars.put(&quot;DOMAIN_NAME&quot;,        &quot;&quot;);
+//vars.put(&quot;IDENTIFIER_1&quot;,       &quot;&quot;);
+//vars.put(&quot;IDENTIFIER_2&quot;,       &quot;&quot;);
+
+// CONTACT //////////////////////////////////////////////////////////////////////////////////////////</stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+            <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="build identity">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.apache.xerces.dom.DocumentImpl;
+
+boolean isSet(String value) {
+    def variable = vars.get(value)
+    return variable != null &amp;&amp; variable.length() &gt; 0 &amp;&amp; !variable.startsWith(&apos;${&apos;)
+}
+
+Document doc = new DocumentImpl();
+Element root = doc.createElement(&quot;root&quot;);
+doc.appendChild(root);
+
+//-------------------------------------------
+// identifier sap-patid
+if (isSet(&quot;IDENTIFIER_1&quot;)) {
+	String[] ids = vars.get(&quot;IDENTIFIER_1&quot;).split(&quot;,&quot;);
+	for (int i=0; i&lt;ids.length; i++) {
+		root.appendChild(identifier = doc.createElement(&quot;identifier&quot;));
+		identifier.appendChild(identifierDomain = doc.createElement(&quot;identifierDomain&quot;));
+		identifierDomain.appendChild(name = doc.createElement(&quot;name&quot;));
+		name.appendChild(doc.createTextNode(&quot;kv-nr&quot;));
+		identifier.appendChild(value = doc.createElement(&quot;value&quot;));
+		value.appendChild(doc.createTextNode(ids[i]));
+	}
+}
+
+// identifier sap-caseid
+if (isSet(&quot;IDENTIFIER_2&quot;)) {
+	String[] ids = vars.get(&quot;IDENTIFIER_2&quot;).split(&quot;,&quot;);
+	for (int i=0; i&lt;ids.length; i++) {
+		root.appendChild(identifier = doc.createElement(&quot;identifier&quot;));
+		identifier.appendChild(identifierDomain = doc.createElement(&quot;identifierDomain&quot;));
+		identifierDomain.appendChild(name = doc.createElement(&quot;name&quot;));
+		name.appendChild(doc.createTextNode(&quot;sap.case_id&quot;));
+		identifier.appendChild(value = doc.createElement(&quot;value&quot;));
+		value.appendChild(doc.createTextNode(ids[i]));
+	}
+}
+
+NodeList identifiers = root.getChildNodes();
+//-------------------------------------------
+
+doc = new DocumentImpl();
+Element node = null;
+Element identity = doc.createElement(&quot;requestEntries&quot;);
+doc.appendChild(identity);
+
+//-------------------------------------------
+if (isSet(&quot;BIRTHDATE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;birthDate&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;BIRTHDATE&quot;).split(&quot; &quot;)[0]));
+}
+if (isSet(&quot;BIRTHPLACE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;birthPlace&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;BIRTHPLACE&quot;)));
+}
+if (isSet(&quot;CIVILSTATUS&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;civilStatus&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;CIVILSTATUS&quot;)));
+}
+if (isSet(&quot;DEGREE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;degree&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;DEGREE&quot;)));
+}
+if (isSet(&quot;EXTERNALDATE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;externalDate&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;EXTERNALDATE&quot;)));
+}
+if (isSet(&quot;FIRSTNAME&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;firstName&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;FIRSTNAME&quot;)));
+}
+if (isSet(&quot;GENDER&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;gender&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;GENDER&quot;)));
+}
+if (isSet(&quot;LASTNAME&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;lastName&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;LASTNAME&quot;)));
+}
+if (isSet(&quot;MIDDLENAME&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;middleName&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;MIDDLENAME&quot;)));
+}
+if (isSet(&quot;MOTHERTONGUE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;motherTongue&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;MOTHERTONGUE&quot;)));
+}
+if (isSet(&quot;MOTHERSMAIDENNAME&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;mothersMaidenName&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;MOTHERSMAIDENNAME&quot;)));
+}
+if (isSet(&quot;NATIONALITY&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;nationality&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;NATIONALITY&quot;)));
+}
+if (isSet(&quot;PREFIX&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;prefix&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;PREFIX&quot;)));
+}
+if (isSet(&quot;RACE&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;race&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;RACE&quot;)));
+}
+if (isSet(&quot;RELIGION&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;religion&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;RELIGION&quot;)));
+}
+if (isSet(&quot;SUFFIX&quot;)) {
+	identity.appendChild(node = doc.createElement(&quot;suffix&quot;));
+	node.appendChild(doc.createTextNode(vars.get(&quot;SUFFIX&quot;)));
+}
+
+// value1-10
+for (i=1; i&lt;=10; i++) if (isSet(&quot;VALUE&quot;+i)) {
+	identity.appendChild(node = doc.createElement(&quot;value&quot;+i));
+	node.appendChild(doc.createTextNode(vars.get(&quot;VALUE&quot;+i)));
+}
+
+// identifiers
+for (int i = 0; i &lt; identifiers.getLength(); i++) {
+	Node identifier = identifiers.item(i);
+	if (identifier.getNodeType() == Node.ELEMENT_NODE) {
+		identity.appendChild(node = doc.importNode(identifier, true));
+		doc.renameNode(node, null, &quot;identifiers&quot;);
+	}
+}
+
+// contacts
+if (isSet(&quot;CONTACT&quot;)) {
+	String[] fields = vars.get(&quot;CONTACT&quot;).split(&quot;,&quot;);
+	int i = 0;
+	identity.appendChild(contacts = doc.createElement(&quot;contacts&quot;));
+	contacts.appendChild(node = doc.createElement(&quot;city&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;country&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;countryCode&quot;));	node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;district&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;email&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	//contacts.appendChild(node = doc.createElement(&quot;externalDate&quot;));	node.appendChild(doc.createTextNode(fields[i++]));
+	//contacts.appendChild(node = doc.createElement(&quot;municipalityKey&quot;));	node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;phone&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;state&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;street&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+	contacts.appendChild(node = doc.createElement(&quot;zipCode&quot;));		node.appendChild(doc.createTextNode(fields[i++]));
+}
+
+//-------------------------------------------
+
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+// Configure transformer
+Transformer transformer = TransformerFactory.newInstance().newTransformer();
+transformer.setOutputProperty(OutputKeys.INDENT, &quot;yes&quot;);
+transformer.setOutputProperty(&quot;{http://xml.apache.org/xslt}indent-amount&quot;, &quot;2&quot;);
+transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, &quot;yes&quot;);
+
+// Transform document to string with 12 spaces prefix for each line
+StringWriter stringWriter = new StringWriter();
+transformer.transform(new DOMSource(doc), new StreamResult(stringWriter));
+
+// Add 12 spaces to the beginning of each line
+StringBuilder indentedStringOut = new StringBuilder();
+for (String line : stringWriter.toString().split(&quot;\n&quot;)) {
+    indentedStringOut.append(&quot;            &quot;).append(line).append(&quot;\n&quot;);
+}
+
+// Output the final result
+vars.put(&quot;IDENTITIES&quot;, vars.get(&quot;IDENTITIES&quot;) + indentedStringOut.toString());
+props.put(&quot;IDENTITY_COUNT&quot;, &quot;&quot; + (Integer.parseInt(props.get(&quot;IDENTITY_COUNT&quot;)) + 1));
+</stringProp>
+            </JSR223Sampler>
+            <hashTree/>
+          </hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="epix-srv - addPerson">
+            <stringProp name="HTTPSampler.domain">${EPIX_SOAP_HOST}</stringProp>
+            <stringProp name="HTTPSampler.port">${EPIX_SOAP_PORT}</stringProp>
+            <stringProp name="HTTPSampler.protocol">${EPIX_SOAP_PROTOCOL}</stringProp>
+            <stringProp name="HTTPSampler.contentEncoding">utf-8</stringProp>
+            <stringProp name="HTTPSampler.path">${EPIX_SOAP_CONTEXT}/${EPIX_SOAP_SERVICE}</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;!-- thread:${__threadNum} loop:${LOOP_COUNT} --&gt;&#xd;
+&lt;soapenv:Envelope xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:ser=&quot;http://service.epix.ttp.icmvc.emau.org/&quot;&gt;&#xd;
+   &lt;soapenv:Header/&gt;&#xd;
+   &lt;soapenv:Body&gt;&#xd;
+      &lt;ser:requestMPIBatch&gt;&#xd;
+         &lt;mpiRequest&gt;&#xd;
+	       &lt;domainName&gt;${DOMAIN}&lt;/domainName&gt;&#xd;
+	       &lt;sourceName&gt;${SOURCE_NAME}&lt;/sourceName&gt;&#xd;
+	       &lt;!--Optional:--&gt;&#xd;
+	       ${__groovy((vars.get(&apos;COMMENT&apos;)) ?&apos;&lt;comment&gt;${COMMENT}&lt;/comment&gt;&apos; :&apos;&apos;)}&#xd;
+            &lt;!--Zero or more repetitions:--&gt;&#xd;
+${__groovy(vars.get(&apos;IDENTITIES&apos;))}&#xd;
+         &lt;/mpiRequest&gt;&#xd;
+      &lt;/ser:requestMPIBatch&gt;&#xd;
+   &lt;/soapenv:Body&gt;&#xd;
+&lt;/soapenv:Envelope&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="test StatusCode200">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="49586">200</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.custom_message"></stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="show request if unexpected code">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import org.xml.sax.InputSource;
+
+String formatXml(String xml) {
+   try {
+       final Transformer serializer = SAXTransformerFactory.newInstance().newTransformer();
+       serializer.setOutputProperty(OutputKeys.INDENT, &quot;yes&quot;);
+       serializer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, &quot;yes&quot;);
+       serializer.setOutputProperty(&quot;{http://xml.apache.org/xslt}indent-amount&quot;, &quot;2&quot;);
+       final StreamResult res = new StreamResult(new ByteArrayOutputStream());            
+       serializer.transform(new SAXSource(new InputSource(new ByteArrayInputStream(xml.getBytes()))), res);
+       return new String(((ByteArrayOutputStream)res.getOutputStream()).toByteArray());
+   } catch (Exception e) {
+       return xml;
+   }
+}
+
+if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;==&quot;true&quot; &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	if (!prev.getResponseDataAsString().startsWith(&quot;java.net.SocketException: Socket closed&quot;)) {
+		String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: soap-error (name: &quot;+prev.getSampleLabel()+&quot;, response-code:&quot;+prev.getResponseCode()+&quot;)&quot;;
+		out += &quot;\n--- last request: ---\n&quot; + formatXml(prev.getSamplerData());
+		out += &quot;\n--- last response: ---\n&quot; + formatXml(prev.getResponseDataAsString());
+		log.info(out);
+		System.out.println(out);
+	}
+	ctx.getEngine().stopTest();
+}</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+            <XPathExtractor guiclass="XPathExtractorGui" testclass="XPathExtractor" testname="set RESULT_MPI">
+              <stringProp name="XPathExtractor.default">0</stringProp>
+              <stringProp name="XPathExtractor.refname">RESULT_MPI</stringProp>
+              <stringProp name="XPathExtractor.matchNumber">-1</stringProp>
+              <stringProp name="XPathExtractor.xpathQuery">/Envelope/Body/requestMPIResponse/return/person/mpiId/identifierDomain/value</stringProp>
+              <boolProp name="XPathExtractor.validate">false</boolProp>
+              <boolProp name="XPathExtractor.tolerant">false</boolProp>
+              <boolProp name="XPathExtractor.namespace">false</boolProp>
+            </XPathExtractor>
+            <hashTree/>
+            <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Constant Timer">
+              <stringProp name="ConstantTimer.delay">${NEXT_REQUEST_TIME}</stringProp>
+            </ConstantTimer>
+            <hashTree/>
+            <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report">
+              <boolProp name="ResultCollector.error_logging">false</boolProp>
+              <objProp>
+                <name>saveConfig</name>
+                <value class="SampleSaveConfiguration">
+                  <time>false</time>
+                  <latency>true</latency>
+                  <timestamp>true</timestamp>
+                  <success>true</success>
+                  <label>true</label>
+                  <code>false</code>
+                  <message>false</message>
+                  <threadName>true</threadName>
+                  <dataType>false</dataType>
+                  <encoding>false</encoding>
+                  <assertions>false</assertions>
+                  <subresults>false</subresults>
+                  <responseData>false</responseData>
+                  <samplerData>false</samplerData>
+                  <xml>false</xml>
+                  <fieldNames>true</fieldNames>
+                  <responseHeaders>false</responseHeaders>
+                  <requestHeaders>false</requestHeaders>
+                  <responseDataOnError>false</responseDataOnError>
+                  <saveAssertionResultsFailureMessage>false</saveAssertionResultsFailureMessage>
+                  <assertionsResultsToSave>0</assertionsResultsToSave>
+                </value>
+              </objProp>
+              <stringProp name="filename">${AGGREGATE_REPORT}</stringProp>
+            </ResultCollector>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="(opt) get IDATs">
+          <stringProp name="IfController.condition">${LOOP_FOR_GETPERSONS}</stringProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+          <stringProp name="TestPlan.comments">optional, only 1 thread is running</stringProp>
+        </IfController>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set parameter (getPersonsForDomainPaginated)">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">false</stringProp>
+            <stringProp name="script">vars.put(&quot;EPIX_GETPERSONSFORDOMAIN_TS&quot;, &quot;${__time()}&quot;);</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="getPersonsForDomainPaginated">
+            <stringProp name="HTTPSampler.domain">${EPIX_SOAP_HOST}</stringProp>
+            <stringProp name="HTTPSampler.port">${EPIX_SOAP_PORT}</stringProp>
+            <stringProp name="HTTPSampler.protocol">${EPIX_SOAP_PROTOCOL}</stringProp>
+            <stringProp name="HTTPSampler.path">${EPIX_SOAP_CONTEXT}/${EPIX_SOAP_SERVICE}</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">&lt;soapenv:Envelope xmlns:soapenv=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:ser=&quot;http://service.epix.ttp.icmvc.emau.org/&quot;&gt;&#xd;
+   &lt;soapenv:Header/&gt;&#xd;
+   &lt;soapenv:Body&gt;&#xd;
+      &lt;ser:getPersonsForDomainPaginated&gt;&#xd;
+         &lt;domainName&gt;${DOMAIN}&lt;/domainName&gt;&#xd;
+         &lt;firstEntry&gt;1&lt;/firstEntry&gt;&#xd;
+         &lt;pageSize&gt;${GET_IDATS_HOW_MANY}&lt;/pageSize&gt;&#xd;
+         &lt;sortField&gt;PERSON_ID&lt;/sortField&gt;&#xd;
+      &lt;/ser:getPersonsForDomainPaginated&gt;&#xd;
+   &lt;/soapenv:Body&gt;&#xd;
+&lt;/soapenv:Envelope&gt;</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree>
+            <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="test StatusCode200">
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="49586">200</stringProp>
+              </collectionProp>
+              <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+              <boolProp name="Assertion.assume_success">false</boolProp>
+              <intProp name="Assertion.test_type">16</intProp>
+              <stringProp name="Assertion.custom_message"></stringProp>
+            </ResponseAssertion>
+            <hashTree/>
+            <XPathExtractor guiclass="XPathExtractorGui" testclass="XPathExtractor" testname="set CURRENT_RESULT_COUNT">
+              <stringProp name="XPathExtractor.default">0</stringProp>
+              <stringProp name="XPathExtractor.refname">CURRENT_RESULT_COUNT</stringProp>
+              <stringProp name="XPathExtractor.matchNumber">-1</stringProp>
+              <stringProp name="XPathExtractor.xpathQuery">count(/Envelope/Body/getPersonsForDomainPaginatedResponse/return)</stringProp>
+              <boolProp name="XPathExtractor.validate">false</boolProp>
+              <boolProp name="XPathExtractor.tolerant">false</boolProp>
+              <boolProp name="XPathExtractor.namespace">false</boolProp>
+            </XPathExtractor>
+            <hashTree/>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="show request if unexpected code">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import org.xml.sax.InputSource;
+
+String formatXml(String xml) {
+   try {
+       final Transformer serializer = SAXTransformerFactory.newInstance().newTransformer();
+       serializer.setOutputProperty(OutputKeys.INDENT, &quot;yes&quot;);
+       serializer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, &quot;yes&quot;);
+       serializer.setOutputProperty(&quot;{http://xml.apache.org/xslt}indent-amount&quot;, &quot;2&quot;);
+       final StreamResult res = new StreamResult(new ByteArrayOutputStream());            
+       serializer.transform(new SAXSource(new InputSource(new ByteArrayInputStream(xml.getBytes()))), res);
+       return new String(((ByteArrayOutputStream)res.getOutputStream()).toByteArray());
+   } catch (Exception e) {
+       return xml;
+   }
+}
+
+if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;==&quot;true&quot; &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	if (!prev.getResponseDataAsString().startsWith(&quot;java.net.SocketException: Socket closed&quot;)) {
+		String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: soap-error (name: &quot;+prev.getSampleLabel()+&quot;, response-code:&quot;+prev.getResponseCode()+&quot;)&quot;;
+		out += &quot;\n--- last request: ---\n&quot; + formatXml(prev.getSamplerData());
+		out += &quot;\n--- last response: ---\n&quot; + formatXml(prev.getResponseDataAsString());
+		log.info(out);
+		System.out.println(out);
+	}
+	ctx.getEngine().stopTest();
+}</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+          </hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set EPIX_GETPERSONSFORDOMAIN_TIME">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">false</stringProp>
+            <stringProp name="script">import java.math.BigInteger;
+
+// Sicherstellen, dass die Platzhalter korrekt aufgelöst werden
+String timeStartStr = vars.get(&quot;EPIX_GETPERSONSFORDOMAIN_TS&quot;)
+String timeEndStr = &quot;${__time()}&quot;
+
+// Überprüfen, ob die Variablen null sind
+if (timeStartStr == null || timeEndStr == null) {
+    log.error(&quot;EPIX_GETPERSONSFORDOMAIN_TS or __time() is null&quot;)
+    return
+}
+
+try {
+    BigInteger timeStart = new BigInteger(timeStartStr)
+    BigInteger timeEnd = new BigInteger(timeEndStr)
+
+    // Berechnung der Zeitdifferenz in Sekunden
+    Float getTime = (timeEnd.subtract(timeStart).floatValue() / 1000)
+    vars.put(&quot;EPIX_GETPERSONSFORDOMAIN_TIME&quot;, getTime.toString())
+
+    // Aktualisieren der Ergebnisanzahl
+    String resultCountStr = props.get(&quot;RESULT_COUNT&quot;)
+    String currentResultCountStr = vars.get(&quot;CURRENT_RESULT_COUNT&quot;)
+
+    if (resultCountStr == null || currentResultCountStr == null) {
+        log.error(&quot;RESULT_COUNT or CURRENT_RESULT_COUNT is null&quot;)
+        return
+    }
+
+    Integer resultCount = Integer.parseInt(resultCountStr)
+    Integer currentResultCount = Integer.parseInt(currentResultCountStr)
+    props.put(&quot;RESULT_COUNT&quot;, (resultCount + currentResultCount).toString())
+
+    // Ausgabe der Informationen
+    String out = &quot;### GET PERSONS FOR DOMAIN (at loop:${LOOP_COUNT}, in time:&quot; + getTime + &quot;s, results:&quot; + currentResultCount + &quot;)&quot;
+    log.info(out)
+} catch (Exception e) {
+    log.error(&quot;Error in processing script: &quot;, e)
+}
+</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+        </hashTree>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="(opt) restart wildfly">
+          <stringProp name="IfController.condition">${LOOP_FOR_RESTART_WF}</stringProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+          <stringProp name="TestPlan.comments">optional, only 1 thread is running</stringProp>
+        </IfController>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="set WILDFLY_RESTARTING=true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">false</stringProp>
+            <stringProp name="script">//log.info(&quot;\n#\n# restarting wildfly\n#&quot;);
+
+props.put(&quot;WILDFLY_RESTARTING&quot;, &quot;true&quot;);
+vars.put(&quot;WILDFLY_RESTART_TS&quot;, &quot;${__time(/1000,)}&quot;);
+
+log.info(&quot;### wildfly is restarting&quot;);</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Constant Timer">
+            <stringProp name="ConstantTimer.delay">1000</stringProp>
+          </ConstantTimer>
+          <hashTree/>
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Set HTTP-Header">
+            <collectionProp name="HeaderManager.headers">
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Content-Type</stringProp>
+                <stringProp name="Header.value">application/json; charset=utf-8</stringProp>
+              </elementProp>
+            </collectionProp>
+          </HeaderManager>
+          <hashTree/>
+          <AuthManager guiclass="AuthPanel" testclass="AuthManager" testname="HTTP Authorization Manager">
+            <collectionProp name="AuthManager.auth_list">
+              <elementProp name="" elementType="Authorization">
+                <stringProp name="Authorization.url">${EPIX_SOAP_PROTOCOL}://${EPIX_SOAP_HOST}</stringProp>
+                <stringProp name="Authorization.username">${RESTART_WILDFLY_ADMIN_USER}</stringProp>
+                <stringProp name="Authorization.password">${RESTART_WILDFLY_ADMIN_PASSWORD}</stringProp>
+                <stringProp name="Authorization.domain"></stringProp>
+                <stringProp name="Authorization.realm"></stringProp>
+                <stringProp name="Authorization.mechanism">DIGEST</stringProp>
+              </elementProp>
+            </collectionProp>
+            <boolProp name="AuthManager.controlledByThreadGroup">false</boolProp>
+          </AuthManager>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="reload deployments">
+            <stringProp name="TestPlan.comments">https://wildscribe.github.io/WildFly/16.0/index.html#op-reload</stringProp>
+            <stringProp name="HTTPSampler.domain">${EPIX_SOAP_HOST}</stringProp>
+            <stringProp name="HTTPSampler.port">9990</stringProp>
+            <stringProp name="HTTPSampler.protocol">${EPIX_SOAP_PROTOCOL}</stringProp>
+            <stringProp name="HTTPSampler.path">management</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <stringProp name="HTTPSampler.method">POST</stringProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="" elementType="HTTPArgument">
+                  <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                  <stringProp name="Argument.value">{&#xd;
+	&quot;operation&quot;:	&quot;reload&quot;,&#xd;
+	&quot;address&quot;:	[]&#xd;
+}</stringProp>
+                  <stringProp name="Argument.metadata">=</stringProp>
+                </elementProp>
+              </collectionProp>
+            </elementProp>
+            <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree/>
+          <WhileController guiclass="WhileControllerGui" testclass="WhileController" testname="wait for restart">
+            <stringProp name="WhileController.condition">${__groovy(props.get(&quot;WILDFLY_RESTARTING&quot;)==&quot;true&quot;)}</stringProp>
+          </WhileController>
+          <hashTree>
+            <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="Constant Timer">
+              <stringProp name="ConstantTimer.delay">1000</stringProp>
+            </ConstantTimer>
+            <hashTree/>
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="check state">
+              <stringProp name="TestPlan.comments">https://docs.jboss.org/author/display/WFLY/The%20HTTP%20management%20API.html</stringProp>
+              <stringProp name="HTTPSampler.domain">${EPIX_SOAP_HOST}</stringProp>
+              <stringProp name="HTTPSampler.port">9990</stringProp>
+              <stringProp name="HTTPSampler.protocol">${EPIX_SOAP_PROTOCOL}</stringProp>
+              <stringProp name="HTTPSampler.path">management</stringProp>
+              <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+              <stringProp name="HTTPSampler.method">POST</stringProp>
+              <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+              <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+              <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                    <stringProp name="Argument.value">{&#xd;
+	&quot;operation&quot;:	&quot;read-attribute&quot;,&#xd;
+	&quot;name&quot;:		&quot;server-state&quot;,&#xd;
+	&quot;json.pretty&quot;:	1&#xd;
+}</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+              <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+            </HTTPSamplerProxy>
+            <hashTree>
+              <JSR223Assertion guiclass="TestBeanGUI" testclass="JSR223Assertion" testname="set WILDFLY_RESTARTING=false when ResponseCode=200">
+                <stringProp name="scriptLanguage">groovy</stringProp>
+                <stringProp name="parameters"></stringProp>
+                <stringProp name="filename"></stringProp>
+                <stringProp name="cacheKey">true</stringProp>
+                <stringProp name="script">// Initialisierung des Failure-Status
+Failure = false
+
+try {
+    // Zugriff auf den Response Code des aktuellen Samplers
+    def responseCode = prev.getResponseCode()
+
+    // Überprüfen, ob der Response Code &quot;200&quot; ist
+    if (&quot;200&quot;.equals(responseCode)) {
+        props.put(&quot;WILDFLY_RESTARTING&quot;, &quot;false&quot;)
+
+        // Sicherstellen, dass WILDFLY_RESTART_TS als Integer behandelt wird
+        Integer wfRestartTs = vars.get(&quot;WILDFLY_RESTART_TS&quot;) as Integer
+
+        // Berechnung der WILDFLY_RESTART_TIME
+        Integer wfRestartTime = (System.currentTimeMillis() / 1000) as Integer - wfRestartTs
+        vars.put(&quot;WILDFLY_RESTART_TIME&quot;, wfRestartTime.toString())
+
+        String out = &quot;### WILDFLY RESTARTED (at loop: ${LOOP_COUNT}, in time: &quot; + wfRestartTime + &quot;s)&quot;
+        log.info(out)
+        System.out.println(out)
+    }
+} catch (Exception e) {
+    log.error(&quot;Error in JSR223 Assertion script: &quot;, e)
+    Failure = true
+}
+</stringProp>
+              </JSR223Assertion>
+              <hashTree/>
+              <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="check known response-code">
+                <collectionProp name="Asserion.test_strings">
+                  <stringProp name="52472">503</stringProp>
+                  <stringProp name="49586">200</stringProp>
+                  <stringProp name="36759048">Non HTTP response code: org.apache.http.NoHttpResponseException</stringProp>
+                  <stringProp name="-526441638">Non HTTP response code: org.apache.http.conn.HttpHostConnectException</stringProp>
+                </collectionProp>
+                <stringProp name="Assertion.custom_message"></stringProp>
+                <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+                <boolProp name="Assertion.assume_success">true</boolProp>
+                <intProp name="Assertion.test_type">48</intProp>
+              </ResponseAssertion>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+        </hashTree>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="(opt) stats-logging">
+          <stringProp name="TestPlan.comments">optional</stringProp>
+          <stringProp name="IfController.condition">${LOOP_FOR_STATISTICS}</stringProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+        </IfController>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="get interesting variables">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">def keySet = [
+	&quot;LOOP_COUNT&quot;, &quot;WILDFLY_RESTART_TIME&quot;, &quot;IDENTITY_COUNT&quot;, &quot;RESULT_COUNT&quot;, &quot;EPIX_GETPERSONSFORDOMAIN_TIME&quot;
+];
+String out = &quot;&quot;;
+
+// Methode zur Erstellung des Key-Value-Paares
+String addKey(String key) {
+    def value = vars.get(key) != null ? vars.get(key) : props.get(key)
+    if (value != null) {
+        return &quot;(&apos;&quot;+props.get(&quot;TEST_TIME&quot;)+&quot;&apos;,&apos;${key}&apos;,&apos;${value}&apos;)&quot;
+    }
+    return &quot;&quot;
+}
+
+// Erstellen der Key-Value-Paare
+for (key in keySet) {
+    def result = addKey(key)
+    if (result) {
+        out += result + &quot;,&quot;
+    }
+}
+
+// Entfernen des letzten Kommas und Setzen der Variable
+//if (out) {
+    out = out.substring(0, out.length() - 1)
+    log.info(out)
+    vars.put(&quot;STAT_KEY_VALUE_PAIRS&quot;, out)
+//}</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="write stats-values">
+            <stringProp name="dataSource">_CONN_STATS</stringProp>
+            <stringProp name="queryType">Update Statement</stringProp>
+            <stringProp name="query">INSERT IGNORE INTO `jmeter_stats` (`starttime`,`key`,`value`) VALUES ${STAT_KEY_VALUE_PAIRS};
+</stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="variableNames"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+          </JDBCSampler>
+          <hashTree>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="abort on response error (sql)">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;==&quot;true&quot; &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: sql-error (name: &quot;+prev.getSampleLabel()+&quot;, create:&quot;+prev.getResponseCode()+&quot;)&quot;;
+	out += &quot;\n--- last request: ---\n&quot; + prev.getSamplerData(); // https://stackoverflow.com/a/31139098
+	out += &quot;\n--- last response: ---\n&quot; + prev.getResponseDataAsString(); // https://stackoverflow.com/a/40610509
+	log.info(out);
+	System.out.println(out);
+	ctx.getEngine().stopTest();
+}</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <DebugSampler guiclass="TestBeanGUI" testclass="DebugSampler" testname="Debug Sampler" enabled="false">
+          <boolProp name="displayJMeterProperties">true</boolProp>
+          <boolProp name="displayJMeterVariables">false</boolProp>
+          <boolProp name="displaySystemProperties">false</boolProp>
+        </DebugSampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="--------- break xxx ---------" enabled="false">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">log.info(Label);
+System.out.println(Label);
+ctx.getEngine().stopTest();</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+      <PostThreadGroup guiclass="PostThreadGroupGui" testclass="PostThreadGroup" testname="tearDown">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </PostThreadGroup>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="--------- end test ---------">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">log.info(Label);
+System.out.println(Label);</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="set individual variables">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="632063950">E-PIX-LoadTest</stringProp>
+            <stringProp name="109328029">setUp</stringProp>
+            <stringProp name="-1861648978">set individual variables</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+        <IfController guiclass="IfControllerPanel" testclass="IfController" testname="(opt) write last stats-values per thread">
+          <stringProp name="IfController.condition">${__groovy(${DB_STATS_LOGGING_EVERY_X_LOOPS}&gt;0)}</stringProp>
+          <boolProp name="IfController.evaluateAll">false</boolProp>
+          <boolProp name="IfController.useExpression">true</boolProp>
+        </IfController>
+        <hashTree>
+          <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="get interesting variables">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">def keySet = [
+	&quot;IDENTITY_COUNT&quot;, &quot;RESULT_COUNT&quot;
+];
+String out = &quot;&quot;;
+
+// Methode zur Erstellung des Key-Value-Paares
+String addKey(String key) {
+    def value = vars.get(key) != null ? vars.get(key) : props.get(key)
+    if (value != null) {
+        return &quot;(&apos;&quot;+props.get(&quot;TEST_TIME&quot;)+&quot;&apos;,&apos;${key}&apos;,&apos;${value}&apos;)&quot;
+    }
+    return &quot;&quot;
+}
+
+// Erstellen der Key-Value-Paare
+for (key in keySet) {
+    def result = addKey(key)
+    if (result) {
+        out += result + &quot;,&quot;
+    }
+}
+
+// Entfernen des letzten Kommas und Setzen der Variable
+//if (out) {
+    out = out.substring(0, out.length() - 1)
+    log.info(out)
+    vars.put(&quot;STAT_KEY_VALUE_PAIRS&quot;, out)
+//}</stringProp>
+          </JSR223Sampler>
+          <hashTree/>
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="write first stats-values">
+            <stringProp name="dataSource">_CONN_STATS</stringProp>
+            <stringProp name="queryType">Update Statement</stringProp>
+            <stringProp name="query">INSERT IGNORE INTO `jmeter_stats` (`starttime`,`key`,`value`) VALUES ${STAT_KEY_VALUE_PAIRS};
+</stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="variableNames"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+          </JDBCSampler>
+          <hashTree>
+            <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="abort on response error (sql)">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">if (&quot;${ABORT_ON_RESPONSE_ERROR}&quot;==&quot;true&quot; &amp;&amp; !&quot;200&quot;.equals(prev.getResponseCode())) {
+	String out = &quot;### STOP TEST&quot;+(&quot;${THREADS}&quot;!=&quot;1&quot; ?&quot; (thread:${__threadNum})&quot; :&quot;&quot;)+&quot;: sql-error (name: &quot;+prev.getSampleLabel()+&quot;, create:&quot;+prev.getResponseCode()+&quot;)&quot;;
+	out += &quot;\n--- last request: ---\n&quot; + prev.getSamplerData(); // https://stackoverflow.com/a/31139098
+	out += &quot;\n--- last response: ---\n&quot; + prev.getResponseDataAsString(); // https://stackoverflow.com/a/40610509
+	log.info(out);
+	System.out.println(out);
+	ctx.getEngine().stopTest();
+}</stringProp>
+            </JSR223PostProcessor>
+            <hashTree/>
+          </hashTree>
+        </hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="log runtime">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">false</stringProp>
+          <stringProp name="script">def sdf = new java.text.SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss.SSS&quot;)
+Date started = sdf.parse(props.get(&quot;TEST_TIME&quot;))
+Date ended = sdf.parse(${__time(&quot;yyyy-MM-dd HH:mm:ss.SSS&quot;)})
+long diffInMs = ended.getTime()-started.getTime()
+
+String out = &quot;### imported identities:${__P(IDENTITY_COUNT)}&quot;
+out += &quot;, runtime:&quot; + org.apache.commons.lang3.time.DurationFormatUtils.formatDuration(diffInMs, &quot;HH:mm:ss,SSS&quot;)
+out += &quot;, average:&quot; + (int)(${__P(IDENTITY_COUNT)} / diffInMs * 1000) + &quot;/s&quot;
+    
+log.info(out);
+System.out.println(out);</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="false">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.service;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -45,12 +45,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import javax.ejb.EJB;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.emau.icmvc.ttp.auth.AbstractServiceBase;
-import org.emau.icmvc.ttp.auth.TTPNames;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
 import org.emau.icmvc.ttp.epix.common.exception.IllegalOperationException;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
@@ -58,8 +52,8 @@ import org.emau.icmvc.ttp.epix.common.exception.MPIErrorCode;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectType;
+import org.emau.icmvc.ttp.epix.common.exception.ValidatorException;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
-import org.emau.icmvc.ttp.epix.common.model.DomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInBaseDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
@@ -80,26 +74,12 @@ import org.emau.icmvc.ttp.epix.persistence.PublicDAO;
  *
  * @author geidell
  */
-public abstract class EpixServiceBase extends AbstractServiceBase
+public abstract class EpixServiceBase extends AbstractEpixServiceBase
 {
-	protected final Logger logger = LogManager.getLogger(getClass());
 	private static final String PARAMETER_MISSING_MESSAGE = "invalid parameter: ";
 	protected static final ResponseEntryDTO MATCH_ERROR_ENTRY = new ResponseEntryDTO(null, MatchStatus.MATCH_ERROR);
 	protected static final RequestConfig DEFAULT_REQUEST_CONFIG = new RequestConfig();
 
-	@EJB
-	protected PublicDAO dao;
-
-	@Override
-	public TTPNames.Tool getTool()
-	{
-		return TTPNames.Tool.epix;
-	}
-
-	protected List<DomainDTO> filterAllowedDomains(List<DomainDTO> domains)
-	{
-		return filterAllowedDomains(domains, DomainDTO::getName);
-	}
 
 	protected void checkAllowedEntity(DomainSupplier domainSupplier, UnknownObjectExceptionSupplier exceptionSupplier) throws UnknownObjectException
 	{
@@ -305,7 +285,7 @@ public abstract class EpixServiceBase extends AbstractServiceBase
 
 	protected ResponseEntryDTO requestMPIInternal(String notificationClientID, String domainName, IdentityInDTO identity,
 			String sourceName, String comment, RequestConfig requestConfig)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
 		requestConfig = requestConfig == null ? DEFAULT_REQUEST_CONFIG : requestConfig;
 
@@ -329,7 +309,7 @@ public abstract class EpixServiceBase extends AbstractServiceBase
 	}
 
 	protected MPIResponseDTO requestMPIBatchInternal(String notificationClientID, MPIRequestDTO mpiRequest)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
 		if (logger.isDebugEnabled())
 		{
@@ -364,8 +344,8 @@ public abstract class EpixServiceBase extends AbstractServiceBase
 	}
 
 	protected ResponseEntryDTO updatePersonInternal(String notificationClientID, String domainName, String mpiId, IdentityInDTO identity,
-			String sourceName, boolean force, String comment, RequestConfig requestConfig)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			String sourceName, boolean force, String comment, RequestConfig requestConfig, boolean activePerson)
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
 		requestConfig = requestConfig == null ? DEFAULT_REQUEST_CONFIG : requestConfig;
 
@@ -384,7 +364,7 @@ public abstract class EpixServiceBase extends AbstractServiceBase
 		checkParameter(mpiId, "mpiId");
 		checkParameter(identity, "identity");
 		checkParameter(sourceName, "sourceName");
-		ResponseEntryDTO result = dao.updatePerson(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, requestConfig, getAuthUser());
+		ResponseEntryDTO result = dao.updatePerson(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, requestConfig, activePerson, getAuthUser());
 		logger.info("updatePerson successfully executed");
 		return result;
 	}
@@ -503,20 +483,36 @@ public abstract class EpixServiceBase extends AbstractServiceBase
 		return result;
 	}
 
-	protected void deactivateContactInternal(long contactId)
+	protected void deactivateContactInternal(String notificationClientID, long contactId)
 			throws UnknownObjectException
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("deactivateContact with id {}", contactId);
+			logger.debug("deactivateContact with contact id {} (notificationClientID = {})", contactId, notificationClientID);
 		}
 		else
 		{
-			logger.info("deactivateContact");
+			logger.info("deactivateContact (notificationClientID = {})", notificationClientID);
 		}
 		checkAllowedContactId(contactId);
-		dao.deactivateContact(contactId, getAuthUser());
+		dao.deactivateContact(notificationClientID, contactId, getAuthUser());
 		logger.info("contact deactivated");
+	}
+
+	protected void deleteContactInternal(String notificationClientID, long contactId)
+			throws IllegalOperationException, UnknownObjectException
+	{
+		if (logger.isDebugEnabled())
+		{
+			logger.debug("deleteContact with contact id {} (notificationClientID = {})", contactId, notificationClientID);
+		}
+		else
+		{
+			logger.info("deleteContact (notificationClientID = {})", notificationClientID);
+		}
+		checkAllowedContactId(contactId);
+		dao.deleteContact(notificationClientID, contactId, null, getAuthUser());
+		logger.info("contact deleted");
 	}
 
 	protected void addLocalIdentifierToActivePersonWithMPIInternal(String notificationClientID, String domainName, String mpiId, List<IdentifierDTO> localIds)

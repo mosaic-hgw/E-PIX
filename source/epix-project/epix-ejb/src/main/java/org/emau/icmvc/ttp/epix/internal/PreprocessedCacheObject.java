@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.internal;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.internal;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -51,7 +51,6 @@ import org.emau.icmvc.ttp.deduplication.config.model.Field;
 import org.emau.icmvc.ttp.epix.common.exception.MPIErrorCode;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.model.enums.BlockingMode;
-import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.persistence.model.IdentityPreprocessed;
 
 public class PreprocessedCacheObject
@@ -118,7 +117,7 @@ public class PreprocessedCacheObject
 			int matchingIndex = 0;
 			for (Field field : matchFields)
 			{
-				String s = getFieldValue(ip, field.getName());
+				String s = ip.getFieldValue(field.getName());
 				if (field.getMultipleValues() != null)
 				{
 					List<String> tempList = createAllCombinationsPrecalculated(s, field.getMultipleValues().getSeparatorChar(),
@@ -187,7 +186,7 @@ public class PreprocessedCacheObject
 			for (Field field : matchFields)
 			{
 				countForMultiValueForMatching[matchingIndex] = matchingIndex;
-				String s = getFieldValue(ip, field.getName());
+				String s = ip.getFieldValue(field.getName());
 				matchFieldValues[matchingIndex] = s;
 				matchHashSB.append(s);
 				matchingIndex++;
@@ -223,8 +222,7 @@ public class PreprocessedCacheObject
 			}
 		}
 		matchHashCode = matchHashSB.toString().hashCode();
-		logger.trace("initialised PreprocessedCacheObject with " + blockFieldValues.length / 2 + " block field values and " + matchFieldValues.length
-				+ " match field values");
+		logger.trace("initialised PreprocessedCacheObject with {} block field values and {} match field values", blockFieldValues.length / 2, matchFieldValues.length);
 	}
 
 	private static List<String> createAllCombinationsPrecalculated(String s, char separatorChar, String fieldName) throws MPIException
@@ -528,102 +526,6 @@ public class PreprocessedCacheObject
 				break;
 		}
 		return result;
-	}
-
-	private static String getFieldValue(IdentityPreprocessed ip, FieldName name) throws MPIException
-	{
-		String result = null;
-		switch (name)
-		{
-			case birthDate:
-				result = ip.getBirthDate();
-				break;
-			case birthPlace:
-				result = ip.getBirthPlace();
-				break;
-			case civilStatus:
-				result = ip.getCivilStatus();
-				break;
-			case degree:
-				result = ip.getDegree();
-				break;
-			case firstName:
-				result = ip.getFirstName();
-				break;
-			case gender:
-				result = String.valueOf(ip.getGender());
-				break;
-			case lastName:
-				result = ip.getLastName();
-				break;
-			case middleName:
-				result = ip.getMiddleName();
-				break;
-			case motherTongue:
-				result = ip.getMotherTongue();
-				break;
-			case mothersMaidenName:
-				result = ip.getMothersMaidenName();
-				break;
-			case nationality:
-				result = ip.getNationality();
-				break;
-			case prefix:
-				result = ip.getPrefix();
-				break;
-			case race:
-				result = ip.getRace();
-				break;
-			case religion:
-				result = ip.getReligion();
-				break;
-			case suffix:
-				result = ip.getSuffix();
-				break;
-			case value1:
-				result = ip.getValue1();
-				break;
-			case value10:
-				result = ip.getValue10();
-				break;
-			case value2:
-				result = ip.getValue2();
-				break;
-			case value3:
-				result = ip.getValue3();
-				break;
-			case value4:
-				result = ip.getValue4();
-				break;
-			case value5:
-				result = ip.getValue5();
-				break;
-			case value6:
-				result = ip.getValue6();
-				break;
-			case value7:
-				result = ip.getValue7();
-				break;
-			case value8:
-				result = ip.getValue8();
-				break;
-			case value9:
-				result = ip.getValue9();
-				break;
-			default:
-				String message = "unexpected field name in matching config: " + name;
-				logger.error(message);
-				throw new MPIException(MPIErrorCode.INTERNAL_ERROR, message);
-		}
-		if (result != null)
-		{
-			return result.intern();
-		}
-		else
-		{
-			// matchfelder duerfen null sein
-			return EMPTY_STRING;
-		}
 	}
 
 	public long getIdentityId()

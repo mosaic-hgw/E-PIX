@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ###license-information-start###
-  E-PIX - Enterprise Patient Identifier Cross-referencing
+  E-PIX - Enterprise Identifier Cross-Referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -13,7 +13,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -39,13 +39,13 @@
   -->
 
 <configuration>
-	<appender name="root" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder>
-			<pattern>%d [%5p] %m%n</pattern>
-		</encoder>
-	</appender>
-	<logger name="org.apache.cxf" level="ERROR"/>
-	<root level="info">
-		<appender-ref ref="root"/>
-	</root>
+    <appender name="root" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d [%5p] %m%n</pattern>
+        </encoder>
+    </appender>
+    <logger name="org.apache.cxf" level="ERROR"/>
+    <root level="info">
+        <appender-ref ref="root"/>
+    </root>
 </configuration>

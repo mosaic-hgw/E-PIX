@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -80,7 +80,7 @@
 						<p:inputText id="updateComment" value="#{addController.comment}" rendered="#{not empty addController.mpi}" />
 						<p:outputLabel for="source" value="#{msg['import.label.source']}" />
 						<p:selectOneMenu label="#{msg['common.pleaseSelect']}" required="true" id="source" value="#{addController.selectedSource}"
-										 converter="#{sourceDTOConverter}" requiredMessage="#{msg['import.label.pleaseSelectSource']}">
+										 converter="sourceDTOConverter" requiredMessage="#{msg['import.label.pleaseSelectSource']}">
 							<f:selectItem noSelectionOption="true" itemLabel="#{msg['common.pleaseSelect']}" itemDisabled="true" />
 							<f:selectItems value="#{addController.sources}" var="_source" itemLabel="#{empty _source.label ? _source.name : _source.label}"
 										   itemValue="#{_source}" />

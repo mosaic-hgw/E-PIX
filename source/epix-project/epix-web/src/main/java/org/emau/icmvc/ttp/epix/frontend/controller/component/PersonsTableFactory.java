@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,19 +39,19 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * ###license-information-end###
  */
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 import org.emau.icmvc.ttp.epix.frontend.model.WebPerson;
 
 @ViewScoped
-@ManagedBean (name = "ptf")
-public class PersonsTableFactory extends AbstractEpixWebBean
+@Named("ptf")
+public class PersonsTableFactory extends AbstractEpixWebBean implements Serializable
 {
 	private Map<String, PersonsTable> personsTables;
 	

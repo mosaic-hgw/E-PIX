@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -37,6 +37,7 @@
   ###license-information-end###
   -->
 <html xmlns="http://www.w3.org/1999/xhtml"
+	  xmlns:components="http://java.sun.com/jsf/composite/components"
 	  xmlns:idat-display="http://java.sun.com/jsf/composite/components/idat/display"
 	  xmlns:idat-form="http://java.sun.com/jsf/composite/components/idat/form"
 	  xmlns:f="http://java.sun.com/jsf/core"
@@ -87,7 +88,6 @@
 										<br />
 										<p:commandButton action="#{personController.onOpenPossibleMatches}"
 														 icon="mdi mdi-account-multiple"
-														 partialSubmit="true"
 														 process="@this"
 														 styleClass="secondary"
 														 value="#{personController.possibleMatches.size() == 1 ? msg['page.person.possibleMatches.show.singular'] : msg['page.person.possibleMatches.show.plural']}" />
@@ -97,7 +97,6 @@
 									<!--								<p:commandButton actionListener="#{personController.onDeactivatePerson}"-->
 									<!--												 disabled="#{personController.person.deactivated}"-->
 									<!--												 icon="mdi mdi-close-circle"-->
-									<!--												 partialSubmit="true"-->
 									<!--												 process="@this"-->
 									<!--												 styleClass="secondary"-->
 									<!--												 update="general, history"-->
@@ -107,7 +106,6 @@
 
 									<p:commandButton action="#{personController.onDeletePerson}"
 													 icon="mdi mdi-delete-empty"
-													 partialSubmit="true"
 													 process="@this"
 													 styleClass="secondary"
 													 value="#{msg['page.person.general.delete']}">
@@ -126,9 +124,10 @@
 								<h:outputText value="#{msg['page.person.mpi.title']}" />
 							</h4>
 							- <b>#{personController.referenceMpi}</b>
-							<a href="/gpas-web/html/internal/edit.xhtml?originalValue=#{personController.referenceMpi}" target="_blank" class="ttp-logo-button">
+							<a href="/#{personController.getGpasContextRoot()}/html/internal/edit.xhtml?originalValue=#{personController.referenceMpi}" target="_blank" class="ttp-logo-button">
 								<i class="mdi mdi-share"></i>
-								<p:graphicImage value="/html/public/assets/images/gPAS-Logo-ohne-Text-160y.png" />
+								<!-- TODO workaround for ismap bug, (fixed in Primefaces 12.0.2), remove usemap if Primefaces >=13.0.0 is used -->
+								<p:graphicImage value="/html/public/assets/images/gPAS-Logo-ohne-Text-160y.png" ismap="false" usemap="false" />
 							</a>
 							<br />
 							<br />
@@ -196,7 +195,6 @@
 															actionDeleteIdentity="onDeleteIdentity"
 															showContact="false"
 															showLocalIdentifiers="false"
-															showStatus="true"
 															update="general, identifiers, contacts, history"
 															webPersonList="#{personController.webIdentities}" />
 								<p:commandButton actionListener="#{personController.onNewIdentity}"
@@ -302,7 +300,7 @@
 						<h:outputText value="#{personController.edit ? msg['page.person.identity.edit'] : msg['page.person.identity.add'] }" />
 					</h3>
 					<h:outputText value="#{msg['page.person.identity.edit.hint']}" rendered="#{personController.edit}" styleClass="mb-3 block" />
-					<p:messages />
+					<p:messages escape="false" />
 					<div class="grid">
 						<idat-form:identity identity="#{personController.editIdentity}" person="#{personController.person}" />
 						<div class="col-12 md:col-12">
@@ -323,14 +321,8 @@
 																   itemValue="#{_source.name}" />
 												</p:selectOneMenu>
 											</h:panelGroup>
-											<h:panelGroup class="field col-12 md:col-6">
-												<p:outputLabel for="forceUpdate" value="#{msg['page.person.identity.add.forceUpdate']}" />
-												<p:selectBooleanCheckbox id="forceUpdate" styleClass="w-full"
-																		 value="#{personController.forceEdit}" />
-											</h:panelGroup>
-											<h:panelGroup class="field col-6 hidden md:inline" />
 											<h:panelGroup class="field col-12 mb-0">
-												<p:commandButton actionListener="#{personController.onAddIdentity}"
+												<p:commandButton actionListener="#{personController.onAddIdentity(false)}"
 																 icon="mdi mdi-check"
 																 ignoreAutoUpdate="true"
 																 oncomplete="if (args &amp;&amp; !args.validationFailed) PF('newIdentity').hide();"
@@ -348,9 +340,15 @@
 				</h:form>
 			</p:dialog>
 
+			<components:confirm_dialog id="forceSaving"
+									   action="#{personController.onAddIdentity(true)}"
+									   message="#{msg['page.person.identity.add.error.idatDoesNotFit']}"
+									   onyes="PF('newIdentity').hide();"
+									   update="identities, history" />
+
 			<p:dialog id="newContact" widgetVar="newContact" modal="true" closeOnEscape="true" header="#{msg['page.person.contact.add']}" style="max-width: 900px;">
 				<h:form rendered="#{not empty personController.editContact}">
-					<p:messages />
+					<p:messages escape="false" />
 					<div class="grid">
 						<idat-form:contact identity="#{personController.editIdentity}" contact="#{personController.editContact}" dialog="true" />
 					</div>
@@ -369,11 +367,11 @@
 
 			<p:dialog id="newIdentifier" widgetVar="newIdentifier" modal="true" closeOnEscape="true" header="#{msg['page.person.identifier.add']}">
 				<h:form rendered="#{not empty personController.editIdentifier}">
-					<p:messages />
+					<p:messages escape="false" />
 					<p:panelGrid columns="2" columnClasses="ui-grid-col-6,ui-grid-col-6" layout="grid">
 						<p:outputLabel for="identifierDomain" value="#{msg['common.identifier.localIdentifierDomain']}" />
 						<p:selectOneMenu label="#{msg['import.label.source']}" id="identifierDomain" value="#{personController.editIdentifier.identifierDomain}"
-										 converter="#{identifierDomainDTOConverter}" required="true" requiredMessage="#{msg['import.label.pleaseSelectDomain']}">
+										 converter="identifierDomainDTOConverter" required="true" requiredMessage="#{msg['import.label.pleaseSelectDomain']}">
 							<f:selectItem noSelectionOption="true" itemLabel="#{msg['common.pleaseSelect']}" itemDisabled="true" />
 							<f:selectItems value="#{personController.identifierDomainsFiltered}" var="_domain" itemLabel="#{_domain.label}" itemValue="#{_domain}" />
 						</p:selectOneMenu>

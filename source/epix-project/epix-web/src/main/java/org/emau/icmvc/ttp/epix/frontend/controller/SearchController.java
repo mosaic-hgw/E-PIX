@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,10 +39,11 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-end###
  */
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
+import java.io.Serializable;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.component.SearchForm;
 
@@ -52,8 +53,8 @@ import org.emau.icmvc.ttp.epix.frontend.controller.component.SearchForm;
  *
  */
 @ViewScoped
-@ManagedBean(name = "searchController")
-public class SearchController extends AbstractEpixWebBean
+@Named( "searchController")
+public class SearchController extends AbstractEpixWebBean implements Serializable
 {
 
 	private SearchForm searchForm;

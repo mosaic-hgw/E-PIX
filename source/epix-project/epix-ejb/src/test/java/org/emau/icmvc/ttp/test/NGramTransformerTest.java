@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.test;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -47,12 +47,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class NGramTransformerTest
+class NGramTransformerTest
 {
 	private static final String TESTSTRING = "ANNA";
 
 	@Test
-	public void testCorrectNumberOfBigrams()
+	void testCorrectNumberOfBigrams()
 	{
 		int correctSize = TESTSTRING.length() + 1;
 
@@ -60,7 +60,7 @@ public class NGramTransformerTest
 	}
 
 	@Test
-	public void testCorrectNumberOfTrigrams()
+	void testCorrectNumberOfTrigrams()
 	{
 		int correctSize = TESTSTRING.length() + 1;
 
@@ -68,7 +68,7 @@ public class NGramTransformerTest
 	}
 
 	@Test
-	public void testCorrectBigrams()
+	void testCorrectBigrams()
 	{
 		List<String> bigrams = Arrays.asList(" A", "AN", "NN", "NA", "A ");
 
@@ -76,7 +76,7 @@ public class NGramTransformerTest
 	}
 
 	@Test
-	public void testCorrectTrigrams()
+	void testCorrectTrigrams()
 	{
 		List<String> trigrams = Arrays.asList("  A", " AN", "ANN", "NNA", "NA ");
 

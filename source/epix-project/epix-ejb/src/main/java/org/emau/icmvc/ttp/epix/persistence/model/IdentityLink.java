@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -44,26 +44,26 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Date;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.persistence.TableGenerator;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.TableGenerator;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.MPIIdentityDTO;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchDTO;
 import org.emau.icmvc.ttp.epix.common.model.PossibleMatchForMPIDTO;
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentityLinkCreationType;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 
 /**
@@ -80,7 +80,7 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 		@NamedQuery(name = "IdentityLink.findByPerson", query = "SELECT il FROM IdentityLink il WHERE il.destIdentity.person = :person or il.srcIdentity.person = :person") })
 public class IdentityLink implements Serializable
 {
-	private static final long serialVersionUID = -6198083103032389316L;
+	private static final long serialVersionUID = -1390179789383418817L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "identitylink_index")
 	private long id;
@@ -97,13 +97,16 @@ public class IdentityLink implements Serializable
 	@OneToOne(cascade = CascadeType.MERGE, optional = false)
 	@JoinColumn(name = "dest_identity")
 	private Identity destIdentity;
+	@Column(name = "type")
+	@Enumerated(EnumType.STRING)
+	private IdentityLinkCreationType creationType;
 
 	public IdentityLink()
 	{
-		this(null, null, null, 0.0, new Timestamp(System.currentTimeMillis()));
+		this(null, null, null, 0.0, new Timestamp(System.currentTimeMillis()), IdentityLinkCreationType.DEFAULT);
 	}
 
-	public IdentityLink(Identity srcIdentity, Identity destIdentity, String algorithm, double threshold, Timestamp timestamp)
+	public IdentityLink(Identity srcIdentity, Identity destIdentity, String algorithm, double threshold, Timestamp timestamp, IdentityLinkCreationType creationType)
 	{
 		this.srcIdentity = srcIdentity;
 		this.destIdentity = destIdentity;
@@ -111,6 +114,7 @@ public class IdentityLink implements Serializable
 		this.threshold = threshold;
 		this.createTimestamp = timestamp;
 		this.priority = PossibleMatchDTO.DEFAULT_PRIORITY;
+		this.creationType = creationType;
 	}
 
 	public long getId()
@@ -183,11 +187,21 @@ public class IdentityLink implements Serializable
 		this.priority = priority;
 	}
 
+	public IdentityLinkCreationType getCreationType()
+	{
+		return creationType;
+	}
+
+	public void setCreationType(IdentityLinkCreationType creationType)
+	{
+		this.creationType = creationType;
+	}
+
 	public PossibleMatchDTO toDTO()
 	{
 		return new PossibleMatchDTO(new MPIIdentityDTO(srcIdentity.getPerson().getFirstMPI().toDTO(), srcIdentity.toDTO()),
 				new MPIIdentityDTO(destIdentity.getPerson().getFirstMPI().toDTO(), destIdentity.toDTO()), id, threshold,
-				createTimestamp == null ? null : new Date(createTimestamp.getTime()), priority);
+				createTimestamp == null ? null : new Date(createTimestamp.getTime()), priority, creationType);
 	}
 
 	public PossibleMatchForMPIDTO toDTOForMPI(String mpiId)
@@ -208,7 +222,7 @@ public class IdentityLink implements Serializable
 			matchingMPIIdentity = new MPIIdentityDTO(srcIdentity.getPerson().getFirstMPI().toDTO(), srcIdentity.toDTO());
 		}
 		return new PossibleMatchForMPIDTO(mpi, assignedIdentity, matchingMPIIdentity, id, threshold,
-				createTimestamp == null ? null : new Date(createTimestamp.getTime()), priority);
+				createTimestamp == null ? null : new Date(createTimestamp.getTime()), priority, creationType);
 	}
 
 	@Override

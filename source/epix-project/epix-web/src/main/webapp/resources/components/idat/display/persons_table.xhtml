@@ -4,7 +4,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -14,7 +14,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -50,6 +50,7 @@
 	<composite:attribute name="showContact" default="true" required="false" type="java.lang.Boolean" />
 	<composite:attribute name="showLocalIdentifiers" default="true" required="false" type="java.lang.Boolean" />
 	<composite:attribute name="showStatus" default="false" required="false" type="java.lang.Boolean" />
+	<composite:attribute name="trimLongValues" required="false" type="java.lang.Boolean" default="true" />
 	<composite:attribute name="actionController" required="false" />
 	<composite:attribute name="actionOpenIdentity" required="false" type="java.lang.String" />
 	<composite:attribute name="actionSetReferenceIdentity" required="false" type="java.lang.String" />
@@ -97,9 +98,9 @@
 
 			<!-- Set Reference Identity -->
 			<p:commandButton action="#{cc.attrs.actionController[cc.attrs.actionSetReferenceIdentity](_person.identityId)}" disabled="#{_person.reference}"
-							 title="#{msg['page.person.identity.reference.set']}"
+							 title="#{msg['page.person.identity.reference'.concat(_person.reference ? '' : '.set')]}"
 							 icon="mdi mdi-star-circle" onclick="PF('loading').show();" oncomplete="PF('loading').hide();"
-							 process="@this" rendered="#{not empty cc.attrs.actionSetReferenceIdentity}" update="persons_list, #{cc.attrs.actionEditIdentityUpdate}" styleClass="secondary" />
+							 process="@this" rendered="#{not empty cc.attrs.actionSetReferenceIdentity}" update="persons_list, #{cc.attrs.actionEditIdentityUpdate}" styleClass="secondary disabled-inverted" />
 			<!-- Edit Identity -->
 			<p:commandButton action="#{cc.attrs.actionController[cc.attrs.actionEditIdentity](_person.identityId)}" title="#{cmsg['ui.button.edit']}"
 							 icon="mdi mdi-pencil" onclick="PF('loading').show();" oncomplete="PF('loading').hide();#{cc.attrs.actionEditIdentityOnComplete}"
@@ -240,34 +241,37 @@
 			</p:column>
 			<p:column headerText="#{epixHelper.getValueFieldLabel('value6')}" rendered="#{ptf.tables.get(cc.attrs.id).hasField(Field.value6)}"
 					  sortBy="#{_person.value6}">
-				<h:outputText id="value6" value="#{webUtil.cut(_person.value6, 50, ' [...]')}" />
-				<p:tooltip for="value6" value="#{_person.value6}" rendered="#{not empty _person.value6 and _person.value6.length() > 50}" />
+				<h:outputText id="value6" value="#{cc.attrs.trimLongValues ? webUtil.cut(_person.value6, 50, ' [...]') : _person.value6}" />
+				<p:tooltip for="value6" value="#{_person.value6}" rendered="#{not empty _person.value6 and cc.attrs.trimLongValues and _person.value6.length() > 50}" />
 			</p:column>
 			<p:column headerText="#{epixHelper.getValueFieldLabel('value7')}" rendered="#{ptf.tables.get(cc.attrs.id).hasField(Field.value7)}"
 					  sortBy="#{_person.value7}">
-				<h:outputText id="value7" value="#{webUtil.cut(_person.value7, 50, ' [...]')}" />
-				<p:tooltip for="value7" value="#{_person.value7}" rendered="#{not empty _person.value7 and _person.value7.length() > 50}" />
+				<h:outputText id="value7" value="#{cc.attrs.trimLongValues ? webUtil.cut(_person.value7, 50, ' [...]') : _person.value7}" />
+				<p:tooltip for="value7" value="#{_person.value7}" rendered="#{not empty _person.value7 and cc.attrs.trimLongValues and _person.value7.length() > 50}" />
 			</p:column>
 			<p:column headerText="#{epixHelper.getValueFieldLabel('value8')}" rendered="#{ptf.tables.get(cc.attrs.id).hasField(Field.value8)}"
 					  sortBy="#{_person.value8}">
-				<h:outputText id="value8" value="#{webUtil.cut(_person.value8, 50, ' [...]')}" />
-				<p:tooltip for="value8" value="#{_person.value8}" rendered="#{not empty _person.value8 and _person.value8.length() > 50}" />
+				<h:outputText id="value8" value="#{cc.attrs.trimLongValues ? webUtil.cut(_person.value8, 50, ' [...]') : _person.value8}" />
+				<p:tooltip for="value8" value="#{_person.value8}" rendered="#{not empty _person.value8 and cc.attrs.trimLongValues and _person.value8.length() > 50}" />
 			</p:column>
 			<p:column headerText="#{epixHelper.getValueFieldLabel('value9')}" rendered="#{ptf.tables.get(cc.attrs.id).hasField(Field.value9)}"
 					  sortBy="#{_person.value9}">
-				<h:outputText id="value9" value="#{webUtil.cut(_person.value9, 50, ' [...]')}" />
-				<p:tooltip for="value9" value="#{_person.value9}" rendered="#{not empty _person.value9 and _person.value9.length() > 50}" />
+				<h:outputText id="value9" value="#{cc.attrs.trimLongValues ? webUtil.cut(_person.value9, 50, ' [...]') : _person.value9}" />
+				<p:tooltip for="value9" value="#{_person.value9}" rendered="#{not empty _person.value9 and cc.attrs.trimLongValues and _person.value9.length() > 50}" />
 			</p:column>
 			<p:column headerText="#{epixHelper.getValueFieldLabel('value10')}" rendered="#{ptf.tables.get(cc.attrs.id).hasField(Field.value10)}"
 					  sortBy="#{_person.value10}">
-				<h:outputText id="value10" value="#{webUtil.cut(_person.value10, 50, ' [...]')}" />
-				<p:tooltip for="value10" value="#{_person.value10}" rendered="#{not empty _person.value10 and _person.value10.length() > 50}" />
+				<h:outputText id="value10" value="#{cc.attrs.trimLongValues ? webUtil.cut(_person.value10, 50, ' [...]') : _person.value10}" />
+				<p:tooltip for="value10" value="#{_person.value10}" rendered="#{not empty _person.value10 and cc.attrs.trimLongValues and _person.value10.length() > 50}" />
+			</p:column>
+			<p:column headerText="#{msg['model.identity.source']}" sortBy="#{_person.source.labelOrName}">
+				<h:outputText value="#{_person.source.labelOrName}"/>
 			</p:column>
 			<p:column headerText="#{msg['common.person.created']}" sortBy="#{_person.created}">
-				<h:outputText value='#{_person.created}' converter="datetime" />
+				<h:outputText value="#{_person.created}" converter="datetime" />
 			</p:column>
 			<p:column headerText="#{msg['common.person.lastEdited']}" sortBy="#{_person.lastEdited}">
-				<h:outputText value='#{_person.lastEdited}' converter="datetime" />
+				<h:outputText value="#{_person.lastEdited}" converter="datetime" />
 			</p:column>
 		</c:if>
 

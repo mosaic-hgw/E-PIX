@@ -5,14 +5,14 @@
 // Generated on: 2012.03.26 at 05:49:30 PM CEST
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://www.ttp.icmvc.emau.org/deduplication/config/model")
+@jakarta.xml.bind.annotation.XmlSchema(namespace = "http://www.ttp.icmvc.emau.org/deduplication/config/model")
 package org.emau.icmvc.ttp.deduplication.config.model;
 
 /*-
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -22,7 +22,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf

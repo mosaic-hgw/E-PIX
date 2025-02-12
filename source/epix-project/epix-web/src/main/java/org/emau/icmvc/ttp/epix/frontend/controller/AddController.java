@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,40 +39,39 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-end###
  */
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.lang3.StringUtils;
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.annotation.ManagedProperty;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletRequest;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
+import org.emau.icmvc.ttp.epix.common.exception.ValidatorException;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
-import org.emau.icmvc.ttp.epix.common.model.ContactOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
-import org.emau.icmvc.ttp.epix.common.model.IdentityOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.PersonDTO;
 import org.emau.icmvc.ttp.epix.common.model.ResponseEntryDTO;
 import org.emau.icmvc.ttp.epix.common.model.SourceDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 
-import static org.emau.icmvc.ttp.epix.frontend.util.SessionMapKeys.EDIT_PERSON;
-
 @ViewScoped
-@ManagedBean(name = "addController")
-public class AddController extends AbstractEpixWebBean
+@Named("addController")
+public class AddController extends AbstractEpixWebBean implements Serializable
 {
+	@Serial
+	private static final long serialVersionUID = -7502565787410128577L;
+	@Inject
 	@ManagedProperty(value = "#{resolveController}")
 	private ResolveController resolveController;
 	private IdentityInDTO identity;
@@ -80,14 +79,14 @@ public class AddController extends AbstractEpixWebBean
 	private IdentifierDTO identifier;
 	private SourceDTO selectedSource;
 	private String comment;
-	private List<IdentifierDTO> identifiers;
 	private String mpi;
 	PersonDTO person;
 
 	@PostConstruct
-	public void init() throws UnknownObjectException, InvalidParameterException
+	public void init()
 	{
 		identity = new IdentityInDTO();
+		identity.setVitalStatus(VitalStatus.ALIVE);
 		contact = new ContactInDTO();
 		identifier = new IdentifierDTO();
 		selectedSource = null;
@@ -95,45 +94,6 @@ public class AddController extends AbstractEpixWebBean
 
 		ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
 		Map<String, Object> sessionMap = externalContext.getSessionMap();
-		if (sessionMap.containsKey(EDIT_PERSON))
-		{
-			person = service.getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), (String) sessionMap.get(EDIT_PERSON));
-			List<ContactInDTO> contacts = new ArrayList<>();
-			for (ContactOutDTO c : person.getReferenceIdentity().getContacts())
-			{
-				contacts.add(new ContactInDTO(c));
-			}
-			IdentityOutDTO referenceIdentity = person.getReferenceIdentity();
-			identity = new IdentityInDTO(referenceIdentity, contacts);
-			mpi = person.getMpiId().getValue();
-
-			sessionMap.remove(EDIT_PERSON);
-			loadIdentifiers();
-		}
-		else
-		{
-			identity.setVitalStatus(VitalStatus.ALIVE);
-		}
-	}
-
-	private void loadIdentifiers()
-	{
-		identifiers = new ArrayList<>();
-		identifiers.addAll(identity.getIdentifiers());
-		if (StringUtils.isNotEmpty(mpi))
-		{
-			try
-			{
-				for (IdentityOutDTO otherIdentitiy : service.getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), mpi).getOtherIdentities())
-				{
-					identifiers.addAll(otherIdentitiy.getIdentifiers());
-				}
-			}
-			catch (InvalidParameterException | UnknownObjectException e)
-			{
-				logger.error(e.getLocalizedMessage());
-			}
-		}
 	}
 
 	public void onAddIdentity()
@@ -142,17 +102,7 @@ public class AddController extends AbstractEpixWebBean
 		{
 			validateDateOfDeath();
 			String domainName = getDomainSelector().getSelectedDomainName();
-			ResponseEntryDTO response;
-
-			if (isUseNotifications())
-			{
-				response = serviceWithNotification.requestMPI(NOTIFICATION_CLIENT_ID, domainName, identity, selectedSource.getName(), null);
-			}
-			else
-			{
-				response = service.requestMPI(domainName, identity, selectedSource.getName(), null);
-			}
-
+			ResponseEntryDTO response = getServiceWithAutomaticNotification().requestMPI(domainName, identity, selectedSource.getName(), null);
 			Object[] args = {};
 			Object[] args2 = {};
 			if (response.getPerson() != null && response.getPerson().getMpiId() != null)
@@ -162,16 +112,16 @@ public class AddController extends AbstractEpixWebBean
 						+ "/html/internal/person.xhtml?domain="
 						+ getDomainSelector().getSelectedDomainName()
 						+ "&mpi="
-						+ response.getPerson().getMpiId().getValue()};
+						+ response.getPerson().getMpiId().getValue() };
 
 				args2 = new Object[] { getRequestPath(
 						(HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest())
 						+ "/html/internal/resolve.xhtml?domain="
 						+ getDomainSelector().getSelectedDomainName()
 						+ "&mpi="
-						+ response.getPerson().getMpiId().getValue()};
+						+ response.getPerson().getMpiId().getValue() };
 			}
-			
+
 			switch (response.getMatchStatus())
 			{
 				case NO_MATCH:
@@ -221,6 +171,10 @@ public class AddController extends AbstractEpixWebBean
 		{
 			logMPIException(e);
 		}
+		catch (ValidatorException e)
+		{
+			handleValidatorException(e);
+		}
 		catch (UnknownObjectException e)
 		{
 			logMessage(e);
@@ -240,12 +194,6 @@ public class AddController extends AbstractEpixWebBean
 	public IdentifierDTO getIdentifier()
 	{
 		return identifier;
-	}
-
-	@Override
-	public List<SourceDTO> getSources()
-	{
-		return managementService.getSources();
 	}
 
 	public SourceDTO getSelectedSource()
@@ -271,11 +219,6 @@ public class AddController extends AbstractEpixWebBean
 	public String getMpi()
 	{
 		return mpi;
-	}
-
-	public List<IdentifierDTO> getIdentifiers()
-	{
-		return identifiers;
 	}
 
 	public void setResolveController(ResolveController resolveController)

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * gICS - a Generic Informed Consent Service
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,73 +39,120 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-end###
  */
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
-import javax.ejb.EJB;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
-import javax.faces.bean.ViewScoped;
-
-import org.emau.icmvc.ttp.auth.TTPNames.Tool;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.annotation.ManagedProperty;
+import jakarta.faces.context.FacesContext;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.emau.icmvc.ttp.epix.common.model.StatisticDTO;
 import org.emau.icmvc.ttp.epix.common.utils.StatisticKeys;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
-import org.emau.icmvc.ttp.epix.service.StatisticManager;
+import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
 import org.icmvc.ttp.web.controller.ThemeBean;
 import org.icmvc.ttp.web.util.Chart;
 import org.icmvc.ttp.web.util.File;
 import org.primefaces.model.StreamedContent;
-import org.primefaces.model.charts.bar.BarChartModel;
-import org.primefaces.model.charts.line.LineChartModel;
-import org.primefaces.model.charts.pie.PieChartModel;
+import software.xdev.chartjs.model.charts.BarChart;
+import software.xdev.chartjs.model.charts.LineChart;
+import software.xdev.chartjs.model.charts.PieChart;
 
-@ViewScoped
-@ManagedBean(name = "dashboardController")
-public class DashboardController extends AbstractEpixWebBean
+@SessionScoped
+@Named("dashboardController")
+public class DashboardController extends AbstractEpixWebBean implements Serializable
 {
-	@EJB(lookup = "java:global/epix/epix-ejb/StatisticManagerBean!org.emau.icmvc.ttp.epix.service.StatisticManager")
-	private StatisticManager statisticServiceTarget;
-	private StatisticManager statisticService;
-
+	@Serial
+	private static final long serialVersionUID = 3170474590648204760L;
+	@Inject
 	@ManagedProperty(value = "#{themeBean}")
 	private ThemeBean themeBean;
 
-	private List<StatisticDTO> historyStats;
-	private StatisticDTO latestStats;
+	private List<StatisticDTO> rangeStats;
+	private StatisticDTO stats;
+	private boolean hasStats;
+
+	private Date rangeStartDate;
+	private Date rangeEndDate;
+	private Date statsDate;
+	private Date statsMinDate;
+	private Date statsMaxDate;
 
 	private Chart.BarScale personsIdentitiesBarScale = Chart.BarScale.MONTHS_12;
-	
-	private DashboardDomain domain = DashboardDomain.CURRENT; 
+
+	private DashboardDomain domain = DashboardDomain.CURRENT;
+
+	private boolean rangeStatsLoaded = false;
+	private String domainName;
+	@Named("domainSelector") @Inject private DomainSelector domainSelector;
 
 	@PostConstruct
 	public void init()
 	{
-		if (getWebAuthContext().isUsingDomainBasedRolesDisabled(Tool.epix))
-		{
-			statisticService = statisticServiceTarget;
-		}
-		else
-		{
-			statisticService = getWebAuthContext().createUpdateAuthContextProxy(statisticServiceTarget, StatisticManager.class);
-		}
-
+		statsDate = null;
+		statsMinDate = null;
+		statsMaxDate = null;
+		rangeStartDate = null;
+		rangeEndDate = null;
+		rangeStatsLoaded = false;
+		domainName = domainSelector.getSelectedDomainName();
 		loadStats();
+	}
+
+	public void checkDomainChange()
+	{
+		if (FacesContext.getCurrentInstance().isPostback())
+		{
+			return;
+		}
+		if (!domainSelector.getSelectedDomainName().equals(domainName))
+		{
+			init();
+		}
 	}
 
 	public void updateStats()
 	{
-		statisticService.updateStats();
+		getStatisticService().updateStats();
 		init();
 		logMessage(getCommonBundle().getString("page.dashboard.statistic.updated"), Severity.INFO);
+	}
+
+	public void loadRangeStats()
+	{
+		rangeStats = getStatisticService().getStatsFromTo(rangeStartDate, rangeEndDate);
+		rangeStatsLoaded = true;
+	}
+
+	public void onDateChange()
+	{
+		Calendar statsCal = Calendar.getInstance();
+		statsCal.setTime(statsDate);
+		statsCal.set(Calendar.HOUR_OF_DAY, 23);
+		statsCal.set(Calendar.MINUTE, 59);
+		statsCal.set(Calendar.SECOND, 59);
+		statsDate = statsCal.getTime();
+
+		Calendar rangeEndCal = Calendar.getInstance();
+		rangeEndCal.setTime(rangeEndDate);
+		rangeEndCal.set(Calendar.HOUR_OF_DAY, 23);
+		rangeEndCal.set(Calendar.MINUTE, 59);
+		rangeEndCal.set(Calendar.SECOND, 59);
+		rangeEndDate = rangeEndCal.getTime();
+		rangeStatsLoaded = false;
+		loadStats();
 	}
 
 	/* Stats Overview */
@@ -115,17 +162,19 @@ public class DashboardController extends AbstractEpixWebBean
 		{
 			return getLatestStatsAllDomainsLabels();
 		}
-		else {
+		else
+		{
 			return getLatestStatsActiveDomainLabels();
 		}
 	}
-	
+
 	public Map<String, String> getLatestStatsAllDomainsLabels()
 	{
 		Map<String, String> result = new LinkedHashMap<>();
 		result.put(StatisticKeys.PERSONS, getBundle().getString("model.person.persons"));
 		result.put(StatisticKeys.IDENTITIES, getBundle().getString("model.identity.identities"));
 		result.put(StatisticKeys.POSSIBLE_MATCHES_OPEN, getBundle().getString("page.dashboard.possibleMatches.open"));
+		result.put(StatisticKeys.POSSIBLE_MATCHES_POSTPONED, getBundle().getString("page.dashboard.possibleMatches.postponed"));
 		result.put(StatisticKeys.POSSIBLE_MATCHES_MERGED, getBundle().getString("page.dashboard.possibleMatches.merged"));
 		result.put(StatisticKeys.POSSIBLE_MATCHES_SPLIT, getBundle().getString("page.dashboard.possibleMatches.split"));
 		return result;
@@ -137,16 +186,17 @@ public class DashboardController extends AbstractEpixWebBean
 		result.put(new StatisticKeys(StatisticKeys.PERSONS).perDomain(getSelectedDomain().getName()).build(), getBundle().getString("model.person.persons"));
 		result.put(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), getBundle().getString("model.identity.identities"));
 		result.put(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_OPEN).perDomain(getSelectedDomain().getName()).build(), getBundle().getString("page.dashboard.possibleMatches.open"));
+		result.put(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_POSTPONED).perDomain(getSelectedDomain().getName()).build(), getBundle().getString("page.dashboard.possibleMatches.postponed"));
 		result.put(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_MERGED).perDomain(getSelectedDomain().getName()).build(), getBundle().getString("page.dashboard.possibleMatches.merged"));
 		result.put(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_SPLIT).perDomain(getSelectedDomain().getName()).build(), getBundle().getString("page.dashboard.possibleMatches.split"));
 		return result;
 	}
 
 	/* Persons + Identities Charts */
-	public LineChartModel getPersonsIdentitiesHistoryChart()
+	public LineChart getPersonsIdentitiesHistoryChart()
 	{
-		List<Object> personsValues = new ArrayList<>();
-		List<Object> identitiesValues = new ArrayList<>();
+		List<Number> personsValues = new ArrayList<>();
+		List<Number> identitiesValues = new ArrayList<>();
 		List<String> dataLabels = new ArrayList<>();
 		List<String> dataSetLabels = new ArrayList<>(Arrays.asList(
 				getBundle().getString("model.person.persons"),
@@ -155,188 +205,206 @@ public class DashboardController extends AbstractEpixWebBean
 				"#26547C",
 				"#FFD166"));
 
-		List<List<Object>> valuesLists = new ArrayList<>();
+		List<List<Number>> valuesLists = new ArrayList<>();
 		valuesLists.add(personsValues);
 		valuesLists.add(identitiesValues);
 
-		LineChartModel historyChart = Chart.initLineChartModel(valuesLists, dataSetLabels, dataSetColors, dataLabels, themeBean.getDarkMode());
-
-		for (StatisticDTO statisticDTO : Chart.reduceStatistic(historyStats, 50))
+		for (StatisticDTO statisticDTO : Chart.reduceStatistic(rangeStats, 50))
 		{
 			if (DashboardDomain.ALL.equals(domain))
 			{
 				personsValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).build(), 0L));
 				identitiesValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 0L));
 			}
-			else {
+			else
+			{
 				personsValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).perDomain(getSelectedDomain().getName()).build(), 0L));
 				identitiesValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 0L));
 			}
 			dataLabels.add(dateToString(statisticDTO.getEntrydate(), "date"));
 		}
 
-		return historyChart;
+		return Chart.initLineChart(valuesLists, dataSetLabels, dataSetColors, dataLabels, themeBean.getDarkMode());
 	}
 
-	/* Persons monthly increase bar chart */
-	public BarChartModel getPersonsIdentityMonthChart()
+	public BarChart getMonthChart(List<String> dataSetLabels, List<String> dataSetColors, List<String> dataSetTypes)
 	{
-		List<Number> personsValues = new ArrayList<>();
-		List<Number> identitiesValues = new ArrayList<>();
 		List<String> dataLabels = new ArrayList<>();
-		List<String> dataSetLabels = new ArrayList<>(Arrays.asList(
-				getBundle().getString("model.person.persons"),
-				getBundle().getString("model.identity.identities")));
-		List<String> dataSetColors = new ArrayList<>(Arrays.asList(
-				"#26547C",
-				"#FFD166"));
 
-		List<List<Number>> valuesLists = new ArrayList<>();
-		valuesLists.add(personsValues);
-		valuesLists.add(identitiesValues);
+		Map<String, List<Number>> allValues = new LinkedHashMap<>();
+		Map<String, Long> previousValues = new LinkedHashMap<>();
+		Map<String, Long> currentValues = new LinkedHashMap<>();
 
-		BarChartModel barChart = Chart.initVerticalBarChart(valuesLists, dataSetLabels, dataSetColors, dataLabels, false, themeBean.getDarkMode());
+		for (String type : dataSetTypes)
+		{
+			allValues.put(type, new ArrayList<>());
+			previousValues.put(type, 0L);
+			currentValues.put(type, 0L);
+		}
 
-		// get current month + year
-		LocalDate today = LocalDate.now();
+		// get start date
+		LocalDate start = rangeStartDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		// year*12 + month = startMonths
+		int startMonths = start.getYear() * 12 + start.getMonthValue();
 
-		// year*12 + month = currentMonth
-		int todayYearMonth = today.getYear() * 12 + today.getMonthValue();
+		// get end date
+		LocalDate end = rangeEndDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		// year*12 + month = endMonths
+		int endMonths = end.getYear() * 12 + end.getMonthValue();
 
-		long previousPersons = 0L;
-		long previousIdentities = 0L;
-		long currentPersons;
-		long currentIdentities;
-
-		// for all 12 previous months + year
-		for (int yearMonth = todayYearMonth - 12; yearMonth < todayYearMonth; yearMonth++)
+		// for all months from start to end
+		for (int months = startMonths; months < endMonths; months++)
 		{
 			// month and year
-			int year = yearMonth / 12;
-			int month = (yearMonth % 12) + 1;
+			int year = months / 12;
+			int month = months % 12 + 1;
 
 			// get stats of the month
-			List<StatisticDTO> monthStats = historyStats.stream().filter(s -> s.getEntrydate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getYear() == year
+			List<StatisticDTO> monthStats = rangeStats.stream().filter(s -> s.getEntrydate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getYear() == year
 					&& s.getEntrydate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getMonthValue() == month).toList();
 
 			// get last stat of the month if any stats for the month exist
 			StatisticDTO stat = null;
 			if (!monthStats.isEmpty())
 			{
-				stat = monthStats.get(monthStats.size() - 1);
+				stat = monthStats.getLast();
 			}
 
 			if (stat != null)
 			{
-				if (DashboardDomain.ALL.equals(domain))
+				for (String type : dataSetTypes)
 				{
-					currentPersons = stat.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).build(), 0L);
-					currentIdentities = stat.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 0L);
+					if (DashboardDomain.ALL.equals(domain))
+					{
+						currentValues.put(type, stat.getMappedStatValue().getOrDefault(new StatisticKeys(type).build(), 0L));
+					}
+					else
+					{
+						currentValues.put(type, stat.getMappedStatValue().getOrDefault(new StatisticKeys(type).perDomain(getSelectedDomain().getName()).build(), 0L));
+					}
+					allValues.get(type).add(currentValues.get(type) - previousValues.get(type));
+					previousValues.put(type, currentValues.get(type));
 				}
-				else
-				{
-					currentPersons = stat.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).perDomain(getSelectedDomain().getName()).build(), 0L);
-					currentIdentities = stat.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 0L);
-				}
-
-				personsValues.add(currentPersons - previousPersons);
-				identitiesValues.add(currentIdentities - previousIdentities);
-
-				previousPersons = currentPersons;
-				previousIdentities = currentIdentities;
 			}
 			else
 			{
-				personsValues.add(0);
-				identitiesValues.add(0);
+				for (String type : dataSetTypes)
+				{
+					allValues.get(type).add(0L);
+				}
 			}
 			dataLabels.add(year + "-" + month);
 		}
-
-		return barChart;
+		return Chart.initBarChart(allValues.values().stream().toList(), dataSetLabels, dataSetColors, dataLabels, false, themeBean.getDarkMode(), true);
 	}
 
-	/* Persons yearly increase bar chart */
-	public BarChartModel getPersonsIdentityYearChart()
+	public BarChart getYearChart(List<String> dataSetLabels, List<String> dataSetColors, List<String> dataSetTypes)
 	{
-		List<Number> personsValues = new ArrayList<>();
-		List<Number> identitiesValues = new ArrayList<>();
 		List<String> dataLabels = new ArrayList<>();
+
+		Map<String, List<Number>> allValues = new LinkedHashMap<>();
+		Map<String, Long> previousValues = new LinkedHashMap<>();
+		Map<String, Long> currentValues = new LinkedHashMap<>();
+
+		for (String type : dataSetTypes)
+		{
+			allValues.put(type, new ArrayList<>());
+			previousValues.put(type, 0L);
+			currentValues.put(type, 0L);
+		}
+
+		// get start date
+		LocalDate start = rangeStartDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		int startYear = start.getYear();
+
+		// get end date
+		LocalDate end = rangeEndDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		// year*12 + month = endMonths
+		int endYear = end.getYear();
+
+		// for all 12 previous months + year
+		for (int year = startYear; year <= endYear; year++)
+		{
+			// get stats of the year
+			int streamYear = year;
+
+			// get stats of the month
+			List<StatisticDTO> yearStats = rangeStats.stream().filter(s -> s.getEntrydate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getYear() == streamYear).toList();
+
+			// get last stat of the year if any stats for the year exist
+			StatisticDTO stat = null;
+			if (!yearStats.isEmpty())
+			{
+				stat = yearStats.getLast();
+			}
+
+			if (stat != null)
+			{
+				for (String type : dataSetTypes)
+				{
+					if (DashboardDomain.ALL.equals(domain))
+					{
+						currentValues.put(type, stat.getMappedStatValue().getOrDefault(new StatisticKeys(type).build(), 0L));
+					}
+					else
+					{
+						currentValues.put(type, stat.getMappedStatValue().getOrDefault(new StatisticKeys(type).perDomain(getSelectedDomain().getName()).build(), 0L));
+					}
+					allValues.get(type).add(currentValues.get(type) - previousValues.get(type));
+					previousValues.put(type, currentValues.get(type));
+				}
+			}
+			else
+			{
+				for (String type : dataSetTypes)
+				{
+					allValues.get(type).add(0L);
+				}
+			}
+			dataLabels.add(String.valueOf(year));
+		}
+		return Chart.initBarChart(allValues.values().stream().toList(), dataSetLabels, dataSetColors, dataLabels, false, themeBean.getDarkMode(), true);
+	}
+
+	/* Persons monthly increase bar chart */
+	public BarChart getPersonsIdentityMonthChart()
+	{
 		List<String> dataSetLabels = new ArrayList<>(Arrays.asList(
 				getBundle().getString("model.person.persons"),
 				getBundle().getString("model.identity.identities")));
 		List<String> dataSetColors = new ArrayList<>(Arrays.asList(
 				"#26547C",
 				"#FFD166"));
+		List<String> dataSetTypes = new ArrayList<>(Arrays.asList(
+				StatisticKeys.PERSONS,
+				StatisticKeys.IDENTITIES));
 
-		List<List<Number>> valuesLists = new ArrayList<>();
-		valuesLists.add(personsValues);
-		valuesLists.add(identitiesValues);
+		return getMonthChart(dataSetLabels, dataSetColors, dataSetTypes);
+	}
 
-		BarChartModel barChart = Chart.initVerticalBarChart(valuesLists, dataSetLabels, dataSetColors, dataLabels, false, themeBean.getDarkMode());
+	/* Persons yearly increase bar chart */
+	public BarChart getPersonsIdentityYearChart()
+	{
+		List<String> dataSetLabels = new ArrayList<>(Arrays.asList(
+				getBundle().getString("model.person.persons"),
+				getBundle().getString("model.identity.identities")));
+		List<String> dataSetColors = new ArrayList<>(Arrays.asList(
+				"#26547C",
+				"#FFD166"));
+		List<String> dataSetTypes = new ArrayList<>(Arrays.asList(
+				StatisticKeys.PERSONS,
+				StatisticKeys.IDENTITIES));
 
-		// get current year
-		LocalDate today = LocalDate.now();
-		int todayYear = today.getYear();
-
-		long previousPersons = 0L;
-		long previousIdentities = 0L;
-		long currentPersons;
-		long currentIdentities;
-
-		// first year
-		int firstYear = historyStats.get(0).getEntrydate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getYear();
-
-		// for all years till today
-		for (int year = firstYear; year <= todayYear; year++)
-		{
-			// get stats of the year
-			int streamYear = year;
-			List<StatisticDTO> yearStats = historyStats.stream().filter(s -> s.getEntrydate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getYear() == streamYear).toList();
-
-			// get last stat of the year if any stats for the year exist
-			StatisticDTO stat = null;
-			if (!yearStats.isEmpty())
-			{
-				stat = yearStats.get(yearStats.size() - 1);
-			}
-
-			if (stat != null)
-			{
-				if (DashboardDomain.ALL.equals(domain))
-				{
-					currentPersons = stat.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).build(), 0L);
-					currentIdentities = stat.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 0L);
-				}
-				else {
-					currentPersons = stat.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).perDomain(getSelectedDomain().getName()).build(), 0L);
-					currentIdentities = stat.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 0L);
-				}
-
-				personsValues.add(currentPersons - previousPersons);
-				identitiesValues.add(currentIdentities - previousIdentities);
-
-				previousPersons = currentPersons;
-				previousIdentities = currentIdentities;
-			}
-			else
-			{
-				personsValues.add(0);
-				identitiesValues.add(0);
-			}
-			dataLabels.add(String.valueOf(year));
-		}
-
-		return barChart;
+		return getYearChart(dataSetLabels, dataSetColors, dataSetTypes);
 	}
 
 	/* Matching Charts */
-	public LineChartModel getMatchingHistoryChart()
+	public LineChart getMatchingHistoryChart()
 	{
-		List<Object> noMatchValues = new ArrayList<>();
-		List<Object> possibleMatchValues = new ArrayList<>();
-		List<Object> matchValues = new ArrayList<>();
-		List<Object> perfectMatchValues = new ArrayList<>();
+		List<Number> noMatchValues = new ArrayList<>();
+		List<Number> possibleMatchValues = new ArrayList<>();
+		List<Number> matchValues = new ArrayList<>();
+		List<Number> perfectMatchValues = new ArrayList<>();
 		List<String> dataLabels = new ArrayList<>();
 		List<String> dataSetLabels = new ArrayList<>(Arrays.asList(
 				getBundle().getString("page.dashboard.matching.noMatch.short"),
@@ -349,15 +417,13 @@ public class DashboardController extends AbstractEpixWebBean
 				"#EF7548",
 				"#EF476F"));
 
-		List<List<Object>> valuesLists = new ArrayList<>();
+		List<List<Number>> valuesLists = new ArrayList<>();
 		valuesLists.add(noMatchValues);
 		valuesLists.add(possibleMatchValues);
 		valuesLists.add(matchValues);
 		valuesLists.add(perfectMatchValues);
 
-		LineChartModel historyChart = Chart.initLineChartModel(valuesLists, dataSetLabels, dataSetColors, dataLabels, themeBean.getDarkMode());
-
-		for (StatisticDTO statisticDTO : Chart.reduceStatistic(historyStats, 50))
+		for (StatisticDTO statisticDTO : Chart.reduceStatistic(rangeStats, 50))
 		{
 			if (DashboardDomain.ALL.equals(domain))
 			{
@@ -366,7 +432,8 @@ public class DashboardController extends AbstractEpixWebBean
 				matchValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).build(), 0L));
 				perfectMatchValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).build(), 0L));
 			}
-			else {
+			else
+			{
 				noMatchValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_NO_MATCH).perDomain(getSelectedDomain().getName()).build(), 0L));
 				possibleMatchValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).perDomain(getSelectedDomain().getName()).build(), 0L));
 				matchValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).perDomain(getSelectedDomain().getName()).build(), 0L));
@@ -375,10 +442,10 @@ public class DashboardController extends AbstractEpixWebBean
 			dataLabels.add(dateToString(statisticDTO.getEntrydate(), "date"));
 		}
 
-		return historyChart;
+		return Chart.initLineChart(valuesLists, dataSetLabels, dataSetColors, dataLabels, themeBean.getDarkMode());
 	}
 
-	public PieChartModel getMatchingChart(boolean mobile)
+	public PieChart getMatchingChart(boolean mobile)
 	{
 		List<Number> values = new ArrayList<>();
 		List<String> labels = new ArrayList<>();
@@ -386,16 +453,17 @@ public class DashboardController extends AbstractEpixWebBean
 
 		if (DashboardDomain.ALL.equals(domain))
 		{
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_NO_MATCH).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_NO_MATCH).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).build()));
 		}
-		else {
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_NO_MATCH).perDomain(getSelectedDomain().getName()).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).perDomain(getSelectedDomain().getName()).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).perDomain(getSelectedDomain().getName()).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).perDomain(getSelectedDomain().getName()).build()));
+		else
+		{
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_NO_MATCH).perDomain(getSelectedDomain().getName()).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).perDomain(getSelectedDomain().getName()).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).perDomain(getSelectedDomain().getName()).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).perDomain(getSelectedDomain().getName()).build()));
 		}
 		labels.add(getBundle().getString("page.dashboard.matching.noMatch.short"));
 		labels.add(getBundle().getString("page.dashboard.matching.possibleMatch.short"));
@@ -406,52 +474,57 @@ public class DashboardController extends AbstractEpixWebBean
 		colors.add("#EF7548");
 		colors.add("#EF476F");
 
-		return Chart.initPieChart(values, labels, colors, mobile ? "top" : "left", themeBean.getDarkMode());
+		return Chart.initPieChart(values, labels, colors, mobile ? Chart.LegendPosition.TOP : Chart.LegendPosition.LEFT, themeBean.getDarkMode());
 	}
 
 	/* Possible Matches Charts */
-	public LineChartModel getPossibleMatchesHistoryChart()
+	public LineChart getPossibleMatchesHistoryChart()
 	{
-		List<Object> openValues = new ArrayList<>();
-		List<Object> mergedValues = new ArrayList<>();
-		List<Object> splitValues = new ArrayList<>();
+		List<Number> openValues = new ArrayList<>();
+		List<Number> mergedValues = new ArrayList<>();
+		List<Number> splitValues = new ArrayList<>();
+		List<Number> postponedValues = new ArrayList<>();
 		List<String> dataLabels = new ArrayList<>();
 		List<String> dataSetLabels = new ArrayList<>(Arrays.asList(
 				getBundle().getString("page.dashboard.possibleMatches.open.short"),
 				getBundle().getString("page.dashboard.possibleMatches.merged.short"),
-				getBundle().getString("page.dashboard.possibleMatches.split.short")));
+				getBundle().getString("page.dashboard.possibleMatches.split.short"),
+				getBundle().getString("page.dashboard.possibleMatches.postponed.short")));
 		List<String> dataSetColors = new ArrayList<>(Arrays.asList(
 				"#FFD166",
 				"#06D6A0",
-				"#26547C"));
+				"#26547C",
+				"#7d7d7d"));
 
-		List<List<Object>> valuesLists = new ArrayList<>();
+		List<List<Number>> valuesLists = new ArrayList<>();
 		valuesLists.add(openValues);
 		valuesLists.add(mergedValues);
 		valuesLists.add(splitValues);
+		valuesLists.add(postponedValues);
 
-		LineChartModel historyChart = Chart.initLineChartModel(valuesLists, dataSetLabels, dataSetColors, dataLabels, themeBean.getDarkMode());
-
-		for (StatisticDTO statisticDTO : Chart.reduceStatistic(historyStats, 50))
+		for (StatisticDTO statisticDTO : Chart.reduceStatistic(rangeStats, 50))
 		{
 			if (DashboardDomain.ALL.equals(domain))
 			{
 				openValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_OPEN).build(), 0L));
 				mergedValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_MERGED).build(), 0L));
 				splitValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_SPLIT).build(), 0L));
+				postponedValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_POSTPONED).build(), 0L));
 			}
-			else {
+			else
+			{
 				openValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_OPEN).perDomain(getSelectedDomain().getName()).build(), 0L));
 				mergedValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_MERGED).perDomain(getSelectedDomain().getName()).build(), 0L));
 				splitValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_SPLIT).perDomain(getSelectedDomain().getName()).build(), 0L));
+				postponedValues.add(statisticDTO.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_POSTPONED).perDomain(getSelectedDomain().getName()).build(), 0L));
 			}
 			dataLabels.add(dateToString(statisticDTO.getEntrydate(), "date"));
 		}
 
-		return historyChart;
+		return Chart.initLineChart(valuesLists, dataSetLabels, dataSetColors, dataLabels, themeBean.getDarkMode());
 	}
 
-	public PieChartModel getPossibleMatchesChart(boolean mobile)
+	public PieChart getPossibleMatchesChart(boolean mobile)
 	{
 		List<Number> values = new ArrayList<>();
 		List<String> labels = new ArrayList<>();
@@ -459,23 +532,28 @@ public class DashboardController extends AbstractEpixWebBean
 
 		if (DashboardDomain.ALL.equals(domain))
 		{
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_OPEN).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_MERGED).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_SPLIT).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_OPEN).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_MERGED).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_SPLIT).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_POSTPONED).build()));
 		}
-		else {
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_OPEN).perDomain(getSelectedDomain().getName()).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_MERGED).perDomain(getSelectedDomain().getName()).build()));
-			values.add(latestStats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_SPLIT).perDomain(getSelectedDomain().getName()).build()));
+		else
+		{
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_OPEN).perDomain(getSelectedDomain().getName()).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_MERGED).perDomain(getSelectedDomain().getName()).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_SPLIT).perDomain(getSelectedDomain().getName()).build()));
+			values.add(stats.getMappedStatValue().get(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_POSTPONED).perDomain(getSelectedDomain().getName()).build()));
 		}
 		labels.add(getBundle().getString("page.dashboard.possibleMatches.open.short"));
 		labels.add(getBundle().getString("page.dashboard.possibleMatches.merged.short"));
 		labels.add(getBundle().getString("page.dashboard.possibleMatches.split.short"));
+		labels.add(getBundle().getString("page.dashboard.possibleMatches.postponed.short"));
 		colors.add("#FFD166");
 		colors.add("#06D6A0");
 		colors.add("#26547C");
+		colors.add("#7d7d7d");
 
-		return Chart.initPieChart(values, labels, colors, mobile ? "top" : "left", themeBean.getDarkMode());
+		return Chart.initPieChart(values, labels, colors, mobile ? Chart.LegendPosition.TOP : Chart.LegendPosition.LEFT, themeBean.getDarkMode());
 	}
 
 	/* Ratios */
@@ -483,13 +561,14 @@ public class DashboardController extends AbstractEpixWebBean
 	{
 		if (DashboardDomain.ALL.equals(domain))
 		{
-			double identities = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 1L);
-			double persons = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).build(), 1L);
+			double identities = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 1L);
+			double persons = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).build(), 1L);
 			return persons > 0 ? identities / persons : 0L;
 		}
-		else {
-			double identities = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 1L);
-			double persons = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).perDomain(getSelectedDomain().getName()).build(), 1L);
+		else
+		{
+			double identities = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 1L);
+			double persons = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.PERSONS).perDomain(getSelectedDomain().getName()).build(), 1L);
 			return persons > 0 ? identities / persons : 0L;
 		}
 	}
@@ -498,13 +577,14 @@ public class DashboardController extends AbstractEpixWebBean
 	{
 		if (DashboardDomain.ALL.equals(domain))
 		{
-			double identitiesPossibleMatch = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).build(), 1L);
-			double identities = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 1L);
+			double identitiesPossibleMatch = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).build(), 1L);
+			double identities = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 1L);
 			return identities > 0 ? identitiesPossibleMatch / identities : 0L;
 		}
-		else {
-			double identitiesPossibleMatch = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).perDomain(getSelectedDomain().getName()).build(), 1L);
-			double identities = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 1L);
+		else
+		{
+			double identitiesPossibleMatch = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_POSSIBLE_MATCH).perDomain(getSelectedDomain().getName()).build(), 1L);
+			double identities = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 1L);
 			return identities > 0 ? identitiesPossibleMatch / identities : 0L;
 		}
 	}
@@ -513,15 +593,16 @@ public class DashboardController extends AbstractEpixWebBean
 	{
 		if (DashboardDomain.ALL.equals(domain))
 		{
-			double identitiesMatch = (latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).build(), 1L)
-					+ latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).build(), 1L));
-			double identities = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 1L);
+			double identitiesMatch = (stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).build(), 1L)
+					+ stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).build(), 1L));
+			double identities = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).build(), 1L);
 			return identities > 0 ? identitiesMatch / identities : 0L;
 		}
-		else {
-			double identitiesMatch = (latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).perDomain(getSelectedDomain().getName()).build(), 1L)
-					+ latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).perDomain(getSelectedDomain().getName()).build(), 1L));
-			double identities = latestStats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 1L);
+		else
+		{
+			double identitiesMatch = (stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_MATCH).perDomain(getSelectedDomain().getName()).build(), 1L)
+					+ stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITY_PERFECT_MATCH).perDomain(getSelectedDomain().getName()).build(), 1L));
+			double identities = stats.getMappedStatValue().getOrDefault(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(getSelectedDomain().getName()).build(), 1L);
 			return identities > 0 ? identitiesMatch / identities : 0L;
 		}
 	}
@@ -544,9 +625,9 @@ public class DashboardController extends AbstractEpixWebBean
 		Map<String, Number> valueMap = new LinkedHashMap<>();
 		for (String key : getLatestStatsAllDomainsLabels().keySet())
 		{
-			valueMap.put(key, latestStats.getMappedStatValue().getOrDefault(key, 0L));
+			valueMap.put(key, stats.getMappedStatValue().getOrDefault(key, 0L));
 		}
-		return getMapAsCsv(valueMap, latestStats.getEntrydate(), "all_domains stats latest");
+		return getMapAsCsv(valueMap, stats.getEntrydate(), "all_domains stats latest");
 	}
 
 	public StreamedContent getHistoryStatsDownload()
@@ -571,9 +652,9 @@ public class DashboardController extends AbstractEpixWebBean
 		Map<String, Number> valueMap = new LinkedHashMap<>();
 		for (String key : getLatestStatsActiveDomainLabels().keySet())
 		{
-			valueMap.put(key, latestStats.getMappedStatValue().getOrDefault(key, 0L));
+			valueMap.put(key, stats.getMappedStatValue().getOrDefault(key, 0L));
 		}
-		return getMapAsCsv(valueMap, latestStats.getEntrydate(), getSelectedDomain().getName() + " stats latest");
+		return getMapAsCsv(valueMap, stats.getEntrydate(), getSelectedDomain().getName() + " stats latest");
 	}
 
 	public StreamedContent getHistoryStatsActiveDomainDownload()
@@ -584,8 +665,33 @@ public class DashboardController extends AbstractEpixWebBean
 	/* Private methods */
 	private void loadStats()
 	{
-		historyStats = statisticService.getAllStats();
-		latestStats = statisticService.getLatestStats();
+		// Look if any stats exist
+		stats = getStatisticService().getLatestStats();
+		hasStats = stats != null && stats.getMappedStatValue().containsKey(StatisticKeys.CALCULATION_TIME);
+
+		if (hasStats)
+		{
+			// Set min and max date for stats
+			statsMinDate = getStatisticService().getFirstStats().getEntrydate();
+			statsMaxDate = stats.getEntrydate();
+
+			// Get stats for custom date
+			if (statsDate != null && !stats.getEntrydate().equals(statsDate))
+			{
+				List<StatisticDTO> historyForCustomStatsDate = getStatisticService().getStatsFromTo(new Date(0), statsDate);
+				stats = historyForCustomStatsDate.get(historyForCustomStatsDate.size() - 1);
+			}
+			else
+			{
+				statsDate = stats.getEntrydate();
+			}
+
+			// Set range start date if not set
+			rangeStartDate = rangeStartDate != null ? rangeStartDate : statsMinDate;
+
+			// set range end date if not set or if range ends after custom statsDate
+			rangeEndDate = rangeEndDate != null && !rangeEndDate.after(statsDate) ? rangeEndDate : statsDate;
+		}
 	}
 
 	private StreamedContent getMapAsCsv(Map<String, Number> map, Date date, String details)
@@ -604,7 +710,7 @@ public class DashboardController extends AbstractEpixWebBean
 		}
 
 		// Fill lists
-		for (StatisticDTO statisticDTO : historyStats)
+		for (StatisticDTO statisticDTO : rangeStats)
 		{
 			dates.add(dateToString(statisticDTO.getEntrydate(), "date"));
 			for (Map.Entry<String, List<Object>> entry : valueMap.entrySet())
@@ -616,41 +722,46 @@ public class DashboardController extends AbstractEpixWebBean
 		return File.get3DDataAsCSV(valueMap, dates, details, TOOL);
 	}
 
-	public StatisticDTO getLatestStats()
+	public StatisticDTO getStats()
 	{
-		return latestStats;
+		return stats;
 	}
 
-	public String getLatestStatsDate()
+	public String getLatestStatsDateTimeString()
 	{
-		if (latestStats.getEntrydate().toInstant().truncatedTo(ChronoUnit.DAYS).equals(new Date().toInstant().truncatedTo(ChronoUnit.DAYS)))
+		if (stats.getEntrydate().toInstant().truncatedTo(ChronoUnit.DAYS).equals(new Date().toInstant().truncatedTo(ChronoUnit.DAYS)))
 		{
-			return getCommonBundle().getString("ui.date.today");
+			return getCommonBundle().getString("ui.date.today") + " " + getLatestStatsTimeString();
 		}
 		else
 		{
-			return dateToString(latestStats.getEntrydate(), "date");
+			return dateToString(stats.getEntrydate(), "date") + " " + getLatestStatsTimeString();
 		}
 	}
 
-	public String getLatestStatsTime()
+	public String getLatestStatsTimeString()
 	{
-		return dateToString(latestStats.getEntrydate(), "time");
+		return dateToString(stats.getEntrydate(), "time");
 	}
 
 	public long getLatestStatsCalculationTime()
 	{
-		return latestStats.getMappedStatValue().getOrDefault(StatisticKeys.CALCULATION_TIME, -1L);
+		return stats.getMappedStatValue().getOrDefault(StatisticKeys.CALCULATION_TIME, -1L);
 	}
 
-	/**
-	 * LatestStats should have calculation time and stats for current domain
-	 *
-	 * @return true if init was successful
-	 */
-	public boolean getInit()
+	public boolean isHasStats()
 	{
-		return latestStats != null && latestStats.getMappedStatValue().containsKey(StatisticKeys.CALCULATION_TIME);
+		return hasStats;
+	}
+
+	public boolean isHasSummaryStats()
+	{
+		return hasStats && stats != null && stats.containsSummary();
+	}
+
+	public boolean isHasStatsInTimespan()
+	{
+		return hasStats && stats != null;
 	}
 
 	/**
@@ -674,9 +785,9 @@ public class DashboardController extends AbstractEpixWebBean
 		this.personsIdentitiesBarScale = personsIdentitiesBarScale != null ? personsIdentitiesBarScale : this.personsIdentitiesBarScale;
 	}
 
-	public Chart.BarScale[] getAvailableBarScales()
+	public List<Chart.BarScale> getAvailableBarScales()
 	{
-		return Chart.BarScale.values();
+		return Arrays.asList(Chart.getAvailableBarScales());
 	}
 
 	public DashboardDomain getDomain()
@@ -688,12 +799,52 @@ public class DashboardController extends AbstractEpixWebBean
 	{
 		this.domain = domain;
 	}
-	
-	public DashboardDomain[] getAvailableDomains()
+
+	public Date getStatsDate()
 	{
-		return DashboardDomain.values();
+		return statsDate;
 	}
 
+	public void setStatsDate(Date statsDate)
+	{
+		this.statsDate = statsDate;
+	}
+
+	public Date getRangeStartDate()
+	{
+		return rangeStartDate;
+	}
+
+	public void setRangeStartDate(Date rangeStartDate)
+	{
+		this.rangeStartDate = rangeStartDate;
+	}
+
+	public Date getRangeEndDate()
+	{
+		return rangeEndDate;
+	}
+
+	public void setRangeEndDate(Date rangeEndDate)
+	{
+		this.rangeEndDate = rangeEndDate;
+	}
+
+	public Date getStatsMinDate()
+	{
+		return statsMinDate;
+	}
+
+	public Date getStatsMaxDate()
+	{
+		return statsMaxDate;
+	}
+
+	public boolean isRangeStatsLoaded()
+	{
+		return rangeStatsLoaded;
+	}
+	
 	public enum DashboardDomain
 	{
 		ALL, CURRENT

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,6 +39,8 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * ###license-information-end###
  */
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -62,8 +64,10 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Arne Blumentritt
  */
-public class SearchForm
+public class SearchForm implements Serializable
 {
+	@Serial private static final long serialVersionUID = -6140117134779575551L;
+
 	protected static final int DEFAULT_RESULT_SIZE = 100;
 
 	protected final Logger logger = LoggerFactory.getLogger(this.getClass());

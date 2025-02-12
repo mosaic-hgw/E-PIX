@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.utils;
  * ###license-information-start###
  * gPAS - a Generic Pseudonym Administration Service
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.utils;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -48,6 +48,7 @@ public class StatisticKeys
 	public static final String POSSIBLE_MATCHES_OPEN = "possible_matches";
 	public static final String POSSIBLE_MATCHES_MERGED = "possible_matches_merged";
 	public static final String POSSIBLE_MATCHES_SPLIT = "possible_matches_separated";
+	public static final String POSSIBLE_MATCHES_POSTPONED = "possible_matches_postponed";
 	public static final String IDENTITY_PERFECT_MATCH = "identity_perfect_match";
 	public static final String IDENTITY_MATCH = "identity_match";
 	public static final String IDENTITY_POSSIBLE_MATCH = "identity_possible_match";

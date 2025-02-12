@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.service;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -43,11 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import javax.ejb.Remote;
-import javax.ejb.Stateless;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-
+import jakarta.ejb.Remote;
+import jakarta.ejb.Stateless;
+import jakarta.jws.WebService;
+import jakarta.jws.soap.SOAPBinding;
 import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.deduplication.config.model.MatchingConfiguration;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
@@ -72,9 +71,7 @@ import org.emau.icmvc.ttp.epix.common.utils.PaginationConfig;
 import org.emau.icmvc.ttp.epix.persistence.PublicDAO;
 
 /**
- *
  * @author Christian Schack, geidell
- *
  */
 @WebService(name = "epixManagementService")
 @SOAPBinding(style = SOAPBinding.Style.RPC)
@@ -82,6 +79,10 @@ import org.emau.icmvc.ttp.epix.persistence.PublicDAO;
 @Remote(value = EPIXManagementService.class)
 public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXManagementService
 {
+
+	private static final String FOUND_POSSIBLE_MATCH_HISTORY_ENTRIES = "found {} possible match history entries";
+	private static final String FOUND_IDENTITY_HISTORY_ENTRIES = "found {} identity history entries";
+
 	public EPIXManagementServiceImpl()
 	{
 		logger.debug("creating epix management service");
@@ -93,7 +94,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("addIdentifierDomain " + identifierDomain);
+			logger.debug("addIdentifierDomain {}", identifierDomain);
 		}
 		else
 		{
@@ -109,14 +110,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	@Override
 	public IdentifierDomainDTO getIdentifierDomain(String identifierDomainName) throws UnknownObjectException, InvalidParameterException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getIdentifierDomain with name " + identifierDomainName);
-		}
-		else
-		{
-			logger.info("getIdentifierDomain");
-		}
+		logger.debug("getIdentifierDomain with name {}", identifierDomainName);
 		checkParameter(identifierDomainName, "identifierDomainName");
 		IdentifierDomainDTO result = dao.getIdentifierDomain(identifierDomainName);
 		logger.info("returning found identifier domain");
@@ -126,9 +120,9 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	@Override
 	public List<IdentifierDomainDTO> getIdentifierDomains()
 	{
-		logger.info("getAllIdentifierDomains");
+		logger.debug("getAllIdentifierDomains");
 		List<IdentifierDomainDTO> result = dao.getIdentifierDomains();
-		logger.info("found " + result.size() + " identifier domains");
+		logger.debug("found {} identifier domains", result.size());
 		return result;
 	}
 
@@ -138,7 +132,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("updateIdentifierDomain with " + identifierDomain);
+			logger.debug("updateIdentifierDomain with {}", identifierDomain);
 		}
 		else
 		{
@@ -157,7 +151,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("deleteIdentifierDomain with name " + identifierDomainName);
+			logger.debug("deleteIdentifierDomain with name {}", identifierDomainName);
 		}
 		else
 		{
@@ -172,7 +166,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("addDomain " + domain);
+			logger.debug("addDomain {}", domain);
 		}
 		else
 		{
@@ -202,27 +196,20 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	@Override
 	public DomainDTO getDomain(String domainName) throws UnknownObjectException, InvalidParameterException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getDomain with name " + domainName);
-		}
-		else
-		{
-			logger.info("getDomain");
-		}
+		logger.debug("getDomain with name {}", domainName);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		DomainDTO result = dao.getDomain(domainName);
-		logger.info("returning found domain");
+		logger.debug("returning found domain");
 		return result;
 	}
 
 	@Override
 	public List<DomainDTO> getDomains()
 	{
-		logger.info("getDomains");
+		logger.debug("getDomains");
 		List<DomainDTO> result = filterAllowedDomains(dao.getDomains());
-		logger.info("found " + result.size() + " domains");
+		logger.debug("found {} domains", result.size());
 		return result;
 	}
 
@@ -231,7 +218,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("updateDomain with " + domain);
+			logger.debug("updateDomain with {}", domain);
 		}
 		else
 		{
@@ -252,7 +239,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("updateDomainInUse with name " + domainName + ", set label = " + label + " and description = " + description);
+			logger.debug("updateDomainInUse with name {}, set label = {} and description = {}", domainName, label, description);
 		}
 		else
 		{
@@ -270,7 +257,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("deleteDomain with name " + domainName);
+			logger.debug("deleteDomain with name {}", domainName);
 		}
 		else
 		{
@@ -287,7 +274,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("addSource " + source);
+			logger.debug("addSource {}", source);
 		}
 		else
 		{
@@ -303,26 +290,19 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	@Override
 	public SourceDTO getSource(String sourceName) throws UnknownObjectException, InvalidParameterException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getSource with name " + sourceName);
-		}
-		else
-		{
-			logger.info("getSource");
-		}
+		logger.debug("getSource with name {}", sourceName);
 		checkParameter(sourceName, "sourceName");
 		SourceDTO result = dao.getSource(sourceName);
-		logger.info("returning found source");
+		logger.debug("returning found source");
 		return result;
 	}
 
 	@Override
 	public List<SourceDTO> getSources()
 	{
-		logger.info("getSources");
+		logger.debug("getSources");
 		List<SourceDTO> result = dao.getSources();
-		logger.info("found " + result.size() + " sources");
+		logger.debug("found {} sources", result.size());
 		return result;
 	}
 
@@ -331,7 +311,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("updateSource with " + source);
+			logger.debug("updateSource with {}", source);
 		}
 		else
 		{
@@ -349,7 +329,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	{
 		if (logger.isDebugEnabled())
 		{
-			logger.debug("deleteSource with name " + sourceName);
+			logger.debug("deleteSource with name {}", sourceName);
 		}
 		else
 		{
@@ -363,112 +343,65 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	@Override
 	public PersonDTO getPersonById(long id) throws UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getPersonById with id " + id);
-		}
-		else
-		{
-			logger.info("getPersonById");
-		}
-
+		logger.debug("getPersonById with id {}", id);
 		PersonDTO person = dao.getPersonById(id);
 		checkAllowedPerson(person);
-
 		return person;
 	}
 
 	@Override
 	public IdentityOutDTO getIdentityById(long id) throws UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getIdentityById with id " + id);
-		}
-		else
-		{
-			logger.info("getIdentityById");
-		}
-
+		logger.debug("getIdentityById with id {}", id);
 		IdentityOutDTO identity = dao.getIdentityById(id);
-
 		checkAllowedEntity(
 				getPersonIdDomainSupplier(identity.getPersonId()),
 				() -> PublicDAO.createUnknownIdentityIdException(id));
-
 		return identity;
 	}
 
 	@Override
 	public List<PersonDTO> getDeactivatedPersonsForDomain(String domainName) throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getDeactivatedPersonsForDomain for domain " + domainName);
-		}
-		else
-		{
-			logger.info("getDeactivatedPersonsForDomain");
-		}
+		logger.debug("getDeactivatedPersonsForDomain for domain {}", domainName);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		List<PersonDTO> result = dao.getDeactivatedPersons(domainName);
-		logger.info("found " + result.size() + " persons");
+		logger.debug("found {} persons", result.size());
 		return result;
 	}
 
 	@Override
 	public List<IdentityOutDTO> getDeacticatedIdentitiesForDomain(String domainName) throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getDeacticatedIdentitiesForDomain for domain " + domainName);
-		}
-		else
-		{
-			logger.info("getDeacticatedIdentitiesForDomain");
-		}
+		logger.debug("getDeacticatedIdentitiesForDomain for domain {}", domainName);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		List<IdentityOutDTO> result = dao.getDeactivatedIdentitiesByDomain(domainName);
-		logger.info("found " + result.size() + " identities");
+		logger.debug("found {} identities", result.size());
 		return result;
 	}
 
 	@Override
 	public List<PersonHistoryDTO> getHistoryForPerson(String domainName, String mpiId) throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getHistoryForPerson for mpi id " + mpiId + " within domain " + domainName);
-		}
-		else
-		{
-			logger.info("getHistoryForPerson");
-		}
+		logger.debug("getHistoryForPerson for mpi id {} within domain {}", mpiId, domainName);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
 		List<PersonHistoryDTO> result = dao.getHistoryForPerson(domainName, mpiId);
-		logger.info("found " + result.size() + " person history entries");
+		logger.debug("found {} person history entries", result.size());
 		return result;
 	}
 
 	@Override
 	public List<IdentityHistoryDTO> getIdentityHistoriesForDomain(String domainName) throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getIdentityHistoriesForDomain " + domainName);
-		}
-		else
-		{
-			logger.info("getIdentityHistoriesForDomain");
-		}
+		logger.debug("getIdentityHistoriesForDomain " + domainName);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		List<IdentityHistoryDTO> result = dao.getIdentityHistoriesForDomain(domainName, null, false);
-		logger.info("found " + result.size() + " identity history entries");
+		logger.debug(FOUND_IDENTITY_HISTORY_ENTRIES, result.size());
 		return result;
 	}
 
@@ -476,20 +409,13 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	public List<IdentityHistoryDTO> getIdentityHistoriesForDomainFiltered(String domainName, Map<IdentityField, String> filter,
 			boolean filterIsCaseSensitive) throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getIdentityHistoriesForDomainFiltered, domain=" + domainName
-					+ (filter != null && !filter.isEmpty() ? filter.size() + " filter values" : " no filter values")
-					+ " and the filter is case sensitive=" + filterIsCaseSensitive);
-		}
-		else
-		{
-			logger.info("getIdentityHistoriesForDomainFiltered");
-		}
+		logger.debug("getIdentityHistoriesForDomainFiltered, domain={} and the filter is case sensitive={}", domainName
+						+ (filter != null && !filter.isEmpty() ? filter.size() + " filter values" : " no filter values")
+				, filterIsCaseSensitive);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		List<IdentityHistoryDTO> result = dao.getIdentityHistoriesForDomain(domainName, filter, filterIsCaseSensitive);
-		logger.info("found " + result.size() + " identity history entries");
+		logger.debug(FOUND_IDENTITY_HISTORY_ENTRIES, result.size());
 		return result;
 	}
 
@@ -497,18 +423,11 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	public List<IdentityHistoryDTO> getIdentityHistoriesForDomainPaginated(String domainName, PaginationConfig paginationConfig)
 			throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getIdentityHistoriesForDomainPaginated, domain=" + domainName + ", paginationConfig=" + paginationConfig);
-		}
-		else
-		{
-			logger.info("getIdentityHistoriesForDomainPaginated");
-		}
+		logger.debug("getIdentityHistoriesForDomainPaginated, domain={}, paginationConfig={}", domainName, paginationConfig);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		List<IdentityHistoryDTO> result = dao.getIdentityHistoriesPaginated(domainName, paginationConfig);
-		logger.info("found " + result.size() + " identity history entries");
+		logger.debug(FOUND_IDENTITY_HISTORY_ENTRIES, result.size());
 		return result;
 	}
 
@@ -516,50 +435,29 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	public long countIdentityHistoriesForDomain(String domainName, PaginationConfig paginationConfig)
 			throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("countIdentityHistoriesForDomain, domain=" + domainName + " paginationConfig=" + paginationConfig);
-		}
-		else
-		{
-			logger.info("countIdentityHistoriesForDomain");
-		}
+		logger.debug("countIdentityHistoriesForDomain, domain={} paginationConfig={}", domainName, paginationConfig);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		long count = dao.countIdentityHistories(domainName, paginationConfig);
-		logger.info("counted " + count + " identity history entries");
+		logger.debug("counted {} identity history entries", count);
 		return count;
 	}
 
 	@Override
 	public long countPossibleMatchHistoriesForDomain(String domainName, PaginationConfig pc) throws UnknownObjectException, InvalidParameterException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("countPossibleMatchHistoriesForDomain, domain=" + domainName + " paginationConfig=" + pc);
-		}
-		else
-		{
-			logger.info("countPossibleMatchHistoriesForDomain");
-		}
+		logger.debug("countPossibleMatchHistoriesForDomain, domain={} paginationConfig={}", domainName, pc);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		long count = dao.countPossibleMatchHistories(domainName, pc);
-		logger.info("counted " + count + " possible match history entries");
+		logger.debug("counted {} possible match history entries", count);
 		return count;
 	}
 
 	@Override
 	public List<IdentityHistoryDTO> getHistoryForIdentity(long identityId) throws UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getHistoryForIdentity with id " + identityId);
-		}
-		else
-		{
-			logger.info("getHistoryForIdentity");
-		}
+		logger.debug("getHistoryForIdentity with id {}", identityId);
 		List<IdentityHistoryDTO> result = dao.getHistoryForIdentity(identityId);
 		if (!result.isEmpty())
 		{
@@ -569,21 +467,14 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 					getPersonIdDomainSupplier(result.get(0).getPersonId()),
 					() -> PublicDAO.createUnknownIdentityIdException(identityId));
 		}
-		logger.info("found " + result.size() + " identity history entries");
+		logger.debug(FOUND_IDENTITY_HISTORY_ENTRIES, result.size());
 		return result;
 	}
 
 	@Override
 	public List<ContactHistoryDTO> getHistoryForContact(long contactId) throws UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getHistoryForContact with id " + contactId);
-		}
-		else
-		{
-			logger.info("getHistoryForContact");
-		}
+		logger.debug("getHistoryForContact with id {}", contactId);
 		List<ContactHistoryDTO> result = dao.getHistoryForContact(contactId);
 		if (!result.isEmpty())
 		{
@@ -593,23 +484,16 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 					getIdentityIdDomainSupplier(result.get(0).getIdentityId()),
 					() -> PublicDAO.createUnknownContactIdException(contactId));
 		}
-		logger.info("found " + result.size() + " contact history entries");
+		logger.debug("found {} contact history entries", result.size());
 		return result;
 	}
 
 	@Override
 	public List<IdentifierHistoryDTO> getHistoryForIdentifier(String identifierDomainName, String value) throws UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getHistoryForIdentifier with identifierDomainName '" + identifierDomainName + "' and value '" + value + "'");
-		}
-		else
-		{
-			logger.info("getHistoryForIdentifier");
-		}
+		logger.debug("getHistoryForIdentifier with identifierDomainName '{}' and value '{}'", identifierDomainName, value);
 		List<IdentifierHistoryDTO> result = dao.getHistoryForIdentifier(identifierDomainName, value);
-		logger.info("found " + result.size() + " identifier history entries");
+		logger.debug("found {} identifier history entries", result.size());
 		return result;
 	}
 
@@ -617,124 +501,73 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	public List<PossibleMatchHistoryDTO> getPossibleMatchHistoryForPerson(String domainName, String mpiId)
 			throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getPossibleMatchHistoryForPerson with mpi id " + mpiId + " within domain " + domainName);
-		}
-		else
-		{
-			logger.info("getPossibleMatchHistoryForPerson");
-		}
+		logger.debug("getPossibleMatchHistoryForPerson with mpi id {} within domain {}", mpiId, domainName);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		checkParameter(mpiId, "mpiId");
 		List<PossibleMatchHistoryDTO> result = dao.getPossibleMatchHistoryForPerson(domainName, mpiId);
-		logger.info("found " + result.size() + " possible match history entries");
+		logger.debug(FOUND_POSSIBLE_MATCH_HISTORY_ENTRIES, result.size());
 		return result;
 	}
 
 	@Override
 	public List<PossibleMatchHistoryDTO> getPossibleMatchHistoryForUpdatedIdentity(long updatedIdentityId) throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getPossibleMatchHistoryForUpdatedIdentity with updatedIdentityId " + updatedIdentityId);
-		}
-		else
-		{
-			logger.info("getPossibleMatchHistoryForUpdatedIdentity");
-		}
+		logger.debug("getPossibleMatchHistoryForUpdatedIdentity with updatedIdentityId {}", updatedIdentityId);
 		List<PossibleMatchHistoryDTO> result = dao.getPossibleMatchHistoryForUpdatedIdentity(updatedIdentityId);
 		checkAllowedPossibleMatchHistoryResult(updatedIdentityId, result);
-		logger.info("found " + result.size() + " possible match history entries");
+		logger.debug(FOUND_POSSIBLE_MATCH_HISTORY_ENTRIES, result.size());
 		return result;
 	}
 
 	@Override
 	public List<PossibleMatchHistoryDTO> getPossibleMatchHistoryByIdentity(long identityId) throws UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getPossibleMatchHistoryByIdentity for identityId " + identityId);
-		}
-		else
-		{
-			logger.info("getPossibleMatchHistoryForIdentity");
-		}
+		logger.debug("getPossibleMatchHistoryByIdentity for identityId {}", identityId);
 		List<PossibleMatchHistoryDTO> result = dao.getPossibleMatchHistoryByIdentity(identityId);
 		checkAllowedPossibleMatchHistoryResult(identityId, result);
-		logger.info("found " + result.size() + " possible match history entries");
+		logger.debug(FOUND_POSSIBLE_MATCH_HISTORY_ENTRIES, result.size());
 		return result;
 	}
 
 	@Override
 	public ConfigurationContainer getConfigurationForDomain(String domainName) throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getConfigurationForDomain " + domainName);
-		}
-		else
-		{
-			logger.info("getConfigurationForDomain");
-		}
+		logger.debug("getConfigurationForDomain {}", domainName);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		ConfigurationContainer result = dao.getConfigurationContainerForDomain(domainName);
-		logger.info("configuration found");
+		logger.debug("configuration found");
 		return result;
 	}
 
 	@Override
 	public List<IdentityHistoryDTO> getIdentityHistoryByPersonId(Long personId) throws UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getReferenceIdentityAtTimestamp with personId " + personId);
-		}
-		else
-		{
-			logger.info("getReferenceIdentityAtTimestamp");
-		}
+		logger.debug("getReferenceIdentityAtTimestamp with personId {}", personId);
 		checkAllowedPersonId(personId);
 		List<IdentityHistoryDTO> result = dao.getIdentityHistoryByPersonId(personId);
-		logger.info("found " + result.size() + " identity history entries for personId");
+		logger.debug("found {} identity history entries for personId", result.size());
 		return result;
 	}
 
 	@Override
 	public List<ReasonDTO> getDefinedDeduplicationReasons(String domainName) throws InvalidParameterException, UnknownObjectException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("getDefinedDeduplicationReasons " + domainName);
-		}
-		else
-		{
-			logger.info("getDefinedDeduplicationReasons");
-		}
+		logger.debug("getDefinedDeduplicationReasons {}", domainName);
 		checkParameter(domainName, "domainName");
 		checkAllowedDomain(domainName);
 		List<ReasonDTO> result = dao.getDefinedDeduplicationReasons(domainName);
-		logger.info("reasons found");
+		logger.debug("reasons found");
 		return result;
 	}
 
 	@Override
 	public ConfigurationContainer parseMatchingConfiguration(String xml) throws InvalidParameterException, MPIException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("parseMatchingConfiguration from '{}'",
-					xml == null ? "null" : StringUtils.truncate(xml, 1000) + "...");
-		}
-		else
-		{
-			logger.info("parseMatchingConfiguration");
-		}
-
+		logger.debug("parseMatchingConfiguration from '{}'",
+				xml == null ? "null" : StringUtils.truncate(xml, 1000) + "...");
 		checkParameter(xml, "xml");
-
 		return unwrapRuntimeException(() ->
 				MatchingConfiguration.fromXml(xml, "unknown").toConfigurationContainer());
 	}
@@ -742,15 +575,7 @@ public class EPIXManagementServiceImpl extends EpixServiceBase implements EPIXMa
 	@Override
 	public String encodeMatchingConfiguration(ConfigurationContainer config) throws InvalidParameterException, MPIException
 	{
-		if (logger.isDebugEnabled())
-		{
-			logger.debug("encodeMatchingConfiguration from '{}'", config == null ? "null" : config);
-		}
-		else
-		{
-			logger.info("encodeMatchingConfiguration");
-		}
-
+		logger.debug("encodeMatchingConfiguration from '{}'", config == null ? "null" : config);
 		checkParameter(config, "config");
 		return unwrapRuntimeException(() ->
 				new MatchingConfiguration(config, "unknown").toXml("unknown"));

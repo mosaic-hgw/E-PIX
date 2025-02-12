@@ -20,10 +20,10 @@ services:
       - "9990:9990"
     env_file:
       - ./envs/ttp_commons.env
-      - ./envs/ttp_epix.env
-      - ./envs/ttp_fhir.env
+      - ./envs/ttp_${project.shortName}.env
       - ./envs/ttp_gras.env
       - ./envs/ttp_noti.env
+      - ./envs/wf_commons.env
     depends_on:
       - mysql
     volumes:

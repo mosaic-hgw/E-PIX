@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -139,6 +139,10 @@ public class PossibleMatchDTOLazyModel extends AbstractLazyDataModel<PossibleMat
 				// query count of ALL filtered possible matches wrt the pattern (not only for the current page(s))
 				logger.debug("load: count possible matches: {}", pc);
 				setRowCount((int) service.countPossibleMatchesForDomainFiltered(getDomainName(), pc));
+			}
+			else
+			{
+				setRowCount(getLastRowCount()); // see comment in #count()
 			}
 
 			updateResult(possibleMatches);

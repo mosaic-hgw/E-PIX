@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.service;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.service;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -42,16 +42,16 @@ package org.emau.icmvc.ttp.epix.service;
 import java.util.List;
 import java.util.Map;
 
-import javax.ejb.Remote;
-import javax.ejb.Stateless;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
-
+import jakarta.ejb.Remote;
+import jakarta.ejb.Stateless;
+import jakarta.jws.WebService;
+import jakarta.jws.soap.SOAPBinding;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
 import org.emau.icmvc.ttp.epix.common.exception.IllegalOperationException;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
+import org.emau.icmvc.ttp.epix.common.exception.ValidatorException;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityInDTO;
@@ -74,7 +74,7 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 {
 	@Override
 	public ResponseEntryDTO requestMPI(String notificationClientID, String domainName, IdentityInDTO identity, String sourceName, String comment)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
 		return requestMPIInternal(notificationClientID, domainName, identity, sourceName, comment, null);
 	}
@@ -82,7 +82,7 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 	@Override
 	public ResponseEntryDTO requestMPIWithConfig(String notificationClientID, String domainName, IdentityInDTO identity,
 			String sourceName, String comment, RequestConfig requestConfig)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
 		return requestMPIInternal(notificationClientID, domainName, identity, sourceName, comment, requestConfig);
 	}
@@ -90,7 +90,7 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 	@TransactionTimeout(3600)
 	@Override
 	public MPIResponseDTO requestMPIBatch(String notificationClientID, MPIRequestDTO mpiRequest)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
 		return requestMPIBatchInternal(notificationClientID, mpiRequest);
 	}
@@ -98,17 +98,33 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 	@Override
 	public ResponseEntryDTO updatePerson(String notificationClientID, String domainName, String mpiId, IdentityInDTO identity,
 			String sourceName, boolean force, String comment)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
-		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, null);
+		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, null, false);
 	}
 
 	@Override
 	public ResponseEntryDTO updatePersonWithConfig(String notificationClientID, String domainName, String mpiId, IdentityInDTO identity,
 			String sourceName, boolean force, String comment, RequestConfig requestConfig)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
-		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, requestConfig);
+		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, requestConfig, false);
+	}
+
+	@Override
+	public ResponseEntryDTO updateActivePerson(String notificationClientID, String domainName, String mpiId, IdentityInDTO identity,
+			String sourceName, boolean force, String comment)
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
+	{
+		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, null, true);
+	}
+
+	@Override
+	public ResponseEntryDTO updateActivePersonWithConfig(String notificationClientID, String domainName, String mpiId, IdentityInDTO identity,
+			String sourceName, boolean force, String comment, RequestConfig requestConfig)
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
+	{
+		return updatePersonInternal(notificationClientID, domainName, mpiId, identity, sourceName, force, comment, requestConfig, true);
 	}
 
 	@Override
@@ -160,8 +176,24 @@ public class EPIXServiceWithNotificationImpl extends EpixServiceBase implements 
 		return addContactInternal(notificationClientID, identityId, contactDTO);
 	}
 
+	@Override public void deactivateContact(String notificationClientId, Long contactId) throws UnknownObjectException
+	{
+		deactivateContactInternal(notificationClientId, contactId);
+	}
+
+	@Override public void deleteContact(String notificationClientId, Long contactId) throws IllegalOperationException, UnknownObjectException
+	{
+		deleteContactInternal(notificationClientId, contactId);
+	}
+
 	@Override
 	public void addLocalIdentifierToMPI(String notificationClientID, String domainName, String mpiId, List<IdentifierDTO> localIds)
+			throws InvalidParameterException, MPIException, UnknownObjectException
+	{
+		addLocalIdentifierToActivePersonWithMPIInternal(notificationClientID, domainName, mpiId, localIds);
+	}
+
+	@Override public void addLocalIdentifierToActivePersonWithMPI(String notificationClientID, String domainName, String mpiId, List<IdentifierDTO> localIds)
 			throws InvalidParameterException, MPIException, UnknownObjectException
 	{
 		addLocalIdentifierToActivePersonWithMPIInternal(notificationClientID, domainName, mpiId, localIds);

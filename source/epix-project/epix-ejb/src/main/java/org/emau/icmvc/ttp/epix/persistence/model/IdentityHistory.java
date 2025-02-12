@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -47,25 +47,24 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.persistence.Cacheable;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.persistence.TableGenerator;
-
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
+import jakarta.persistence.TableGenerator;
 import org.apache.logging.log4j.util.Strings;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentityHistoryDTO;
@@ -90,7 +89,8 @@ import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 public class IdentityHistory implements Serializable
 {
 	@Serial
-	private static final long serialVersionUID = -2430065296798657156L;
+	private static final long serialVersionUID = 4450844468704031875L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.TABLE, generator = "identity_history_index")
 	private long id;
@@ -144,6 +144,9 @@ public class IdentityHistory implements Serializable
 	private boolean deactivated;
 	private String comment;
 	private double matchingScore;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "matching_identity_id", referencedColumnName = "id")
+	private Identity matchingIdentity;
 	@Column(name = "vital_status")
 	@Enumerated
 	private VitalStatus vitalStatus;
@@ -171,7 +174,21 @@ public class IdentityHistory implements Serializable
 		historyTimestamp = new Timestamp(System.currentTimeMillis());
 	}
 
-	public IdentityHistory(Identity identity, IdentityHistoryEvent event, String comment, double matchingScore, Timestamp timestamp, String user)
+	public IdentityHistory(Identity identity, IdentityHistoryEvent event, String comment,
+			Timestamp timestamp, String user)
+	{
+		this(identity,event, comment, 0.0, timestamp, user);
+	}
+
+	public IdentityHistory(Identity identity, IdentityHistoryEvent event, String comment,
+			double matchingScore, Identity matchingIdentity, Timestamp timestamp, String user)
+	{
+		this(identity, event, comment, matchingScore, timestamp, user);
+		this.matchingIdentity = matchingIdentity;
+	}
+
+	public IdentityHistory(Identity identity, IdentityHistoryEvent event, String comment,
+			double matchingScore, Timestamp timestamp, String user)
 	{
 		identityVersion = identity.getVersion();
 		firstName = getValidString(identity.getFirstName());
@@ -562,6 +579,16 @@ public class IdentityHistory implements Serializable
 		this.matchingScore = matchingScore;
 	}
 
+	public Identity getMatchingIdentity()
+	{
+		return matchingIdentity;
+	}
+
+	public void setMatchingIdentity(Identity matchingIdentity)
+	{
+		this.matchingIdentity = matchingIdentity;
+	}
+
 	public List<Identifier> getIdentifiers()
 	{
 		return identifiers;
@@ -645,7 +672,8 @@ public class IdentityHistory implements Serializable
 				value3, value4, value5, value6, value7, value8, value9, value10, vitalStatus, dateOfDeath);
 		IdentityOutBaseDTO outBase = new IdentityOutBaseDTO(inBase, identity.getId(), identityVersion, person.getId(), source.toDTO(), deactivated,
 				new Date(identity.getCreateTimestamp().getTime()), new Date(identity.getTimestamp().getTime()));
-		return new IdentityHistoryDTO(outBase, id, new Date(historyTimestamp.getTime()), event, matchingScore, comment, user);
+		return new IdentityHistoryDTO(outBase, id, new Date(historyTimestamp.getTime()), event,
+				matchingScore, matchingIdentity != null ? matchingIdentity.getId() : 0, comment, user);
 	}
 
 	@Override
@@ -684,7 +712,8 @@ public class IdentityHistory implements Serializable
 	public String toString()
 	{
 		return "IdentityHistory [id=" + id + ", identityVersion=" + identityVersion + ", forcedReference=" + forcedReference + ", deactivated="
-				+ deactivated + ", comment=" + comment + ", matchingScore=" + matchingScore + ", identifiers="
+				+ deactivated + ", comment=" + comment + ", matchingScore=" + matchingScore + ", matchingIdentityId="
+				+ (matchingIdentity == null ? "null" : matchingIdentity.getId()) + ", identifiers="
 				+ (identifiers == null ? "null" : identifiers.stream().map(Object::toString).collect(Collectors.joining(", "))) + ", identityId="
 				+ (identity == null ? "null" : identity.getId()) + ", source=" + source + ", person=" + person
 				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
@@ -705,7 +734,8 @@ public class IdentityHistory implements Serializable
 				+ (vitalStatus != null ? ", vitalStatus=" + vitalStatus : "")
 				+ (dateOfDeath != null ? ", dateOfDeath=" + dateOfDeath : "")
 				+ ", forcedReference=" + forcedReference
-				+ ", deactivated=" + deactivated + ", matchingScore=" + matchingScore + ", identifiers="
+				+ ", deactivated=" + deactivated + ", matchingScore=" + matchingScore+ ", matchingIdentityId="
+				+ (matchingIdentity == null ? "null" : matchingIdentity.getId()) + ", identifiers="
 				+ (identifiers == null ? "null" : identifiers.stream().map(Object::toString).collect(Collectors.joining(", "))) + ", identityId="
 				+ (identity == null ? "null" : identity.getId()) + ", source=" + source + ", personId=" + (person == null ? "null" : person.getId())
 				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")

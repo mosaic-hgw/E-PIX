@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * gICS - a Generic Informed Consent Service
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,16 +39,19 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-end###
  */
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import org.emau.icmvc.ttp.epix.common.utils.StatisticKeys;
 
 public class StatisticDTO implements Serializable
 {
+	@Serial
 	private static final long serialVersionUID = 3248339807246508058L;
 	private final long id;
 	private final Date entrydate;
@@ -129,6 +132,11 @@ public class StatisticDTO implements Serializable
 		return mappedStatValue;
 	}
 
+	public boolean containsSummary()
+	{
+		return mappedStatValue.containsKey(StatisticKeys.IDENTITIES);
+	}
+
 	@Override
 	public int hashCode()
 	{
@@ -173,7 +181,7 @@ public class StatisticDTO implements Serializable
 
 		for (Map.Entry<String, Long> item : mappedStatValue.entrySet())
 		{
-			sb.append(" " + item.getKey() + "=" + item.getValue());
+			sb.append("\n  ").append(item.getKey()).append("=").append(item.getValue());
 		}
 
 		return sb.toString();

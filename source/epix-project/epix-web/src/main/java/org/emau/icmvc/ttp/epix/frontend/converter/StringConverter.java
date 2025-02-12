@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -40,17 +40,17 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  */
 
 
-import javax.faces.component.EditableValueHolder;
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
-import javax.faces.convert.FacesConverter;
+import jakarta.faces.component.EditableValueHolder;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.convert.Converter;
+import jakarta.faces.convert.FacesConverter;
 
 @FacesConverter(forClass = String.class)
-public class StringConverter implements Converter
+public class StringConverter implements Converter<String>
 {
 	@Override
-	public Object getAsObject(FacesContext arg0, UIComponent component, String value)
+	public String getAsObject(FacesContext arg0, UIComponent component, String value)
 	{
 		if (value != null && value.trim().isEmpty())
 		{
@@ -67,9 +67,9 @@ public class StringConverter implements Converter
 	}
 
 	@Override
-	public String getAsString(FacesContext arg0, UIComponent arg1, Object value)
+	public String getAsString(FacesContext arg0, UIComponent arg1, String value)
 	{
-		return (String) value;
+		return value;
 	}
 
 }

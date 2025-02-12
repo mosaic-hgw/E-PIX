@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.emau.icmvc.ttp.epix</groupId>
 		<artifactId>epix-project</artifactId>
-		<version>2023.1.2</version>
+		<version>2024.3.0</version>
 	</parent>
 
 	<dependencies>
@@ -15,8 +15,8 @@
 			<artifactId>log4j-api</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-api</artifactId>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.ejb3</groupId>
@@ -77,6 +77,41 @@
 							<Dependencies>io.undertow.servlet export, io.undertow.core export, org.wildfly.security.elytron-http-oidc export, org.apache.cxf.impl export</Dependencies>
 						</manifestEntries>
 					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.2.0</version>
+				<executions>
+					<execution>
+						<id>filtering-deployment-descriptor</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.outputDirectory}/META-INF</outputDirectory>
+							<resources>
+								<resource>
+									<filtering>true</filtering>
+									<directory>src/main/resources/META-INF</directory>
+									<includes>
+										<include>**/jboss-webservices.xml</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<classpathDependencyExcludes>
+						<classpathDependencyExclude>org.eclipse.persistence:eclipselink</classpathDependencyExclude>
+					</classpathDependencyExcludes>
 				</configuration>
 			</plugin>
 		</plugins>

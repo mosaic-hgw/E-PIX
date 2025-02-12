@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -142,6 +142,7 @@
 								<p:separator />
 
 								<p:menuitem
+										actionListener="#{webUtil.dummy}"
 										disabled="#{managementController.domain.selected ne null and not (managementController.domain.isEditable(managementController.domain.selected))}"
 										icon="mdi mdi-delete-empty" ignoreAutoUpdate="true" oncomplete="PF('domains_confirmDelete_dialog').show();"
 										update="domains_confirmDelete_dialog:message"
@@ -224,6 +225,7 @@
 								<p:separator />
 
 								<p:menuitem
+										actionListener="#{webUtil.dummy}"
 										disabled="#{managementController.source.selected ne null and not (managementController.source.isEditable(managementController.source.selected))}"
 										icon="mdi mdi-delete-empty" ignoreAutoUpdate="true" oncomplete="PF('sources_confirmDelete_dialog').show();"
 										update="sources_confirmDelete_dialog:message"
@@ -310,6 +312,7 @@
 								<p:separator />
 
 								<p:menuitem
+										actionListener="#{webUtil.dummy}"
 										disabled="#{managementController.identifierDomain.selected ne null and not (managementController.identifierDomain.isEditable(managementController.identifierDomain.selected))}"
 										icon="mdi mdi-delete-empty" ignoreAutoUpdate="true"
 										oncomplete="PF('identifierDomains_confirmDelete_dialog').show();"
@@ -339,12 +342,13 @@
 
 			<!-- Edit Source -->
 			<p:dialog id="sources_new_dialog" blockScroll="true"
+					  focus="sources_new_dialog_form:source_label"
 					  header="#{msg['page.management.source.dialog.'.concat(managementController.source.pageMode.name())]}"
 					  modal="true"
 					  responsive="true" widgetVar="sources_new_dialog" closeOnEscape="true">
 				<p:ajax event="close" ignoreAutoUpdate="true" listener="#{managementController.source.onCancel}"
 						update="source_form:sources, sources_new_dialog" />
-				<h:form onkeypress="if (event.keyCode === 13) { return false; }">
+				<h:form id="sources_new_dialog_form" onkeypress="if (event.keyCode === 13) { return false; }">
 					<p:focus context="@form" />
 					<p:messages />
 
@@ -413,12 +417,13 @@
 
 			<!-- Edit Identifier Domain -->
 			<p:dialog id="identifierDomains_new_dialog" blockScroll="true"
+					  focus="identifierDomains_new_dialog_form:identifierDomain_label"
 					  header="#{msg['page.management.identifierDomain.dialog.'.concat(managementController.identifierDomain.pageMode.name())]}"
 					  modal="true"
 					  responsive="true" widgetVar="identifierDomains_new_dialog" closeOnEscape="true">
 				<p:ajax event="close" ignoreAutoUpdate="true" listener="#{managementController.identifierDomain.onCancel}"
 						update="identifierDomain_form:identifierDomains, identifierDomains_new_dialog" />
-				<h:form onkeypress="if (event.keyCode === 13) { return false; }">
+				<h:form id="identifierDomains_new_dialog_form" onkeypress="if (event.keyCode === 13) { return false; }">
 					<p:focus context="@form" />
 					<p:messages id="identifierDomains_messages" />
 

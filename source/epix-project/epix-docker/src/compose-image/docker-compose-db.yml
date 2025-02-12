@@ -1,0 +1,22 @@
+version: '3.7'
+services:
+  wildfly:
+    image: mosaicgreifswald/${project.shortName}-db:${project.version}
+    container_name: ${project.shortName}-db
+    ports:
+      - "3306:3306"
+#      - "8787:8787"
+      - "8080:8080"
+      - "9990:9990"
+    env_file:
+      - ./envs/mysql.env
+      - ./envs/ttp_commons.env
+      - ./envs/ttp_${project.shortName}.env
+      - ./envs/ttp_gras.env
+      - ./envs/ttp_noti.env
+      - ./envs/wf_commons.env
+    volumes:
+#      - ./addins:${docker.wildfly.addins}
+      - ./logs:${docker.wildfly.logs}
+#      - ./data/mysql:${docker.wildfly.dbdata}
+

@@ -5,19 +5,21 @@
 
 	<groupId>org.emau.icmvc.ttp.epix</groupId>
 	<artifactId>epix-project</artifactId>
-	<version>2023.1.2</version>
+	<version>2024.3.0</version>
 
 	<packaging>pom</packaging>
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<ttp-web-common.version>2024.3.0</ttp-web-common.version>
 		<project.shortName>epix</project.shortName>
 		<project.upperName>EPIX</project.upperName>
 		<display_version>${project.version}</display_version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<noti-serv.version>2023.1.1</noti-serv.version>
-		<ths-utils.version>1.4.11</ths-utils.version>
-		<ttp-gras.version>1.0.0</ttp-gras.version>
-		<ttp-web-common.version>2.15.5</ttp-web-common.version>
-		<log4j.version>2.20.0</log4j.version>
+		<log4j.version>2.24.2</log4j.version>
+		<ttp-noti.version>2024.1.1</ttp-noti.version>
+		<ttp-gras.version>1.2.0</ttp-gras.version>
+		<docker-shared-resources.version>2024.2.0</docker-shared-resources.version>
+		<ths-utils.version>1.5.4</ths-utils.version>
+		<excludeTests>Disabled,Integration,Selenium</excludeTests>
 	</properties>
 
 	<name>E-PIX</name>
@@ -58,13 +60,20 @@
 			</properties>
 		</profile>
 		<profile>
+			<id>staticContext</id>
+			<properties>
+				<env.TTP_EPIX_WEB_CONTEXT>${project.shortName}-web</env.TTP_EPIX_WEB_CONTEXT>
+				<env.TTP_EPIX_SOAP_CONTEXT>${project.shortName}</env.TTP_EPIX_SOAP_CONTEXT>
+			</properties>
+		</profile>
+		<profile>
 			<id>coverage</id>
 			<build>
 				<plugins>
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>0.8.8</version>
+						<version>0.8.12</version>
 						<executions>
 							<execution>
 								<goals>
@@ -83,6 +92,45 @@
 				</plugins>
 			</build>
 		</profile>
+		<!-- profiles for testing -->
+		<profile>
+			<id>integration</id>
+			<properties>
+				<excludeTests>Disabled</excludeTests>
+			</properties>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-surefire-plugin</artifactId>
+							<configuration>
+								<groups>Integration</groups>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
+		<profile>
+			<id>selenium</id>
+			<properties>
+				<excludeTests>Disabled</excludeTests>
+			</properties>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-surefire-plugin</artifactId>
+							<configuration>
+								<groups>Selenium</groups>
+							</configuration>
+						</plugin>
+					</plugins>
+				</pluginManagement>
+			</build>
+		</profile>
 	</profiles>
 
 	<repositories>
@@ -95,6 +143,7 @@
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- E-PIX -->
 			<dependency>
 				<groupId>org.emau.icmvc.ttp.epix</groupId>
 				<artifactId>epix-common</artifactId>
@@ -107,123 +156,6 @@
 				<version>${project.version}</version>
 				<type>ejb</type>
 			</dependency>
-			<!-- for notification-service and keycloak-based soap auth-->
-			<dependency>
-				<groupId>org.emau.icmvc.ttp</groupId>
-				<artifactId>ths-utils</artifactId>
-				<version>${ths-utils.version}</version>
-				<type>jar</type>
-			</dependency>
-
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-api</artifactId>
-				<version>${log4j.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>1.7.36</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-log4j12</artifactId>
-				<version>1.7.36</version>
-				<scope>provided</scope>
-			</dependency>
-
-			<dependency>
-				<groupId>it.unimi.dsi</groupId>
-				<artifactId>fastutil</artifactId>
-				<version>8.5.12</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.persistence</groupId>
-				<artifactId>eclipselink</artifactId>
-				<version>2.7.12</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.persistence</groupId>
-				<artifactId>org.eclipse.persistence.jpa.modelgen.processor</artifactId>
-				<version>2.7.12</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>com.wutka</groupId>
-				<artifactId>dtdparser</artifactId>
-				<version>1.21</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>commons-codec</groupId>
-				<artifactId>commons-codec</artifactId>
-				<version>1.15</version>
-			</dependency>
-			<!-- web -->
-			<dependency>
-				<groupId>org.emau.icmvc.ttp</groupId>
-				<artifactId>ttp-web-common</artifactId>
-				<version>${ttp-web-common.version}</version>
-				<type>war</type>
-			</dependency>
-			<dependency>
-				<groupId>org.emau.icmvc.ttp</groupId>
-				<artifactId>ttp-web-common</artifactId>
-				<version>${ttp-web-common.version}</version>
-				<classifier>classes</classifier>
-			</dependency>
-			<dependency>
-				<groupId>com.ibm.icu</groupId>
-				<artifactId>icu4j</artifactId>
-				<version>73.1</version>
-			</dependency>
-			<dependency>
-				<groupId>org.primefaces</groupId>
-				<artifactId>primefaces</artifactId>
-				<version>12.0.0</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-lang3</artifactId>
-				<version>3.12.0</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-collections4</artifactId>
-				<version>4.4</version>
-			</dependency>
-			<dependency>
-				<groupId>javax</groupId>
-				<artifactId>javaee-api</artifactId>
-				<version>7.0</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.jboss.ejb3</groupId>
-				<artifactId>jboss-ejb3-ext-api</artifactId>
-				<version>2.3.0.Final</version>
-				<scope>provided</scope>
-			</dependency>
-
-			<!-- Java 9+ Kompatibilität -->
-			<dependency>
-				<groupId>javax.xml.bind</groupId>
-				<artifactId>jaxb-api</artifactId>
-				<version>2.3.1</version>
-			</dependency>
-			<dependency>
-				<groupId>com.sun.xml.ws</groupId>
-				<artifactId>jaxws-rt</artifactId>
-				<!-- Warning: Higher versions dont work for now -->
-				<version>2.3.6</version>
-				<type>pom</type>
-			</dependency>
-
-			<!-- own shared resources and deployments -->
 			<dependency>
 				<groupId>org.emau.icmvc.ttp.epix</groupId>
 				<artifactId>epix-shared-resources</artifactId>
@@ -243,23 +175,42 @@
 				<type>war</type>
 			</dependency>
 
-			<!-- external shared resources and deployments -->
+			<!-- TTP utils and shared resources -->
+			<dependency>
+				<groupId>org.emau.icmvc.ttp</groupId>
+				<artifactId>ths-utils</artifactId>
+				<version>${ths-utils.version}</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.emau.icmvc.ttp</groupId>
+				<artifactId>ttp-web-common</artifactId>
+				<version>${ttp-web-common.version}</version>
+				<type>war</type>
+			</dependency>
+			<dependency>
+				<groupId>org.emau.icmvc.ttp</groupId>
+				<artifactId>ttp-web-common</artifactId>
+				<version>${ttp-web-common.version}</version>
+				<classifier>classes</classifier>
+				<scope>provided</scope>
+			</dependency>
 			<dependency>
 				<groupId>org.emau.icmvc.ttp</groupId>
 				<artifactId>noti-shared-resources</artifactId>
-				<version>${noti-serv.version}</version>
+				<version>${ttp-noti.version}</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.emau.icmvc.ttp</groupId>
 				<artifactId>ths-notification-client-ear</artifactId>
-				<version>${noti-serv.version}</version>
+				<version>${ttp-noti.version}</version>
 				<type>ear</type>
 			</dependency>
 			<dependency>
 				<groupId>org.emau.icmvc.ttp</groupId>
 				<artifactId>ths-notification-service</artifactId>
-				<version>${noti-serv.version}</version>
+				<version>${ttp-noti.version}</version>
 				<type>war</type>
 			</dependency>
 			<dependency>
@@ -268,56 +219,173 @@
 				<version>${ttp-gras.version}</version>
 				<type>jar</type>
 			</dependency>
+			<dependency>
+				<groupId>org.icmvc.ttp.docker</groupId>
+				<artifactId>docker-shared-resources</artifactId>
+				<version>${docker-shared-resources.version}</version>
+				<type>jar</type>
+			</dependency>
+
+			<!-- Logging -->
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-api</artifactId>
+				<version>${log4j.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>1.7.36</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-log4j12</artifactId>
+				<version>2.0.16</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- JavaEE APIs -->
+			<dependency>
+				<groupId>jakarta.platform</groupId>
+				<artifactId>jakarta.jakartaee-api</artifactId>
+				<version>10.0.0</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- Apache Commons -->
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>1.17.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-collections4</artifactId>
+				<version>4.4</version>
+				<scope>compile</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-lang3</artifactId>
+				<version>3.17.0</version>
+			</dependency>
+
+			<!-- Persistence -->
+			<dependency>
+				<groupId>org.eclipse.persistence</groupId>
+				<artifactId>eclipselink</artifactId>
+				<version>4.0.4</version>
+				<scope>provided</scope>
+				<exclusions>
+					<exclusion>
+						<groupId>com.sun.xml.bind</groupId>
+						<artifactId>jaxb-core</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>org.eclipse.persistence</groupId>
+				<artifactId>org.eclipse.persistence.jpa.modelgen.processor</artifactId>
+				<version>4.0.4</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- Web -->
+			<dependency>
+				<groupId>org.primefaces</groupId>
+				<artifactId>primefaces</artifactId>
+				<version>14.0.8</version>
+				<scope>provided</scope>
+				<classifier>jakarta</classifier>
+			</dependency>
+			<dependency>
+				<groupId>software.xdev</groupId>
+				<artifactId>chartjs-java-model</artifactId>
+				<version>2.5.0</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.ibm.icu</groupId>
+				<artifactId>icu4j</artifactId>
+				<version>76.1</version>
+			</dependency>
+
+			<!-- Java 9+ Kompatibilität -->
+			<dependency>
+				<groupId>com.sun.xml.ws</groupId>
+				<artifactId>jaxws-rt</artifactId>
+				<version>4.0.3</version>
+				<type>pom</type>
+				<exclusions>
+					<exclusion>
+						<groupId>com.sun.xml.bind</groupId>
+						<artifactId>jaxb-core</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+
+			<!-- Other -->
+			<dependency>
+				<groupId>it.unimi.dsi</groupId>
+				<artifactId>fastutil</artifactId>
+				<version>8.5.15</version>
+			</dependency>
+			<dependency>
+				<groupId>com.wutka</groupId>
+				<artifactId>dtdparser</artifactId>
+				<version>1.21</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.jboss.ejb3</groupId>
+				<artifactId>jboss-ejb3-ext-api</artifactId>
+				<version>2.4.0.Final</version>
+				<scope>provided</scope>
+			</dependency>
 
 			<!-- Tests -->
 			<dependency>
-				<groupId>org.apache.cxf</groupId>
-				<artifactId>cxf-rt-frontend-jaxws</artifactId>
-				<scope>test</scope>
-				<version>3.6.1</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.cxf</groupId>
-				<artifactId>cxf-rt-transports-http-jetty</artifactId>
-				<scope>test</scope>
-				<version>3.6.1</version>
-			</dependency>
-			<dependency>
-				<groupId>org.junit.jupiter</groupId>
-				<artifactId>junit-jupiter</artifactId>
-				<version>5.9.3</version>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.mockito</groupId>
-				<artifactId>mockito-core</artifactId>
-				<version>5.3.1</version>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-core</artifactId>
-				<!-- Warning: Higher versions dont work for now -->
-				<version>1.2.12</version>
+				<version>1.5.12</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-classic</artifactId>
-				<!-- Warning: Higher versions dont work for now -->
-				<version>1.2.12</version>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>nl.jqno.equalsverifier</groupId>
-				<artifactId>equalsverifier</artifactId>
-				<version>3.14.1</version>
+				<version>1.5.12</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.sun.faces</groupId>
 				<artifactId>jsf-api</artifactId>
 				<version>2.2.20</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>nl.jqno.equalsverifier</groupId>
+				<artifactId>equalsverifier</artifactId>
+				<version>3.17.4</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-rt-frontend-jaxws</artifactId>
+				<scope>test</scope>
+				<version>4.0.5</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.cxf</groupId>
+				<artifactId>cxf-rt-transports-http-jetty</artifactId>
+				<scope>test</scope>
+				<version>4.0.5</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-core</artifactId>
+				<version>${log4j.version}</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
@@ -328,9 +396,15 @@
 				<scope>test</scope>
 			</dependency>
 			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-core</artifactId>
-				<version>${log4j.version}</version>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter</artifactId>
+				<version>5.11.3</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>5.14.2</version>
 				<scope>test</scope>
 			</dependency>
 		</dependencies>
@@ -365,7 +439,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jar-plugin</artifactId>
-					<version>3.3.0</version>
+					<version>3.4.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -378,7 +452,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-ear-plugin</artifactId>
-					<version>3.2.0</version>
+					<version>3.3.0</version>
 					<configuration>
 						<version>6</version>
 						<filtering>true</filtering>
@@ -387,16 +461,15 @@
 						</jboss>
 						<defaultLibBundleDir>lib</defaultLibBundleDir>
 						<applicationName>epix</applicationName>
-						<finalName>epix-${project.version}</finalName>
 					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.10.1</version>
+					<version>3.13.0</version>
 					<configuration>
-						<source>17</source>
-						<target>17</target>
+						<source>21</source>
+						<target>21</target>
 						<debug>true</debug>
 						<debuglevel>source,lines,vars</debuglevel>
 					</configuration>
@@ -404,11 +477,11 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-war-plugin</artifactId>
-					<version>3.3.2</version>
+					<version>3.4.0</version>
 					<configuration>
 						<archive>
 							<manifestEntries>
-								<Dependencies>org.slf4j, deployment.epix-${project.version}.ear</Dependencies>
+								<Dependencies>org.slf4j, deployment.epix-ear-${project.version}.ear</Dependencies>
 							</manifestEntries>
 						</archive>
 						<nonFilteredFileExtensions>
@@ -429,35 +502,39 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-deploy-plugin</artifactId>
-					<version>3.0.0</version>
+					<version>3.1.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>2.22.2</version>
+					<configuration>
+						<excludedGroups>${excludeTests}</excludedGroups>
+					</configuration>
 				</plugin>
-
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-javadoc-plugin</artifactId>
 					<version>3.4.1</version>
 					<configuration>
 						<windowtitle>E-PIX ${project.version} API</windowtitle>
-						<bottom><![CDATA[E-PIX ${project.version} API, Copyright 2022, <a href="https://www.ths-greifswald.de">ths-greifswald.de<a>]]></bottom>
+						<bottom><![CDATA[E-PIX ${project.version} API, Copyright 2025, <a href="https://www.ths-greifswald.de">ths-greifswald.de<a>]]></bottom>
 					</configuration>
 				</plugin>
 				<plugin>
-					<!--To update license details, set canUpdateCopyright to true and run with maven goal 'license:update-file-header' -->
+					<!--To update license details:
+					set canUpdateCopyright to true and run with maven goal 'license:update-file-header'
+					set canUpdateCopyright to false before committing changes -->
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>license-maven-plugin</artifactId>
 					<version>1.20</version>
 					<configuration>
-						<canUpdateCopyright>true</canUpdateCopyright>
+						<canUpdateCopyright>false</canUpdateCopyright>
 						<verbose>false</verbose>
 						<processStartTag>###license-information-start###</processStartTag>
 						<processEndTag>###license-information-end###</processEndTag>
 						<sectionDelimiter>__</sectionDelimiter>
-						<projectName>E-PIX - Enterprise Patient Identifier Cross-referencing</projectName>
+						<projectName>E-PIX - Enterprise Identifier Cross-Referencing</projectName>
 						<inceptionYear>2009</inceptionYear>
 						<organizationName>Trusted Third Party of the University Medicine Greifswald
 							kontakt-ths@uni-greifswald.de
@@ -469,7 +546,7 @@
 							a.blumentritt, f.m. moser
 
 							docker
-							r.schuldt
+							r.schuldt, f.m. moser
 
 							privacy preserving record linkage (PPRL)
 							c.hampf

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -41,16 +41,17 @@ package org.emau.icmvc.ttp.epix.frontend.controller.component;
 
 
 import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpServletRequest;
-
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
+import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
@@ -60,9 +61,11 @@ import org.emau.icmvc.ttp.epix.common.model.enums.MatchingMode;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixBean;
 
 @SessionScoped
-@ManagedBean(name = "domainSelector")
-public class DomainSelector extends AbstractEpixBean
+@Named( "domainSelector")
+public class DomainSelector extends AbstractEpixBean implements Serializable
 {
+	@Serial
+	private static final long serialVersionUID = 352954424779613025L;
 	private List<DomainDTO> domains = new ArrayList<>();
 	private DomainDTO selectedDomain;
 	private ConfigurationContainer configurationContainer;
@@ -74,7 +77,7 @@ public class DomainSelector extends AbstractEpixBean
 	private void initialize()
 	{
 		loadDomains();
-		if (domains.size() > 0)
+		if (!domains.isEmpty())
 		{
 			setSelectedDomain(domains.get(0));
 		}
@@ -82,7 +85,7 @@ public class DomainSelector extends AbstractEpixBean
 
 	public void loadDomains()
 	{
-		domains = managementService.getDomains();
+		domains = getManager().getDomains();
 		domains.sort((d1, d2) -> {
 			String l1 = StringUtils.isNotEmpty(d1.getLabel()) ? d1.getLabel() : d1.getName();
 			String l2 = StringUtils.isNotEmpty(d2.getLabel()) ? d2.getLabel() : d2.getName();
@@ -108,7 +111,7 @@ public class DomainSelector extends AbstractEpixBean
 		// Domain does not exist
 		if (temp == null)
 		{
-			selectedDomain = domains.size() > 0 ? domains.get(0) : null;
+			selectedDomain = !domains.isEmpty() ? domains.get(0) : null;
 			// selectedDomain can be null
 			if (selectedDomain != null)
 			{
@@ -184,7 +187,7 @@ public class DomainSelector extends AbstractEpixBean
 					getSelectedDomain(); // using side-effects
 				}
 			}
-			configurationContainer = managementService.getConfigurationForDomain(selectedDomain.getName());
+			configurationContainer = getManager().getConfigurationForDomain(selectedDomain.getName());
 		}
 		catch (InvalidParameterException | UnknownObjectException e)
 		{

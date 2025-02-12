@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentityLinkCreationType;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 
 /**
@@ -53,7 +54,7 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
  */
 public class PossibleMatchForMPIDTO extends PossibleMatchBaseDTO implements Serializable
 {
-	private static final long serialVersionUID = -3516760475884765479L;
+	private static final long serialVersionUID = -3226200395840098342L;
 	private IdentifierDTO requestedMPI;
 	private IdentityOutDTO assignedIdentity;
 	private MPIIdentityDTO matchingMPIIdentity;
@@ -62,9 +63,9 @@ public class PossibleMatchForMPIDTO extends PossibleMatchBaseDTO implements Seri
 	{}
 
 	public PossibleMatchForMPIDTO(IdentifierDTO requestedMPI, IdentityOutDTO assignedIdentity, MPIIdentityDTO matchingMPIIdentity, long linkId,
-			Double probability, Date possibleMatchCreated, PossibleMatchPriority priority)
+			Double probability, Date possibleMatchCreated, PossibleMatchPriority priority, IdentityLinkCreationType creationType)
 	{
-		super(linkId, probability, possibleMatchCreated, priority);
+		super(linkId, probability, possibleMatchCreated, priority, creationType);
 		setRequestedMPI(requestedMPI);
 		setAssignedIdentity(assignedIdentity);
 		setMatchingMPIIdentity(matchingMPIIdentity);

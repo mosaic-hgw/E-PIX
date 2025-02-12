@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.test;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,9 +39,9 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-end###
  */
 
-import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.Tag;
 
-@EnabledIf("isEpixManagementServiceAvailable")
+@Tag("Integration")
 public class DeleteDomainForcedTest extends DeletePersonTest
 {
 	@Override protected boolean skipAnyDeactivationAndDeletionOfPersonsOrIdentities()

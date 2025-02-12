@@ -6,7 +6,7 @@
 	<parent>
 		<artifactId>epix-project</artifactId>
 		<groupId>org.emau.icmvc.ttp.epix</groupId>
-		<version>2023.1.2</version>
+		<version>2024.3.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -38,7 +38,7 @@
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.7</version>
+				<version>0.8.12</version>
 				<executions>
 					<!-- aggregated overallall test coverage report -->
 					<execution>

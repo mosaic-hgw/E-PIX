@@ -1,0 +1,17 @@
+#####################
+# How to test E-PIX #
+#####################
+
+1. Voraussetzungen:
+
+* Java 8
+* Apache jMeter, v5.x: http://jmeter.apache.org/
+	- JDBC-Plugin wird genutzt und dafür braucht man den mysql-connector im lib-Verzeichnis von jMeter (https://dev.mysql.com/downloads/connector/j/)
+	- Empfehlenswert ist auch der Plugin-Manager (https://jmeter-plugins.org/wiki/PluginsManager/)
+
+2. Testaufbau:
+
+* Sie sind unterteilt nach den Services managementService und epixService
+* Für epixService gibt es nochmal eine Unterteilung in MI- und ND-Funktionalität
+* Die Tests sind in sich als Szenario aufgebaut, d.h. dass sie von oben nach unten von einander größtenteils abhängig sind. Einzelne Test können zwischendurch aber durchaus mal weggeleassen werden.
+* insgesamt können alle Tests auf einmal oder auch parallel laufen, da jeder test seine eigene Domain hat 

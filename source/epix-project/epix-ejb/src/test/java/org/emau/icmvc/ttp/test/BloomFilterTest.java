@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.test;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -52,12 +52,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class BloomFilterTest
+class BloomFilterTest
 {
 	private static final Logger logger = LogManager.getLogger(BloomFilterTest.class);
 
 	@Test
-	public void testIsMemberTrueOk()
+	void testIsMemberTrueOk()
 	{
 		DoubleHashingStrategy dhs = new DoubleHashingStrategy(100, 15, 2);
 		BloomFilter bf = new BloomFilter(500, dhs);
@@ -69,7 +69,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testIsNotMemberOk()
+	void testIsNotMemberOk()
 	{
 		DoubleHashingStrategy dhs = new DoubleHashingStrategy(100, 15, 2);
 		BloomFilter bf = new BloomFilter(500, dhs);
@@ -81,7 +81,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testFoldOk1()
+	void testFoldOk1()
 	{
 		BitSet toFold = new BitSet(16);
 		toFold.set(0);
@@ -104,7 +104,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testFoldOk2()
+	void testFoldOk2()
 	{
 		BitSet toFold = new BitSet(8);
 		toFold.set(4);
@@ -127,7 +127,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testFoldOk3()
+	void testFoldOk3()
 	{
 		BitSet toFold = new BitSet(8);
 		toFold.set(0);
@@ -148,7 +148,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testFoldOk4FoldOneAndTwiceAreEqual()
+	void testFoldOk4FoldOneAndTwiceAreEqual()
 	{
 		BitSet toFold = new BitSet(16);
 		toFold.set(0);
@@ -178,7 +178,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testConvertFromStringToBitSetToStringOk()
+	void testConvertFromStringToBitSetToStringOk()
 	{
 		String bfVector = "1111000011001110001010100101";
 		BloomFilter bf = new BloomFilter(bfVector, null);
@@ -187,7 +187,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testMultipleValuesAreOKAllValuesAreAdded()
+	void testMultipleValuesAreOKAllValuesAreAdded()
 	{
 		DoubleHashingStrategy sbfs = new DoubleHashingStrategy(100, 15, 2);
 		BloomFilter bf = new BloomFilter(500, sbfs);
@@ -209,7 +209,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testMultipleValuesAreOKOneValueIsAdded()
+	void testMultipleValuesAreOKOneValueIsAdded()
 	{
 		DoubleHashingStrategy dhs = new DoubleHashingStrategy(100, 15, 2);
 		BloomFilter bf = new BloomFilter(500, dhs);
@@ -228,7 +228,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testMultipleValuesAreOKNoneValueIsAdded()
+	void testMultipleValuesAreOKNoneValueIsAdded()
 	{
 		DoubleHashingStrategy dhs = new DoubleHashingStrategy(100, 15, 2);
 		BloomFilter bf = new BloomFilter(500, dhs);
@@ -245,7 +245,7 @@ public class BloomFilterTest
 	}
 
 	@Test
-	public void testSpecificValuesFoldWithoutError()
+	void testSpecificValuesFoldWithoutError()
 	{
 		DoubleHashingStrategy dhs = new DoubleHashingStrategy(500, 15, 2);
 		BloomFilter bf = new BloomFilter(500, dhs);

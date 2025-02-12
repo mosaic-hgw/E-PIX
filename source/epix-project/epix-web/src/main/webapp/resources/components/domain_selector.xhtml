@@ -4,7 +4,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -14,7 +14,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -62,7 +62,7 @@
 					<h:outputText value="#{msg['domain.label.noDomain']}" rendered="#{empty domainSelector.selectedDomain}" />
 					<p:selectOneMenu id="domain" rendered="#{not empty domainSelector.selectedDomain}"
 									 value="#{domainSelector.selectedDomain}"
-									 converter="#{domainDTOConverter}" onchange="submit();PF('loading').show();"
+									 converter="domainDTOConverter" onchange="submit();PF('loading').show();"
 									 oncomplete="PF('loading').hide();" style="min-width: 100%;"
 									 widgetVar="domainSelector">
 						<f:selectItems value="#{domainSelector.domains}" var="_domain" itemLabel="#{domainSelector.getLabel(_domain)}" />

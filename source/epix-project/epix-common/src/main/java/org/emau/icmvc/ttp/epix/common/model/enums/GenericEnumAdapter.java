@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.enums;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model.enums;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -41,9 +41,8 @@ package org.emau.icmvc.ttp.epix.common.model.enums;
 
 import java.lang.reflect.ParameterizedType;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -62,19 +62,25 @@ import org.emau.icmvc.ttp.epix.common.model.config.FieldDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.PreprocessingFieldDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.SourceFieldDTO;
+import org.emau.icmvc.ttp.epix.common.model.config.ValidatorConfigDTO;
+import org.emau.icmvc.ttp.epix.common.model.config.ValidatorDTO;
+import org.emau.icmvc.ttp.epix.common.model.config.ValidatorGroupDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.BlockingMode;
 import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.common.model.enums.MatchingMode;
 import org.emau.icmvc.ttp.epix.common.model.enums.PersistMode;
+import org.emau.icmvc.ttp.epix.common.model.enums.ValidatorOperator;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.ICRUDObject;
 import org.emau.icmvc.ttp.epix.frontend.controller.component.DomainSelector;
+import org.emau.icmvc.ttp.epix.frontend.model.ValidatorNode;
 import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
-import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
 import org.icmvc.ttp.web.controller.Text;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.StreamedContent;
+import org.primefaces.model.TreeNode;
 
 public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDTO>
 {
@@ -87,6 +93,15 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 
 	private ReasonDTO selectedReason;
 
+	// Validation
+	private TreeNode<ValidatorNode> validatorTree;
+	private ValidatorConfigDTO selectedValidatorConfig;
+	private ValidatorDTO selectedValidator;
+	private ValidatorGroupDTO selectedValidatorGroup;
+	private ValidatorGroupDTO selectedValidatorParent;
+	private boolean selectedIsNew;
+
+	// Preprocessing
 	private PreprocessingFieldDTO selectedPreprocessingField;
 	private boolean selectedPreprocessingFieldIsNew;
 	private String selectedSimpleTransformationInput;
@@ -108,9 +123,8 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 	private DoubleHashingSaltType doubleHashingSaltType;
 
 	@Override
-	public void init(EPIXManagementService managementService, EpixHelper epixHelper, Text text)
+	public void init(EpixHelper epixHelper, Text text)
 	{
-		this.managementService = managementService;
 		this.text = text;
 		reload();
 	}
@@ -126,8 +140,14 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 	public void onShowDetails(DomainDTO domain)
 	{
 		selected = domain;
-		disableAutomaticMatch = getConfig().getMatchingConfig().getThresholdAutomaticMatch() >= 1000;
+		loadWebEnhancements();
 		pageMode = PageMode.READ;
+	}
+
+	private void loadWebEnhancements()
+	{
+		disableAutomaticMatch = getConfig().getMatchingConfig().getThresholdAutomaticMatch() >= 1000;
+		loadValidatorTree();
 	}
 
 	@Override
@@ -146,7 +166,6 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 				.add(new FieldDTO(FieldName.gender, 0.0, BlockingMode.TEXT, 0.75, 3, "org.emau.icmvc.ttp.deduplication.impl.LevenshteinAlgorithm", Character.MIN_VALUE, 0.0, 0.0, 0.0));
 		getConfig().getMatchingConfig().getFields()
 				.add(new FieldDTO(FieldName.birthDate, 0.6, BlockingMode.NUMBERS, 1, 9, "org.emau.icmvc.ttp.deduplication.impl.LevenshteinAlgorithm", Character.MIN_VALUE, 0.0, 0.0, 0.0));
-		disableAutomaticMatch = false;
 		getConfig().getRequiredFields().add(FieldName.firstName);
 		getConfig().getRequiredFields().add(FieldName.lastName);
 		getConfig().getRequiredFields().add(FieldName.gender);
@@ -161,25 +180,15 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 		getConfig().getPreprocessingFields().add(lastNamePreprocessing);
 		getConfig().getDeduplication().getReasons().add(new ReasonDTO("TYPING_ERROR", "TYPING_ERROR.description"));
 		getConfig().getDeduplication().getReasons().add(new ReasonDTO("NAME_CHANGE_MARRIAGE", "NAME_CHANGE_MARRIAGE.description"));
+		loadWebEnhancements();
 
 		pageMode = PageMode.NEW;
 	}
 
 	private void fillPreprocessingField(PreprocessingFieldDTO field)
 	{
-		field.getSimpleTransformationTypes().put("é", "e");
-		field.getSimpleTransformationTypes().put("è", "e");
-		field.getSimpleTransformationTypes().put("ê", "e");
-		field.getSimpleTransformationTypes().put("ë", "e");
-		field.getSimpleTransformationTypes().put("à", "a");
-		field.getSimpleTransformationTypes().put("â", "a");
 		field.getSimpleTransformationTypes().put("æ", "a");
-		field.getSimpleTransformationTypes().put("ô", "o");
-		field.getSimpleTransformationTypes().put("ò", "o");
 		field.getSimpleTransformationTypes().put("œ", "o");
-		field.getSimpleTransformationTypes().put("û", "u");
-		field.getSimpleTransformationTypes().put("ù", "u");
-		field.getSimpleTransformationTypes().put("ç", "c");
 		field.getSimpleTransformationTypes().put("?", "");
 		field.getSimpleTransformationTypes().put("Dr.", "");
 		field.getSimpleTransformationTypes().put("Prof.", "");
@@ -192,8 +201,9 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 		field.getSimpleTransformationTypes().put("-", "");
 		field.getComplexTransformationClasses().add("org.emau.icmvc.ttp.deduplication.preprocessing.impl.ToUpperCaseTransformation");
 		field.getComplexTransformationClasses().add("org.emau.icmvc.ttp.deduplication.preprocessing.impl.CharsMutationTransformation");
+		field.getComplexTransformationClasses().add("org.emau.icmvc.ttp.deduplication.preprocessing.impl.CharNormalizationTransformation");
 	}
-	
+
 	@Override
 	public void onEdit(DomainDTO object)
 	{
@@ -215,12 +225,12 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 				// Small edit
 				if (selected.isInUse())
 				{
-					managementService.updateDomainInUse(selected.getName(), selected.getLabel(), selected.getDescription());
+					getManager().updateDomainInUse(selected.getName(), selected.getLabel(), selected.getDescription());
 				}
 				// Large edit
 				else
 				{
-					managementService.updateDomain(selected);
+					getManager().updateDomain(selected);
 				}
 				logMessage(new MessageFormat(getBundle().getString("domain.message.edit.success")).format(args), Severity.INFO);
 				reload();
@@ -253,7 +263,7 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 
 			try
 			{
-				managementService.addDomain(tmp);
+				getManager().addDomain(tmp);
 				logMessage(new MessageFormat(getBundle().getString("domain.message.add.success")).format(args), Severity.INFO);
 				// on success write back changes on selected
 				selected = new DomainDTO(tmp);
@@ -331,7 +341,7 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 		Object[] args = { selected.getLabel() };
 		try
 		{
-			managementService.deleteDomain(selected.getName(), false);
+			getManager().deleteDomain(selected.getName(), false);
 			logMessage(new MessageFormat(getBundle().getString("domain.message.delete.success")).format(args), Severity.INFO);
 			reload();
 			updateDomainSelector();
@@ -404,7 +414,9 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 	{
 		selectedMatchingField = new FieldDTO();
 		selectedMatchingField.setAlgorithm("org.emau.icmvc.ttp.deduplication.impl.LevenshteinAlgorithm");
-		selectedMatchingField.setWeight(1);
+		selectedMatchingField.setBlockingThreshold(0.4);
+		selectedMatchingField.setMatchingThreshold(0.8);
+		selectedMatchingField.setWeight(5);
 		selectedMatchingFieldIsNew = true;
 	}
 
@@ -428,7 +440,8 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 		{
 			getConfig().getMatchingConfig().getFields().remove(matchingField);
 		}
-		else {
+		else
+		{
 			logMessage(getBundle().getString("page.management.domain.matching.message.atLeastOneField"), Severity.WARN);
 		}
 	}
@@ -446,6 +459,128 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 	public void onRemoveReason(ReasonDTO reason)
 	{
 		getConfig().getDeduplication().getReasons().remove(reason);
+	}
+
+	private void loadValidatorTree()
+	{
+		validatorTree = new DefaultTreeNode<>(new ValidatorNode());
+		if (getConfig().getValidation() != null)
+		{
+			getConfig().getValidation().getValidationConfigs().forEach(v -> {
+				if (v.getValidator() != null)
+				{
+					new DefaultTreeNode<>(new ValidatorNode(v, v.getValidator()), validatorTree);
+				}
+				else if (v.getValidatorGroup() != null)
+				{
+					addValidatorGroup(v, v.getValidatorGroup(), validatorTree);
+				}
+			});
+		}
+	}
+
+	private void addValidatorGroup(ValidatorConfigDTO validatorConfig, ValidatorGroupDTO validatorGroup, TreeNode<ValidatorNode> parent)
+	{
+		TreeNode<ValidatorNode> validatorGroupNode = new DefaultTreeNode<>(new ValidatorNode(validatorConfig, validatorGroup), parent);
+		validatorGroupNode.setExpanded(true);
+
+		validatorGroup.getValidators().forEach(validator -> new DefaultTreeNode<>(new ValidatorNode(validatorConfig, validator), validatorGroupNode));
+		validatorGroup.getValidatorGroups().forEach(group -> addValidatorGroup(validatorConfig, group, validatorGroupNode));
+	}
+
+	public void onNewValidator(ValidatorGroupDTO parent)
+	{
+		selectedValidatorConfig = new ValidatorConfigDTO();
+		selectedValidator = new ValidatorDTO();
+		selectedValidatorParent = parent;
+		selectedIsNew = true;
+	}
+
+	public void onEditValidator(ValidatorConfigDTO validatorConfig, ValidatorDTO validator, ValidatorGroupDTO parent)
+	{
+		selectedValidatorConfig = validatorConfig;
+		selectedValidator = validator;
+		selectedValidatorParent = parent;
+		selectedIsNew = false;
+	}
+
+	public void onSaveValidator()
+	{
+		if (selectedIsNew)
+		{
+			if (selectedValidatorParent == null)
+			{
+				getConfig().getValidation().getValidationConfigs().add(new ValidatorConfigDTO(selectedValidatorConfig.getField(), selectedValidator, null));
+			}
+			else
+			{
+				selectedValidatorParent.getValidators().add(selectedValidator);
+			}
+		}
+		loadValidatorTree();
+	}
+
+	public void onRemoveValidator(ValidatorDTO validator, ValidatorGroupDTO parent)
+	{
+		if (parent == null)
+		{
+			getConfig().getValidation().getValidationConfigs().removeIf(vc -> validator.equals(vc.getValidator()));
+		}
+		else
+		{
+			parent.getValidators().remove(validator);
+		}
+		loadValidatorTree();
+	}
+
+	public void onNewValidatorGroup(ValidatorGroupDTO parent)
+	{
+		selectedValidatorConfig = new ValidatorConfigDTO();
+		selectedValidatorGroup = new ValidatorGroupDTO();
+		selectedValidatorParent = parent;
+		selectedIsNew = true;
+	}
+
+	public void onEditValidatorGroup(ValidatorConfigDTO validatorConfig, ValidatorGroupDTO validatorGroup, ValidatorGroupDTO parent)
+	{
+		selectedValidatorConfig = validatorConfig;
+		selectedValidatorGroup = validatorGroup;
+		selectedValidatorParent = parent;
+		selectedIsNew = false;
+	}
+
+	public void onSaveValidatorGroup()
+	{
+		if (selectedIsNew)
+		{
+			if (selectedValidatorParent == null)
+			{
+				getConfig().getValidation().getValidationConfigs().add(new ValidatorConfigDTO(selectedValidatorConfig.getField(), null, selectedValidatorGroup));
+			}
+			else
+			{
+				selectedValidatorParent.getValidatorGroups().add(selectedValidatorGroup);
+			}
+		}
+		loadValidatorTree();
+	}
+
+	public void onRemoveValidatorGroup(ValidatorGroupDTO validatorGroup, ValidatorGroupDTO parent)
+	{
+		if (parent == null)
+		{
+			getConfig().getValidation().getValidationConfigs().removeIf(vc -> validatorGroup.equals(vc.getValidatorGroup()));
+		}
+		else
+		{
+			parent.getValidatorGroups().remove(validatorGroup);
+		}
+		loadValidatorTree();
+	}
+	
+	public void onChangeValidatorClass()
+	{
+		selectedValidator.setCriterion(null);
 	}
 
 	public void onNewPreprocessingField()
@@ -574,7 +709,8 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 		String xml = new String(event.getFile().getContent(), MATCHING_CONFIG_XML_CHARSET);
 		try
 		{
-			selected.setConfigObjects(managementService.parseMatchingConfiguration(xml));
+			selected.setConfigObjects(getManager().parseMatchingConfiguration(xml));
+			loadWebEnhancements();
 		}
 		catch (MPIException | InvalidParameterException e)
 		{
@@ -591,7 +727,7 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 		if (StringUtils.isBlank(xml) || hasEditableMatchingConfig())
 		{
 			// configuration objects to xml config
-			xml = managementService.encodeMatchingConfiguration(selected.getConfigObjects());
+			xml = getManager().encodeMatchingConfiguration(selected.getConfigObjects());
 		}
 
 		ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes(MATCHING_CONFIG_XML_CHARSET));
@@ -958,5 +1094,99 @@ public class DomainBean extends AbstractEpixBean implements ICRUDObject<DomainDT
 	{
 		return new String[] { "org.emau.icmvc.ttp.deduplication.preprocessing.impl.ToUpperCaseTransformation", "org.emau.icmvc.ttp.deduplication.preprocessing.impl.CharNormalizationTransformation",
 				"org.emau.icmvc.ttp.deduplication.preprocessing.impl.CharsMutationTransformation", "org.emau.icmvc.ttp.deduplication.preprocessing.impl.TrimTransformation" };
+	}
+
+	public TreeNode<ValidatorNode> getValidatorTree()
+	{
+		return validatorTree;
+	}
+
+	public boolean isSelectedIsNew()
+	{
+		return selectedIsNew;
+	}
+
+	public void setSelectedIsNew(boolean selectedIsNew)
+	{
+		this.selectedIsNew = selectedIsNew;
+	}
+
+	public ValidatorDTO getSelectedValidator()
+	{
+		return selectedValidator;
+	}
+
+	public void setSelectedValidator(ValidatorDTO selectedValidator)
+	{
+		this.selectedValidator = selectedValidator;
+	}
+
+	public ValidatorConfigDTO getSelectedValidatorConfig()
+	{
+		return selectedValidatorConfig;
+	}
+
+	public void setSelectedValidatorConfig(ValidatorConfigDTO selectedValidatorConfig)
+	{
+		this.selectedValidatorConfig = selectedValidatorConfig;
+	}
+
+	public ValidatorGroupDTO getSelectedValidatorGroup()
+	{
+		return selectedValidatorGroup;
+	}
+
+	public void setSelectedValidatorGroup(ValidatorGroupDTO selectedValidatorGroup)
+	{
+		this.selectedValidatorGroup = selectedValidatorGroup;
+	}
+
+	public ValidatorGroupDTO getSelectedValidatorParent()
+	{
+		return selectedValidatorParent;
+	}
+
+	public String[] getAvailableQualifiedClassNames()
+	{
+		return new String[] { "org.emau.icmvc.ttp.deduplication.impl.validation.AlphabetValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.LengthValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.EmptyFieldValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.RegExValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.Base64Validator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.BalancedBloomFilterValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.GermanZipCodeValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.PhoneNumberValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.EMailValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.EGKValidator" };
+	}
+
+	public boolean containsCriteria(String validatorClassName)
+	{
+		return containsStringCriteria(validatorClassName) || containsIntegerCriteria(validatorClassName) || containsBooleanCriteria(validatorClassName);
+	}
+
+	public boolean containsStringCriteria(String validatorClassName)
+	{
+		List<String> criteriaValidators = Arrays.asList("org.emau.icmvc.ttp.deduplication.impl.validation.RegExValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.AlphabetValidator");
+		return criteriaValidators.contains(validatorClassName);
+	}
+
+	public boolean containsIntegerCriteria(String validatorClassName)
+	{
+		List<String> criteriaValidators = Arrays.asList("org.emau.icmvc.ttp.deduplication.impl.validation.LengthValidator",
+				"org.emau.icmvc.ttp.deduplication.impl.validation.BalancedBloomFilterValidator");
+		return criteriaValidators.contains(validatorClassName);
+	}
+
+	public boolean containsBooleanCriteria(String validatorClassName)
+	{
+		List<String> criteriaValidators = Arrays.asList("org.emau.icmvc.ttp.deduplication.impl.validation.EmptyFieldValidator");
+		return criteriaValidators.contains(validatorClassName);
+	}
+
+	public ValidatorOperator[] getAvailableOperators()
+	{
+		return ValidatorOperator.values();
 	}
 }

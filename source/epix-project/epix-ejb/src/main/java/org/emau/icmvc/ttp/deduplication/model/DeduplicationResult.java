@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.deduplication.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -41,6 +41,7 @@ package org.emau.icmvc.ttp.deduplication.model;
 
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -49,8 +50,8 @@ import org.emau.icmvc.ttp.epix.internal.PreprocessedCacheObject;
 
 public class DeduplicationResult
 {
-	private final List<MatchResult> possibleMatches = new ArrayList<MatchResult>();
-	private final List<MatchResult> matches = new ArrayList<MatchResult>();
+	private final List<MatchResult> possibleMatches = new ArrayList<>();
+	private final List<MatchResult> matches = new ArrayList<>();
 	private final PreprocessedCacheObject matchable;
 	private final LongSet matchPersonIDs = new LongOpenHashSet();
 	private final LongSet possibleMatchPersonIDs = new LongOpenHashSet();
@@ -109,7 +110,7 @@ public class DeduplicationResult
 
 	public long getUniqueMatchPersonId()
 	{
-		long result = -1l;
+		long result = -1L;
 		if (hasUniqueMatch())
 		{
 			result = matches.get(0).getComparativeValue().getPersonId();
@@ -124,7 +125,7 @@ public class DeduplicationResult
 
 	public long getUniquePossibleMatchPersonId()
 	{
-		long result = -1l;
+		long result = -1L;
 		if (hasUniquePossibleMatch())
 		{
 			result = possibleMatches.get(0).getComparativeValue().getPersonId();
@@ -134,7 +135,7 @@ public class DeduplicationResult
 
 	public List<MatchResult> getMatchResults()
 	{
-		List<MatchResult> m = new ArrayList<MatchResult>();
+		List<MatchResult> m = new ArrayList<>();
 		m.addAll(matches);
 		m.addAll(possibleMatches);
 		return m;
@@ -199,5 +200,25 @@ public class DeduplicationResult
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * {@return the match result with the highest matching score or null if there is no such result}
+	 * @param decision one of {@link MatchResult.DECISION#MATCH} or {@link MatchResult.DECISION#POSSIBLE_MATCH}
+	 * @param excludeIdentityId an id of an identity to exclude match results for
+	 */
+	public MatchResult getMatchResultWithHighestMatchingScore(MatchResult.DECISION decision, long excludeIdentityId)
+	{
+		List<MatchResult> results = switch (decision)
+		{
+			case MATCH -> matches;
+			case POSSIBLE_MATCH -> possibleMatches;
+			default -> new ArrayList<>();
+		};
+
+		return results.stream()
+				.filter(r -> r.getDecision() == decision)
+				.filter(r -> r.getComparativeValue().getIdentityId() != excludeIdentityId)
+				.max(Comparator.comparingDouble(MatchResult::getRatio)).orElse(null);
 	}
 }

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -47,6 +47,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
+import org.emau.icmvc.ttp.epix.common.model.enums.IdentityLinkCreationType;
 import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
 
 /**
@@ -56,15 +57,16 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PossibleMatchPriority;
  */
 public class PossibleMatchDTO extends PossibleMatchBaseDTO implements Serializable
 {
-	private static final long serialVersionUID = 6193372669052258377L;
+	private static final long serialVersionUID = 451648092639098271L;
 	private final Set<MPIIdentityDTO> matchingMPIIdentities = new HashSet<>();
 
 	public PossibleMatchDTO()
 	{}
 
-	public PossibleMatchDTO(MPIIdentityDTO mpiIdentity1, MPIIdentityDTO mpiIdentity2, long linkId, double probability, Date possibleMatchCreated, PossibleMatchPriority priority)
+	public PossibleMatchDTO(MPIIdentityDTO mpiIdentity1, MPIIdentityDTO mpiIdentity2, long linkId, double probability, Date possibleMatchCreated, PossibleMatchPriority priority,
+			IdentityLinkCreationType creationType)
 	{
-		super(linkId, probability, possibleMatchCreated, priority);
+		super(linkId, probability, possibleMatchCreated, priority, creationType);
 		matchingMPIIdentities.add(new MPIIdentityDTO(mpiIdentity1));
 		matchingMPIIdentities.add(new MPIIdentityDTO(mpiIdentity2));
 	}

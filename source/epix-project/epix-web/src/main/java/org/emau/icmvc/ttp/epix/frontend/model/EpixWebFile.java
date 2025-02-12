@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -48,6 +48,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
@@ -70,7 +71,7 @@ public class EpixWebFile extends WebFile
 
 	// Stores the position of each column type (or local identifier domain) in the uploaded file (for performance improvements)
 	private Map<String, Integer> columnTypeIndex = new HashMap<>();
-	
+
 	private List<IdentifierDomainDTO> identifierDomains;
 
 	public EpixWebFile(LanguageBean languageBean, ConfigurationContainer domainConfiguration, List<IdentifierDomainDTO> identifierDomains)
@@ -129,7 +130,8 @@ public class EpixWebFile extends WebFile
 	 */
 	public boolean checkRequiredTypesPresent(List<WebPersonField> requiredTypes)
 	{
-		requiredTypes: for (WebPersonField requiredType : requiredTypes)
+		requiredTypes:
+		for (WebPersonField requiredType : requiredTypes)
 		{
 			for (String column : selectedColumns)
 			{
@@ -196,19 +198,19 @@ public class EpixWebFile extends WebFile
 							.orElse(WebPersonField.unkown).name();
 				}
 			}
-			
+
 			// Try to detect by matching the identifier domain name or label
 			if (WebPersonField.unkown.name().equals(type))
 			{
 				IdentifierDomainDTO identifierDomain = identifierDomains.stream()
-						.filter(d -> d.getName().equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, "")) || d.getLabel().equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, "")))
+						.filter(d -> d.getName().replaceAll(NORMALIZE_PATTERN, "").equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, "")) || d.getLabel().replaceAll(NORMALIZE_PATTERN, "").equalsIgnoreCase(column.replaceAll(NORMALIZE_PATTERN, "")))
 						.findAny().orElse(null);
 				if (identifierDomain != null)
 				{
 					type = "localId." + identifierDomain.getName();
 				}
 			}
-			
+
 			columnTypeMapping.put(column, type);
 		}
 	}
@@ -232,7 +234,7 @@ public class EpixWebFile extends WebFile
 	 * Get bundle for a specific language
 	 *
 	 * @param language
-	 *            2 char lower-case code for language, e.g. "en"
+	 * 		2 char lower-case code for language, e.g. "en"
 	 * @return bundle in given language
 	 */
 	private ResourceBundle getBundle(String language)
@@ -265,10 +267,11 @@ public class EpixWebFile extends WebFile
 		return columnTypeIndex;
 	}
 
-	// Dont return value fields that are not enabled in DomainConfiguration
 	public List<String> getTypes()
 	{
-		return Arrays.stream(WebPersonField.values()).map(Enum::name).filter(t -> !t.contains("value") || domainConfiguration.getValueFieldMapping().containsKey(t)).collect(Collectors.toList());
+		return Stream.concat(
+				Arrays.stream(WebPersonField.values()).map(Enum::name).filter(t -> !t.contains("value") || domainConfiguration.getValueFieldMapping().containsKey(t)),
+						identifierDomains.stream().map(idd -> "localId." + idd.getName())).collect(Collectors.toList());
 	}
 
 	public boolean hasMpi()

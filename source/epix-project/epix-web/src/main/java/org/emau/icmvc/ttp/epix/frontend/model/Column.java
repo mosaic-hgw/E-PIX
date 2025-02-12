@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -40,6 +40,8 @@ package org.emau.icmvc.ttp.epix.frontend.model;
  */
 
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,10 +50,12 @@ import java.util.List;
  *
  * @author blumentritta
  */
-public class Column
+public class Column implements Serializable
 {
+	@Serial private static final long serialVersionUID = -7358096586317794450L;
+
 	private String name;
-	private Boolean active;
+	private boolean active;
 
 	public Column(String name)
 	{
@@ -69,12 +73,12 @@ public class Column
 		this.name = name;
 	}
 
-	public Boolean getActive()
+	public boolean getActive()
 	{
 		return active;
 	}
 
-	public void setActive(Boolean active)
+	public void setActive(boolean active)
 	{
 		this.active = active;
 	}
@@ -117,55 +121,23 @@ public class Column
 		return columnTypes;
 	}
 
-	@Override
-	public int hashCode()
+	@Override public boolean equals(Object o)
 	{
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((active == null) ? 0 : active.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
+		if (this == o)
+			return true;
+		if (!(o instanceof Column column))
+			return false;
+
+		if (getActive() != column.getActive())
+			return false;
+		return getName() != null ? getName().equals(column.getName()) : column.getName() == null;
 	}
 
-	@Override
-	public boolean equals(Object obj)
+	@Override public int hashCode()
 	{
-		if (this == obj)
-		{
-			return true;
-		}
-		if (obj == null)
-		{
-			return false;
-		}
-		if (getClass() != obj.getClass())
-		{
-			return false;
-		}
-		Column other = (Column) obj;
-		if (active == null)
-		{
-			if (other.active != null)
-			{
-				return false;
-			}
-		}
-		else if (!active.equals(other.active))
-		{
-			return false;
-		}
-		if (name == null)
-		{
-			if (other.name != null)
-			{
-				return false;
-			}
-		}
-		else if (!name.equals(other.name))
-		{
-			return false;
-		}
-		return true;
+		int result = getName() != null ? getName().hashCode() : 0;
+		result = 31 * result + (getActive() ? 1 : 0);
+		return result;
 	}
 
 	/**
@@ -173,6 +145,6 @@ public class Column
 	 */
 	public enum Type
 	{
-		MPI, localId, degree, lastName, mothersMaidenName, middleName, firstName, birthDate, birthPlace, gender, nationality, motherTongue, civilStatus, race, religion, prefix, suffix, externalDate, value1, value2, value3, value4, value5, value6, value7, value8, value9, value10, street, zipCode, city, state, country, countryCode, district, municipalityKey, phone, email, streetOnly, number, contactExternalDate, unknown
+		MPI, localId, degree, lastName, mothersMaidenName, middleName, firstName, birthDate, birthPlace, gender, nationality, motherTongue, civilStatus, race, religion, prefix, suffix, externalDate, value1, value2, value3, value4, value5, value6, value7, value8, value9, value10, street, zipCode, city, state, country, countryCode, district, municipalityKey, phone, email, streetOnly, number, contactExternalDate, vitalStatus, dateOfDeath, unknown
 	};
 }

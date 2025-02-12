@@ -2,7 +2,7 @@
   ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -93,7 +93,7 @@
 					<p:blockUI block="identity_history" widgetVar="blockIdentityHistory" animate="false">
 						<h:outputFormat escape="false" value="#{msg['resolve.label.filteringEntries']}" />
 					</p:blockUI>
-					
+
 					<p:dataTable id="identity_history" widgetVar="identity_history" var="_pair"
 								 lazy="true" paginator="true"
 								 value="#{reportsController.identityHistoryPairsLazyModel}"
@@ -108,9 +108,9 @@
 						<p:column headerText="#{msg['common.timestamp']}" width="90"
 								  filterBy="#{reportsController.dateToString(_pair.newIdentity.historyTimestamp, 'datetime')}" filterable="false"
 								  sortBy="#{_pair.newIdentity.historyId}" sortOrder="desc">
-							<h:outputText value="#{_pair.newIdentity.historyTimestamp}" converter="date"/>
+							<h:outputText value="#{_pair.newIdentity.historyTimestamp}" converter="date" />
 							<h:outputText value=" " />
-							<h:outputText value="#{_pair.newIdentity.historyTimestamp}" converter="time" styleClass="rowDetail"/>
+							<h:outputText value="#{_pair.newIdentity.historyTimestamp}" converter="time" styleClass="rowDetail" />
 						</p:column>
 						<!--************************************************************** -->
 
@@ -156,11 +156,11 @@
 						<p:column rendered="#{epixHelper.required('middleName')}" headerText="#{msg['common.person.middleName']} #{msg['reports.label.new']}">
 							<h:outputText value="#{_pair.newIdentity.middleName}" />
 						</p:column>
-						<p:column rendered="#{epixHelper.required('mothersMaidenName')}" headerText="#{msg['common.person.mothersMaidenName']} #{msg['reports.label.new']}" >
+						<p:column rendered="#{epixHelper.required('mothersMaidenName')}" headerText="#{msg['common.person.mothersMaidenName']} #{msg['reports.label.new']}">
 							<h:outputText value="#{_pair.newIdentity.mothersMaidenName}" />
 						</p:column>
 						<p:column rendered="#{epixHelper.required('birthDate')}" headerText="#{msg['common.person.birthDate']} #{msg['reports.label.new']}">
-							<h:outputText value="#{_pair.newIdentity.birthDate}" converter="date"/>
+							<h:outputText value="#{_pair.newIdentity.birthDate}" converter="date" />
 						</p:column>
 						<p:column rendered="#{epixHelper.required('birthPlace')}" headerText="#{msg['common.person.birthPlace']} #{msg['reports.label.new']}">
 							<h:outputText value="#{_pair.newIdentity.birthPlace}" />
@@ -249,7 +249,7 @@
 							<h:outputText value="#{_pair.oldIdentity.mothersMaidenName}" />
 						</p:column>
 						<p:column rendered="#{epixHelper.required('birthDate')}" headerText="#{msg['common.person.birthDate']} #{msg['reports.label.old']}">
-							<h:outputText value="#{_pair.oldIdentity.birthDate}" converter="date"/>
+							<h:outputText value="#{_pair.oldIdentity.birthDate}" converter="date" />
 						</p:column>
 						<p:column rendered="#{epixHelper.required('birthPlace')}" headerText="#{msg['common.person.birthPlace']} #{msg['reports.label.old']}">
 							<h:outputText value="#{_pair.oldIdentity.birthPlace}" />
@@ -326,7 +326,7 @@
 						<h:outputText value="#{msg['common.download']}" />
 					</h4>
 					<p:commandButton value="#{cmsg['ui.button.download.csv']}" ajax="false" icon="mdi mdi-file-excel">
-						<p:dataExporter type="csv" target="main:identity_history" fileName="#{reportsController.identityReportFilename}" />
+						<p:dataExporter encoding="UTF-16LE" fileName="#{reportsController.identityReportFilename}" options="#{props.optionsCSV}" target="main:identity_history" type="csv" />
 					</p:commandButton>
 				</p:panel>
 			</h:form>

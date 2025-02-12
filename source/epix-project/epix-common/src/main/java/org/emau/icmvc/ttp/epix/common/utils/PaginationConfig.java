@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.utils;
  * ###license-information-start###
  * gPAS - a Generic Pseudonym Administration Service
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.utils;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,6 +39,7 @@ package org.emau.icmvc.ttp.epix.common.utils;
  * ###license-information-end###
  */
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +52,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.util.Strings;
+import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
+import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityField;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
@@ -103,6 +106,7 @@ import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
  */
 public class PaginationConfig implements Serializable
 {
+	@Serial
 	private static final long serialVersionUID = 6071259667642410949L;
 
 	// pagination
@@ -509,7 +513,7 @@ public class PaginationConfig implements Serializable
 			return null;
 		}
 
-		Set<String> patterns = personFilter.values().stream().collect(Collectors.toSet());
+		Set<String> patterns = new HashSet<>(personFilter.values());
 
 		if (patterns.size() != 1)
 		{
@@ -605,6 +609,27 @@ public class PaginationConfig implements Serializable
 		}
 		return false;
 	}
+
+	/**
+	 * Prepares this pagination config for using with JPA-predicates.
+	 * @param cc the configuration container e.g. to request required fields
+	 * @return true, if the pagination config actually has been changed
+	 */
+	public boolean prepareIdentityFilterForPredicates(ConfigurationContainer cc)
+	{
+		boolean changed = normalize();
+
+		// set up the default column set to search in with the global filter pattern combined as disjunction (if applicable)
+		if (detectAndConfigureGlobalIdentityFiltering(new HashSet<>(FieldName.toIdentityFields(cc.getRequiredFields()))))
+		{
+			// replace localized gender patterns by matching gender symbols separated by ',' (e.g. 'lich' -> 'F,M')
+			detectAndConfigureIdentityGenderFiltering();
+			changed = true;
+		}
+
+		return changed;
+	}
+
 
 	@Override
 	public int hashCode()
@@ -836,7 +861,7 @@ public class PaginationConfig implements Serializable
 			else
 			{
 				statuses = statusStrings.entrySet().stream().filter(e -> e.getValue().toLowerCase().contains(p.toLowerCase()))
-						.map(e -> "" + e.getKey().name()).collect(Collectors.joining(","));
+						.map(e -> e.getKey().name()).collect(Collectors.joining(","));
 			}
 			if (!statuses.isEmpty())
 			{

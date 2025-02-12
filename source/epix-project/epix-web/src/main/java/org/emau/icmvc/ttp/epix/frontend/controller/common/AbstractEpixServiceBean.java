@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,14 +39,14 @@ package org.emau.icmvc.ttp.epix.frontend.controller.common;
  * ###license-information-end###
  */
 
-import javax.annotation.PostConstruct;
-import javax.ejb.EJB;
-
-import org.emau.icmvc.ttp.auth.TTPNames.Tool;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
 import org.emau.icmvc.ttp.epix.service.EPIXService;
-import org.emau.icmvc.ttp.epix.service.EPIXServiceWithNotification;
+import org.emau.icmvc.ttp.epix.service.StatisticManager;
 import org.icmvc.ttp.web.controller.AbstractBean;
+import org.icmvc.ttp.web.util.WebAuthContext;
 
 /**
  * An abstract bean  which encapsulates the E-PIX service interfaces
@@ -57,48 +57,53 @@ import org.icmvc.ttp.web.controller.AbstractBean;
  */
 public class AbstractEpixServiceBean extends AbstractBean
 {
-	protected static final String TOOL = "E-PIX";
-	protected static final String NOTIFICATION_CLIENT_ID = "E-PIX_Web";
-	@EJB(lookup = "java:global/epix/epix-ejb/EPIXServiceImpl!org.emau.icmvc.ttp.epix.service.EPIXService")
-	private EPIXService serviceTarget;
-	protected EPIXService service;
-	@EJB(lookup = "java:global/epix/epix-ejb/EPIXServiceWithNotificationImpl!org.emau.icmvc.ttp.epix.service.EPIXServiceWithNotification")
-	private EPIXServiceWithNotification serviceWithNotificationTarget;
-	protected EPIXServiceWithNotification serviceWithNotification;
-	@EJB(lookup = "java:global/epix/epix-ejb/EPIXManagementServiceImpl!org.emau.icmvc.ttp.epix.service.EPIXManagementService")
-	private EPIXManagementService managementServiceTarget;
-	protected EPIXManagementService managementService;
+	protected static final String TOOL = ServiceHelper.TOOL;
+
+	@Inject
+	private ServiceHelper serviceHelper;
 
 	@PostConstruct
 	private void init()
 	{
-		if (getWebAuthContext().isUsingDomainBasedRolesDisabled(Tool.epix))
+	}
+
+	public ServiceHelper getServiceHelper()
+	{
+		if (serviceHelper == null)
 		{
-			service = serviceTarget;
-			managementService = managementServiceTarget;
-			serviceWithNotification = serviceWithNotificationTarget;
+			// https://github.com/eclipse-ee4j/mojarra/issues/4308
+			// If the above does not work here, too: "@Inject private ServiceHelper serviceHelper;"
+			// but "CDI.current().select(ServiceHelper.class).get();" helps
+			serviceHelper = CDI.current().select(ServiceHelper.class).get();
 		}
-		else
-		{
-			service = getWebAuthContext().createUpdateAuthContextProxy(serviceTarget, EPIXService.class);
-			managementService = getWebAuthContext().createUpdateAuthContextProxy(managementServiceTarget, EPIXManagementService.class);
-			serviceWithNotification = getWebAuthContext().createUpdateAuthContextProxy(serviceWithNotificationTarget, EPIXServiceWithNotification.class);
-		}
+
+		return serviceHelper;
 	}
 
 	public EPIXService getService()
 	{
-		return service;
+		return getServiceHelper().getService();
 	}
 
-	public EPIXServiceWithNotification getServiceWithNotification()
+	public EPIXService getServiceWithAutomaticNotification(boolean notify)
 	{
-		return serviceWithNotification;
+		return getServiceHelper().getServiceWithAutomaticNotification(notify);
 	}
 
-	public EPIXManagementService getManagementService()
+	public EPIXManagementService getManager()
 	{
-		return managementService;
+		return getServiceHelper().getManager();
+	}
+
+	public StatisticManager getStatisticService()
+	{
+		return getServiceHelper().getStatisticService();
+	}
+
+	@Override
+	public WebAuthContext getWebAuthContext()
+	{
+		return getServiceHelper().getWebAuthContext();
 	}
 
 	public String getTool()

@@ -1,4 +1,5 @@
-FROM ${docker.baseImage}
+ARG TAG=mosaicgreifswald/wildfly:${docker.wildfly.version}
+FROM ${TAG}
 
 # ###license-information-start###
 # E-PIX - Enterprise Patient Identifier Cross-referencing
@@ -31,28 +32,15 @@ FROM ${docker.baseImage}
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ###license-information-end###
 
-# tool-defaults
-ENV TTP_${project.upperName}_VERSION        ${project.version}
-ENV TTP_${project.upperName}_WEB_AUTH_MODE  none
+ARG DATE_YMD="20240618"
 
-# mysql-defaults
-ENV TTP_${project.upperName}_DB_HOST        mysql
-ENV TTP_${project.upperName}_DB_PORT        3306
-ENV TTP_${project.upperName}_DB_NAME        ${project.shortName}
-ENV TTP_${project.upperName}_DB_USER        ${project.shortName}_user
-ENV TTP_${project.upperName}_DB_PASS        ${project.shortName}_password
-
-# gras-defaults
-ENV TTP_GRAS_DB_HOST        mysql
-ENV TTP_GRAS_DB_PORT        3306
-ENV TTP_GRAS_DB_NAME        gras
-ENV TTP_GRAS_DB_USER        gras_user
-ENV TTP_GRAS_DB_PASS        gras_password
-
-# keycloak-defaults
-ENV TTP_KEYCLOAK_SSL_REQUIRED               all
-ENV TTP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS false
-ENV TTP_KEYCLOAK_CONFIDENTIAL_PORT          8443
+# envs
+ENV TTP_${project.upperName}_VERSION="${project.version}" \
+    TTP_${project.upperName}_WEB_AUTH_MODE="none" \
+    \
+    TTP_KEYCLOAK_SSL_REQUIRED="all" \
+    TTP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS="false" \
+    TTP_KEYCLOAK_CONFIDENTIAL_PORT="8443"
 
 # annotations
 LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
@@ -65,10 +53,7 @@ LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
       org.opencontainers.image.license     = "AGPLv3"
 
 # copy files
-COPY ["deployments/*ar",    "${ENTRY_WILDFLY_DEPLOYS}/"]
-COPY ["jboss/*",            "${ENTRY_WILDFLY_CLI}/"]
-COPY ["LICENSE.txt",        "./"]
+COPY --chown=${PROCESS_UID}:${PROCESS_GID} ["deployments/*ar", "${ENTRY_WILDFLY_DEPLOYS}/"]
+COPY --chown=${PROCESS_UID}:${PROCESS_GID} ["jboss/*",         "${ENTRY_WILDFLY_CLI}/"]
 
-USER root
-RUN chown -R ${USER}:${USER} ${ENTRY_WILDFLY_DEPLOYS} ${ENTRY_WILDFLY_CLI} LICENSE.txt
-USER ${USER}
+RUN register --add-version="${project.parent.name}:${project.version}"

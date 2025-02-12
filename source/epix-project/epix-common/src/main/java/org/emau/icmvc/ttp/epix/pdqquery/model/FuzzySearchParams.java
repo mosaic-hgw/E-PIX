@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.pdqquery.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.pdqquery.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -40,16 +40,21 @@ package org.emau.icmvc.ttp.epix.pdqquery.model;
  */
 
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.emau.icmvc.ttp.epix.pdqquery.model.enums.MatchTypeForSearch;
 
 public class FuzzySearchParams implements Serializable
 {
+	@Serial
 	private static final long serialVersionUID = -230892869586756955L;
 	private MatchTypeForSearch matchType = MatchTypeForSearch.MATCH;
 	private double thresholdPossibleMatch = 0;
 	private double thresholdAutomaticMatch = 1000;
+
+	public FuzzySearchParams()
+	{}
 
 	public FuzzySearchParams(MatchTypeForSearch matchType, double thresholdPossibleMatch, double thresholdAutomaticMatch)
 	{

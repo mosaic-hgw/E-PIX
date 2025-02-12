@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -49,19 +49,18 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.faces.application.FacesMessage;
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
-import javax.faces.convert.ConverterException;
-import javax.faces.convert.FacesConverter;
-import javax.faces.validator.ValidatorException;
-
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.convert.Converter;
+import jakarta.faces.convert.ConverterException;
+import jakarta.faces.convert.FacesConverter;
+import jakarta.faces.validator.ValidatorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @FacesConverter("org.icmvc.jsf.BirthdateConverter")
-public class BirthdateValidateConverter implements Converter, Serializable
+public class BirthdateValidateConverter implements Converter<Date>, Serializable
 {
 	/**
 	     * 
@@ -106,7 +105,7 @@ public class BirthdateValidateConverter implements Converter, Serializable
 	}
 
 	@Override
-	public Object getAsObject(FacesContext context, UIComponent component, String value)
+	public Date getAsObject(FacesContext context, UIComponent component, String value)
 	{
 		SimpleDateFormat sf = new SimpleDateFormat(component.getAttributes().get("pattern").toString());
 		try
@@ -130,10 +129,10 @@ public class BirthdateValidateConverter implements Converter, Serializable
 	}
 
 	@Override
-	public String getAsString(FacesContext context, UIComponent component, Object value)
+	public String getAsString(FacesContext context, UIComponent component, Date value)
 	{
 		SimpleDateFormat sf = new SimpleDateFormat(component.getAttributes().get("pattern").toString());
-		if (value instanceof Date)
+		if (value != null)
 		{
 			return sf.format(value);
 		}

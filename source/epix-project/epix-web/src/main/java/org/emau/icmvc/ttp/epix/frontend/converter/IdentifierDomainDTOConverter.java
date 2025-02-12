@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -41,42 +41,31 @@ package org.emau.icmvc.ttp.epix.frontend.converter;
 
 import java.util.List;
 
-import javax.faces.application.FacesMessage;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.RequestScoped;
-import javax.faces.component.UIComponent;
-import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
-import javax.faces.convert.ConverterException;
-
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.convert.Converter;
+import jakarta.faces.convert.ConverterException;
+import jakarta.faces.convert.FacesConverter;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixServiceBean;
 
-// Cannot use @FacesConverter with @EJB until JSF 2.3
-@ManagedBean
-@RequestScoped
-public class IdentifierDomainDTOConverter extends AbstractEpixServiceBean implements Converter
+@FacesConverter(value = "identifierDomainDTOConverter")
+public class IdentifierDomainDTOConverter extends AbstractEpixServiceBean implements Converter<IdentifierDomainDTO>
 {
 	@Override
-	public String getAsString(FacesContext context, UIComponent component, Object modelValue)
+	public String getAsString(FacesContext context, UIComponent component, IdentifierDomainDTO modelValue)
 	{
 		if (modelValue == null)
 		{
 			return "";
 		}
 
-		if (modelValue instanceof IdentifierDomainDTO)
-		{
-			return String.valueOf(((IdentifierDomainDTO) modelValue).getName());
-		}
-		else
-		{
-			throw new ConverterException(new FacesMessage(text.sanitize(modelValue + " is not a valid IdentifierDomainDTO")));
-		}
+		return modelValue.getName();
 	}
 
 	@Override
-	public Object getAsObject(FacesContext context, UIComponent component, String submittedValue)
+	public IdentifierDomainDTO getAsObject(FacesContext context, UIComponent component, String submittedValue)
 	{
 		if (submittedValue == null || submittedValue.isEmpty())
 		{
@@ -85,7 +74,7 @@ public class IdentifierDomainDTOConverter extends AbstractEpixServiceBean implem
 
 		try
 		{
-			List<IdentifierDomainDTO> identifierDomains = managementService.getIdentifierDomains();
+			List<IdentifierDomainDTO> identifierDomains = getManager().getIdentifierDomains();
 
 			for (IdentifierDomainDTO identifierDomain : identifierDomains)
 			{

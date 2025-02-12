@@ -1,8 +1,6 @@
-![context](https://www.ths-greifswald.de/wp-content/uploads/2019/01/Design-Logo-THS-deutsch-542.png)
+${ttp.readme.header}
 
-Stand: Novenmber 2022
-
-# Aktualisierung der THS-Tools in Docker(-Compose)
+# Aktualisierung der THS-Tools per Docker
 
 ## Hintergrund
 
@@ -19,7 +17,7 @@ docker ps -a
 
 ### Neue  Tool-Version von der THS-Webseite herunterladen
 
-Die aktuelle Version von [ths-greifswald.de/epix](www.ths-greifswald.de/epix) herunterladen und entpacken, sowie auf das Host-System kopieren und sicherstellen, dass entsprechende Berechtigungen zum Ausführen der Dateien gesetzt sind.
+Die aktuelle Version von [ths-greifswald.de/epix](https://www.ths-greifswald.de/epix) herunterladen und entpacken, sowie auf das Host-System kopieren und sicherstellen, dass entsprechende Berechtigungen zum Ausführen der Dateien gesetzt sind.
 
 ```
 CHMOD -R 755 /PFAD
@@ -64,13 +62,15 @@ docker exec -it epix-2.11.0-mysql /usr/bin/mysql -u epix_user -p -e "USE epix; $
 docker exec -it epix-2.11.0-mysql /usr/bin/mysql -u epix_user -p -e "USE epix; $(cat epix-new/standard/update_database_epix_2.12.x-2.13.x.sql)"
 ```
 
-### Aktualisierung der Deployments und Wildfly-Konfiguration
+### Aktualisieren der Deployments und Wildfly-Konfiguration
 
 Den Datenbank-Container nun herunterfahren
 
 ```
 docker epix-<old-version>-mysql down
 ```
+
+#### Aktualisieren der Deployments
 
 Die Deployments im `<epix-old>` Verzeichnis auf dem Host-System löschen und die neuen Deployments hinein kopieren
 
@@ -79,25 +79,72 @@ rm -f <epix-old>/deployments/*
 cp -R <epix-new>/deployments/ <epix-old>/deployments/
 ```
 
-Aktualisierung der Bezeichnung des MySQL Containers
+#### Aktualisieren der Bezeichnung des MySQL Containers
 
 ```
 sudo docker rename epix-<old-version>-mysql epix-<new-version>-mysql
 ```
 
-JBOSS Konfiguration aktualisieren
+#### Aktualisieren der JBOSS Konfigurationsskripte
+
+Die alten Dateien können gesichert oder gelöscht und die neuen müssen eingespielt werden:
 
 ```
-cp -R <epix-new>/jboss/ <epix-old>/jboss/
+mv <epix-old>/jboss <epix-old>/jboss-<old-version>
+cp -R <epix-new>/jboss/ <epix-old>/jboss
 ```
 
-Docker-Compose-Konfiguration aktualisieren
+Mit Hilfe dieser Dateien wird JBOSS nach den Vorgaben aus den `*.env`-Dateien konfiguriert.
+
+#### Aktualisieren der Umgebungsvariablen für die JBOSS Konfigurationsskripte
+
+In der aktuellen Version liegen die zugehörigen `*.env`-Dateien im Unterordner `./envs`. In älteren Versionen lagen diese direkt im Wurzelverzeichnis des Dockerpaketes. Falls eine solche Version aktualisiert werden soll, müssen zuvor die `*.env`-Dateien in den Unterordner `./envs` verschoben werden:
 
 ```
-cp -R <epix-new>/docker-compose.yml <epix-old>/docker-compose.yml
+mkdir <epix-old>/envs
+mv <epix-old>/*.env <epix-old>/envs/
 ```
 
-Anpassen des Eigentümer-Benutzers
+Dieser Ordner sollte auch gesichert werden:
+
+```
+cp -R <epix-old>/envs <epix-old>/envs-<old-version>
+```
+
+Nun muss die Liste der neuen und umbenannten `ENV`-Variablen in der `README_gICS.md` im Wurzelverzeichnis des Dockerpaketes studiert werden, um gegebenenfalls die `*.env`-Dateien entsprechend anzupassen. **Achtung**: unter Umständen wurden auch die Namen der `*.env`-Dateien geändert. Dies muss auf auf jeden Fall angepasst werden.
+
+**Alternativ** kann man mit etwas höherem Aufwand die Anpassungen der alten `*.env`-Dateien manuell in die neuen übertragen, um größtmögliche Ähnlichkeit zwischen den angepassten und ausgelieferten `*.env`-Dateien zu bewahren. Dazu müssen die alten angepassten Dateien  gesichert und die neuen eingespielt werden:
+
+```
+mv <epix-old>/envs <epix-old>/envs-<old-version>
+cp -R <epix-new>/envs/ <epix-old>/envs
+```
+
+Anschließend müssen alle manuellen Anpassungen der alten in die neuen `*.env`-Dateien übertragen werden. Dabei ist hohe Aufmerksamkeit erforderlich. Wir empfehlen die Nutzung eines grafischen Diff-Werkzeuges (z.B [devart Code Compare Free](https://www.devart.com/codecompare/featurematrix.html)). Für zukünftige Updates ist es hilfreich, die bestehenden Skeletons, Beispiele und Kommentare nicht zu ändern, sondern die eigenen Zeilen zu ergänzen und durch einen leicht wiederauffindbaren Kommentar zu markieren.
+
+#### Aktualisieren der Docker-Compose-Konfiguration
+
+Die alte angepasste Datei muss gesichert und die neue eingespielt werden:
+
+```
+mv <epix-old>/docker-compose.yml <epix-old>/docker-compose-<old-version>.yml
+cp <epix-new>/docker-compose.yml <epix-old>/docker-compose.yml
+```
+
+Wahrscheinlich müssen auch hier die Anpassungen der alten `docker-compose.yml` (inbesondere für Ports und Volumes) in die neue übertragen werden (am besten wieder mit Hilfe eines grafischen Diff-Werkzeuges).
+
+#### Aktualisieren der Dokumentationsdateien
+
+Schließlich empfiehlt es sich, auch die aktualisierten Dokumentationsdateien zu übertragen:
+
+```
+rm -f <epix-old>/*.md 
+cp <epix-new>/*.md <epix-old>/
+rm -f <epix-old>/docs/* 
+cp -R <epix-new>/docs/ <epix-old>/docs/
+```
+
+#### Anpassen des Eigentümer-Benutzers
 
 ```
 chown 999 <epix-new>/sqls
@@ -124,37 +171,4 @@ Im Fehlerfall, kann die bisherige Datenbank wiederhergestellt werden (sofern die
 docker exec -it epix-<new-version>-mysql /usr/bin/mysql -u epix_user -p -e "USE epix; $(cat backup-epix-2022-03-31.sql)"
 ```
 
-# Additional Information #
-
-The E-PIX was developed by the University Medicine Greifswald  and published in 2014 as part of the [MOSAIC-Project](https://ths-greifswald.de/mosaic "")  (funded by the DFG HO 1937/2-1).
-
-Selected functionalities of E-PIX were developed as part of the following research projects:
-- MIRACUM (funded by the German Federal Ministry of Education and Research 01ZZ1801M)
-- NUM-CODEX (funded by the German Federal Ministry of Education and Research 01KX2021)
-
-## Credits ##
-Concept and implementation: L. Geidel
-
-Web-Client: A. Blumentritt, F.M. Moser
-
-Docker: R. Schuldt
-
-Privacy Preserving Record Linkage: C. Hampf
-
-## License ##
-License: AGPLv3, https://www.gnu.org/licenses/agpl-3.0.en.html
-
-Copyright: 2009 - 2022 University Medicine Greifswald
-
-Contact: https://www.ths-greifswald.de/kontakt/
-
-## Publications ##
-
-Hampf et al. 2020 "Assessment of scalability and performance of the record linkage tool E‑PIX® in managing multi‑million patients in research projects at a large university hospital in Germany", https://translational-medicine.biomedcentral.com/articles/10.1186/s12967-020-02257-4
-
-https://dx.doi.org/10.3414/ME14-01-0133
-
-https://dx.doi.org/10.1186/s12967-015-0545-6
-
-# Supported languages #
-German, English
+${ttp.readme.footer}

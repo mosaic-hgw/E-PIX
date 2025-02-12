@@ -2,7 +2,7 @@
 <!-- ###license-information-start###
   E-PIX - Enterprise Patient Identifier Cross-referencing
   __
-  Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+  Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
   							kontakt-ths@uni-greifswald.de
   
   							concept and implementation
@@ -12,7 +12,7 @@
   							a.blumentritt, f.m. moser
   
   							docker
-  							r.schuldt
+  							r.schuldt, f.m. moser
   
   							privacy preserving record linkage (PPRL)
   							c.hampf
@@ -31,5 +31,5 @@
 
 <webservices xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.jboss.com/xml/ns/javaee"
 	xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee http://www.jboss.org/j2ee/schema/jboss_webservices_1_0.xsd">
-	<context-root>epix</context-root>
+	<context-root>${env.TTP_EPIX_SOAP_CONTEXT}</context-root>
 </webservices>

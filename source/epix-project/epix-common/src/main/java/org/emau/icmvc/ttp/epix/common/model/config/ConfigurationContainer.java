@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -56,7 +56,7 @@ import org.emau.icmvc.ttp.epix.common.model.enums.PersistMode;
  */
 public class ConfigurationContainer implements Serializable
 {
-	private static final long serialVersionUID = 4542967924668614814L;
+	private static final long serialVersionUID = 8866119841174028251L;
 	private MatchingMode matchingMode = MatchingMode.MATCHING_IDENTITIES;
 	private String mpiGenerator;
 	private String mpiPrefix;
@@ -66,6 +66,7 @@ public class ConfigurationContainer implements Serializable
 	private final List<FieldName> requiredFields = new ArrayList<>();
 	private final Map<String, String> valueFieldMapping = new HashMap<>();
 	private DeduplicationDTO deduplication = new DeduplicationDTO();
+	private ValidationDTO validation = new ValidationDTO();
 	private PrivacyDTO privacy = new PrivacyDTO();
 	private MatchingDTO matchingConfig = new MatchingDTO();
 	private final List<PreprocessingFieldDTO> preprocessingFields = new ArrayList<>();
@@ -74,8 +75,8 @@ public class ConfigurationContainer implements Serializable
 	{}
 
 	public ConfigurationContainer(MatchingMode matchingMode, String mpiGenerator, String mpiPrefix, boolean useNotifications, boolean limitSearchForLowMemory,
-			PersistMode persistMode, List<FieldName> requiredFields, Map<String, String> valueFieldMapping, DeduplicationDTO deduplication, PrivacyDTO privacy, MatchingDTO matchingConfig,
-			List<PreprocessingFieldDTO> preprocessingFields)
+			PersistMode persistMode, List<FieldName> requiredFields, Map<String, String> valueFieldMapping, DeduplicationDTO deduplication, ValidationDTO validation,
+			PrivacyDTO privacy, MatchingDTO matchingConfig, List<PreprocessingFieldDTO> preprocessingFields)
 	{
 		super();
 		setMatchingMode(matchingMode);
@@ -87,6 +88,7 @@ public class ConfigurationContainer implements Serializable
 		setRequiredFields(requiredFields);
 		setValueFieldMapping(valueFieldMapping);
 		setDeduplication(deduplication);
+		setValidation(validation);
 		setPrivacy(privacy);
 		setMatchingConfig(matchingConfig);
 		setPreprocessingFields(preprocessingFields);
@@ -95,7 +97,7 @@ public class ConfigurationContainer implements Serializable
 	public ConfigurationContainer(ConfigurationContainer cc)
 	{
 		this(cc.getMatchingMode(), cc.getMpiGenerator(), cc.getMpiPrefix(), cc.isUseNotifications(), cc.isLimitSearchForLowMemory(), cc.getPersistMode(), cc.getRequiredFields(),
-				cc.getValueFieldMapping(), cc.getDeduplication(), cc.getPrivacy(), cc.getMatchingConfig(), cc.getPreprocessingFields());
+				cc.getValueFieldMapping(), cc.getDeduplication(), cc.getValidation(), cc.getPrivacy(), cc.getMatchingConfig(), cc.getPreprocessingFields());
 	}
 
 	public boolean isUseNotifications()
@@ -186,6 +188,16 @@ public class ConfigurationContainer implements Serializable
 		this.deduplication = deduplication != null ? new DeduplicationDTO(deduplication) : null;
 	}
 
+	public ValidationDTO getValidation()
+	{
+		return validation;
+	}
+
+	public void setValidation(ValidationDTO validation)
+	{
+		this.validation = validation != null ? new ValidationDTO(validation) : null;
+	}
+
 	public PrivacyDTO getPrivacy()
 	{
 		return privacy;
@@ -243,6 +255,7 @@ public class ConfigurationContainer implements Serializable
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (deduplication == null ? 0 : deduplication.hashCode());
+		result = prime * result + (validation == null ? 0 : validation.hashCode());
 		result = prime * result + (limitSearchForLowMemory ? 1231 : 1237);
 		result = prime * result + (matchingConfig == null ? 0 : matchingConfig.hashCode());
 		result = prime * result + (matchingMode == null ? 0 : matchingMode.hashCode());
@@ -280,7 +293,14 @@ public class ConfigurationContainer implements Serializable
 				return false;
 			}
 		}
-		else if (!deduplication.equals(other.deduplication))
+		else if (validation == null)
+		{
+			if (other.validation != null)
+			{
+				return false;
+			}
+		}
+		else if (!validation.equals(other.validation))
 		{
 			return false;
 		}
@@ -385,6 +405,6 @@ public class ConfigurationContainer implements Serializable
 	{
 		return "ConfigurationContainer [matchingMode=" + matchingMode + ", mpiGenerator=" + mpiGenerator + ", mpiPrefix=" + mpiPrefix + ", useNotifications=" + useNotifications
 				+ ", limitSearchForLowMemory=" + limitSearchForLowMemory + ", persistMode=" + persistMode + ", requiredFields=" + requiredFields + ", valueFieldMapping=" + valueFieldMapping
-				+ ", deduplication=" + deduplication + ", privacy=" + privacy + ", matchingConfig=" + matchingConfig + ", preprocessingFields=" + preprocessingFields + "]";
+				+ ", deduplication=" + deduplication + ", validation=" + validation + ", privacy=" + privacy + ", matchingConfig=" + matchingConfig + ", preprocessingFields=" + preprocessingFields + "]";
 	}
 }

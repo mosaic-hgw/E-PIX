@@ -1,4 +1,87 @@
-${ttp.epix.readme.header}
+${ttp.readme.header}
+
+# E-PIX 2024.3.0
+
+## Improvements
+*  Anzeige ob eine mögliche Dublette manuell hinzugefügt oder automatisch erkannt wurde
+*  Konfiguration der Threads für paralleles Matching in der Weboberfläche
+*  Anzeige der Datenquelle bei Dublettenauflösung und Personendetails
+*  Allgemeine Verbesserungen in der Weboberfläche
+*  Beschleunigter Aufruf des Dashboards
+
+## Bug Fixes
+*  Export aus Identifier-Domäne enthält pro Domäne und Teilnehmer nur einen Wert, obwohl der Teilnehmer mehrere Identifier in der Domäne besitzt
+
+
+# E-PIX 2024.2.0
+
+## Improvements
+*  Domäne des lokalen Identifiers in Notifications mitsenden
+*  Notifications bei verbleibenden Methoden sofern verfügbar via Weboberfläche senden
+
+
+# E-PIX 2024.1.0
+
+## New Features
+*  Umfangreich konfigurierbare Validierung von Personen- und Zusatzfeldern
+
+## Improvements
+*  Prüfung ob Bloomfilter in gewähltes Feld passt
+*  Mehr Hinweise bei Konfiguration einer Domäne in der Weboberfläche
+*  Dashboard: Anzeige zurückgestellter Dubletten
+
+## Bug Fixes
+*  Suche nach Matchingfeldern bei aktivierter Option limitSearchForLowMemory nicht möglich
+*  Fehlermeldung "no counter found for domain" aufgrund bisher verpflichtender Verwendung eins 4-stelliges Prefix + 9-stelliger MPI-ID
+*  Bei Aufruf der Methode updateDomain wird der vorherige Zustand zurückgegeben
+*  Unvollständige Übernahme von Änderungen der Domänenkonfiguration in den Cache
+
+## Docker
+*  Geänderte Logging-Variable: TTP_EPIX_LOG_TO_FILE zu TTP_EPIX_LOG_TO
+
+
+# E-PIX 2023.2.1
+
+## Bug Fixes
+*  Merge Bugfixes von 2023.1.3
+
+
+# E-PIX 2023.2.0
+
+## New Features
+*  Funktion updateActivePerson
+
+## Improvements
+*  Verwendung von JakartaEE statt JavaEE
+*  Export und Import der Felder Vitalstatus und Sterbedatum
+*  Download des Importergebnis mit Excel kompatiblem Encoding
+*  Berücksichtigung des flexiblen Context-Roots beim Link vom E-PIX zum gPAS
+*  Anpassbarer Context Root der Weboberfläche und SOAP-Schnittstelle
+*  Benutzerdefinierte Auswahl der Spalte mit Identifiern beim Export anhand einer Identifierliste
+*  Verbesserungen in der Oberfläche bei Export von Personen 3
+*  Verbessertes Feedback in der Oberfläche, wenn IDAT bei Änderung stark abweichen
+*  Historisierung der konkreten Identitäts-ID mit welcher ein automatischer Match stattgefunden hat
+*  Ausblenden der Gesamtstatistik, sofern kein Recht für alle Domänen besteht
+*  Lokalisierter Kalender in Datumsauswahl
+*  Wählbarer Start und Endzeitpunkt in Statistik-Diagrammen
+
+## Bug Fixes
+*  Teilweise fehlende Erkennung des Identifiers beim Import mit automatischer Spaltenerkennung und externem Identifier
+*  Falsche Auswahl des Feldtyps beim Import mit automatischer Spaltenerkennung und externem Identifier 0
+*  Export enthält den Eintrag "null", wenn ein Feld den Wert null hat
+*  Schneller Seitenwechsel führt zu leerer Protokollansicht 2 o
+*  Interner Fehler beim Update einer aktiven Person mit deaktivierten Identitäten
+
+## Docker
+*  Anpassbarer Context Root der Weboberfläche und SOAP-Schnittstelle
+
+
+# E-PIX 2023.1.3
+
+## Bug Fixes
+*  CSV-Download von Importergebnis enthält gekürzte Bloomfilter
+*  Import einer Konfiguration mit "Mindestscore für möglichen Match = nie" schlägt fehl
+
 
 # E-PIX 2023.1.2
 
@@ -6,6 +89,7 @@ ${ttp.epix.readme.header}
 *  Quellfeld-Seed wird nicht in Bloomfilterkonfigurationen gespeichert
 *  Löschen von Personen mit Identifiern nicht möglich
 *  Mögliche NullPointerException bei Benutzung des SOAP-Interfaces ohne Authentifizierung
+
 
 # E-PIX 2023.1.1
 
@@ -19,16 +103,17 @@ ${ttp.epix.readme.header}
 *  CSV Exception bei mehreren Anführungszeichen im Import
 *  Filtern im Protokoll zeigt leeres Ergebnis bei schnellem Tippen
 
+
 # E-PIX 2023.1.0
 
 ## New Features
-* Vollständige Domänen-Konfiguration in der Weboberfläche
-* Verknüpfung zu möglicher Dublette, wenn eine neue Person diese erzeugt
-* Bearbeitung von Kontakten
-* Historie über die Löschung von Identitäten
-* Historie über die Löschung von Kontakten und Identifiern
-* Historie über das Hinzufügen von Identifiern
-* [Rechte und Rollen: Domänenspezifische Vergabe von Berechtigungen per OIDC](https://www.ths-greifswald.de/ttp-tools/domain-auth)
+*  Vollständige Domänen-Konfiguration in der Weboberfläche
+*  Verknüpfung zu möglicher Dublette, wenn eine neue Person diese erzeugt
+*  Bearbeitung von Kontakten
+*  Historie über die Löschung von Identitäten
+*  Historie über die Löschung von Kontakten und Identifiern
+*  Historie über das Hinzufügen von Identifiern
+*  [Rechte und Rollen: Domänenspezifische Vergabe von Berechtigungen per OIDC](https://www.ths-greifswald.de/ttp-tools/domain-auth)
 
 ## Improvements
 *  Hinweis, wenn keine Lokaler-Identifier Domäne zur Verfügung steht
@@ -46,6 +131,8 @@ ${ttp.epix.readme.header}
 *  [Stored XSS Vulnerability in der Weboberfläche](https://github.com/mosaic-hgw/gICS/issues/2)
 *  Anzeige des lesbaren Benutzernamens bei Login via OIDC (Keycloak)
 
+## API Changes
+*  Umbenennung von Funktionen welche ausschließlich aktive Personen (person ->activePerson) zurückgeben, betrifft getPersonsForDomain, getPersonsForDomainFiltered, getPersonsForDomainPaginated, getPersonByMPI, getPersonsByMPIBatch, getPersonByLocalIdentifier, getPersonByMultipleLocalIdentifier, sowie zugehörige count-Methoden
 ## Docker
 *  Fail-Fast-Strategie für Docker-CLI-Skripte
 
@@ -191,4 +278,4 @@ ${ttp.epix.readme.header}
 * RequestMPI mit null Gender auch möglich, wenn dies ein Pflichtfeld ist
 * Exception bei RequestMPI mit null Gender
 
-${ttp.epix.readme.footer}
+${ttp.readme.footer}

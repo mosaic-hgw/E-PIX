@@ -56,9 +56,35 @@
 			<xs:element name="required-fields" type="ma:RequiredFields" minOccurs="0" />
 			<xs:element name="value-fields-mapping" type="ma:ValueFieldsMapping" minOccurs="0" />
 			<xs:element name="deduplication" type="ma:Deduplication" minOccurs="0" maxOccurs="1" />
+			<xs:element name="validation" type="ma:Validation" minOccurs="0" maxOccurs="1" />
 			<xs:element name="privacy" type="ma:Privacy" minOccurs="0" />
 			<xs:element name="preprocessing-config" type="ma:PreprocessingConfig" minOccurs="0" />
 			<xs:element name="matching" type="ma:Matching" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Validation">
+		<xs:sequence>
+			<xs:element name="validator-config" type="ma:Validator-Config" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Validator-Config">
+		<xs:sequence>
+			<xs:element name="field" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="validator" type="ma:Validator" minOccurs="0" maxOccurs="1" />
+			<xs:element name="validator-group" type="ma:Validator-Group" minOccurs="0" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Validator-Group">
+		<xs:sequence>
+			<xs:element name="validator-group" type="ma:Validator-Group" minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="validator" type="ma:Validator" minOccurs="0" maxOccurs="unbounded" />
+			<xs:element name="link" type="xs:string" minOccurs="1" maxOccurs="1" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="Validator">
+		<xs:sequence>
+			<xs:element name="qualified-class-name" type="xs:string" minOccurs="1" maxOccurs="1" />
+			<xs:element name="validation-criterion" type="xs:string" minOccurs="0" maxOccurs="1" />
 		</xs:sequence>
 	</xs:complexType>
 	<xs:complexType name="Deduplication">

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,6 +39,8 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-end###
  */
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -48,13 +50,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
-
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
+import org.emau.icmvc.ttp.epix.common.exception.ValidatorException;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.ContactOutDTO;
 import org.emau.icmvc.ttp.epix.common.model.IdentifierDTO;
@@ -68,15 +70,18 @@ import org.emau.icmvc.ttp.epix.common.model.SourceDTO;
 import org.emau.icmvc.ttp.epix.common.model.enums.Gender;
 import org.emau.icmvc.ttp.epix.common.model.enums.MatchStatus;
 import org.emau.icmvc.ttp.epix.common.model.enums.RequestSaveAction;
+import org.emau.icmvc.ttp.epix.common.model.enums.VitalStatus;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 import org.emau.icmvc.ttp.epix.frontend.model.EpixWebFile;
 import org.emau.icmvc.ttp.epix.frontend.model.WebPerson;
 import org.emau.icmvc.ttp.epix.frontend.model.WebPersonField;
 
 @ViewScoped
-@ManagedBean(name = "importController")
-public class ImportController extends AbstractEpixWebBean
+@Named( "importController")
+public class ImportController extends AbstractEpixWebBean implements Serializable
 {
+	@Serial
+	private static final long serialVersionUID = 6002834173321687240L;
 	// File
 	private EpixWebFile webFile;
 	private final List<WebPerson> successfulImports = new ArrayList<>();
@@ -162,33 +167,15 @@ public class ImportController extends AbstractEpixWebBean
 				// Update existing persons (not possible in Batch yet)
 				if (webFile.getColumnTypeIndex().containsKey(WebPersonField.MPI.name()))
 				{
-
-					if (isUseNotifications())
-					{
-						importedPerson = serviceWithNotification.updatePersonWithConfig(NOTIFICATION_CLIENT_ID, getDomainSelector().getSelectedDomainName(), person.getMpiId(),
-								new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), forceUpdate, null,
-								saveConfig);
-					}
-					else
-					{
-						importedPerson = service.updatePersonWithConfig(getDomainSelector().getSelectedDomainName(), person.getMpiId(),
-								new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), forceUpdate, null,
-								saveConfig);
-					}
+					importedPerson = getServiceWithAutomaticNotification().updatePersonWithConfig(getDomainSelector().getSelectedDomainName(), person.getMpiId(),
+							new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), forceUpdate, null,
+							saveConfig);
 				}
 				// New persons (Request MPI)
 				else
 				{
-					if (isUseNotifications())
-					{
-						importedPerson = serviceWithNotification.requestMPIWithConfig(NOTIFICATION_CLIENT_ID, getDomainSelector().getSelectedDomainName(),
-								new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), null, saveConfig);
-					}
-					else
-					{
-						importedPerson = service.requestMPIWithConfig(getDomainSelector().getSelectedDomainName(),
-								new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), null, saveConfig);
-					}
+					importedPerson = getServiceWithAutomaticNotification().requestMPIWithConfig(getDomainSelector().getSelectedDomainName(),
+							new IdentityInDTO(person.getIdentity(), person.getContacts().stream().map(ContactInDTO::new).collect(Collectors.toList())), selectedSource.getName(), null, saveConfig);
 				}
 
 				if (importedPerson != null)
@@ -213,7 +200,7 @@ public class ImportController extends AbstractEpixWebBean
 					failedImports.add(person);
 				}
 			}
-			catch (UnknownObjectException | InvalidParameterException e)
+			catch (UnknownObjectException | InvalidParameterException | ValidatorException e)
 			{
 				person.setErrorMsg(person.getErrorMsg() == null ? e.getLocalizedMessage() : person.getErrorMsg());
 				failedImports.add(person);
@@ -371,6 +358,13 @@ public class ImportController extends AbstractEpixWebBean
 		person.setValue9(getValueForType(personData, WebPersonField.value9.name()));
 		person.setValue10(getValueForType(personData, WebPersonField.value10.name()));
 
+		String vitalStatus = getValueForType(personData, WebPersonField.vitalStatus.name());
+		if(vitalStatus != null)
+		{
+			person.setVitalStatus(VitalStatus.valueOf(vitalStatus));
+		}
+		person.setDateOfDeath(parseDateString(getValueForType(personData, WebPersonField.dateOfDeath.name()), WebPersonField.dateOfDeath));
+
 		List<ContactInDTO> contacts = new ArrayList<>();
 		ContactInDTO contact = new ContactInDTO();
 		// Build street and number from individual columns if not set in
@@ -463,7 +457,7 @@ public class ImportController extends AbstractEpixWebBean
 
 			if (record.size() > index)
 			{
-				return record.get(index).equals("null") ? null : record.get(index);
+				return record.get(index).equals("null") || record.get(index).isEmpty() ? null : record.get(index);
 			}
 		}
 

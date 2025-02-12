@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.persistence.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -44,11 +44,14 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-import javax.persistence.Cacheable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Cacheable;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import org.emau.icmvc.ttp.epix.common.exception.MPIErrorCode;
+import org.emau.icmvc.ttp.epix.common.exception.MPIException;
+import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 
 /**
  *
@@ -539,6 +542,101 @@ public class IdentityPreprocessed implements Serializable
 	public void setDeactivated(boolean deactivated)
 	{
 		this.deactivated = deactivated;
+	}
+
+	public String getFieldValue(FieldName name) throws MPIException
+	{
+		String result = null;
+		switch (name)
+		{
+			case birthDate:
+				result = getBirthDate();
+				break;
+			case birthPlace:
+				result = getBirthPlace();
+				break;
+			case civilStatus:
+				result = getCivilStatus();
+				break;
+			case degree:
+				result = getDegree();
+				break;
+			case firstName:
+				result = getFirstName();
+				break;
+			case gender:
+				result = String.valueOf(getGender());
+				break;
+			case lastName:
+				result = getLastName();
+				break;
+			case middleName:
+				result = getMiddleName();
+				break;
+			case motherTongue:
+				result = getMotherTongue();
+				break;
+			case mothersMaidenName:
+				result = getMothersMaidenName();
+				break;
+			case nationality:
+				result = getNationality();
+				break;
+			case prefix:
+				result = getPrefix();
+				break;
+			case race:
+				result = getRace();
+				break;
+			case religion:
+				result = getReligion();
+				break;
+			case suffix:
+				result = getSuffix();
+				break;
+			case value1:
+				result = getValue1();
+				break;
+			case value10:
+				result = getValue10();
+				break;
+			case value2:
+				result = getValue2();
+				break;
+			case value3:
+				result = getValue3();
+				break;
+			case value4:
+				result = getValue4();
+				break;
+			case value5:
+				result = getValue5();
+				break;
+			case value6:
+				result = getValue6();
+				break;
+			case value7:
+				result = getValue7();
+				break;
+			case value8:
+				result = getValue8();
+				break;
+			case value9:
+				result = getValue9();
+				break;
+			default:
+				String message = "unexpected field name in matching config: " + name;
+				throw new MPIException(MPIErrorCode.INTERNAL_ERROR, message);
+		}
+		if (result != null)
+		{
+			return result.intern();
+		}
+		else
+		{
+			// matchfelder duerfen null sein
+			return EMPTY_STRING;
+		}
 	}
 
 	@Override

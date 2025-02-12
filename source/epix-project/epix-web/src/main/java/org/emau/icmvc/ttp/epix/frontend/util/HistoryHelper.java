@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.util;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.util;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -43,9 +43,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
-
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Named;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
@@ -55,7 +54,7 @@ import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixServiceBean;
 import org.emau.icmvc.ttp.epix.frontend.model.IdentityHistoryPair;
 
-@ManagedBean(name = "historyHelper")
+@Named( "historyHelper")
 @SessionScoped
 public class HistoryHelper extends AbstractEpixServiceBean implements Serializable
 {
@@ -72,19 +71,17 @@ public class HistoryHelper extends AbstractEpixServiceBean implements Serializab
 	{
 		try
 		{
-			switch (entry.getEvent())
+			return switch (entry.getEvent())
 			{
-				case MATCH:
-				case FORCED_MATCH:
+				case MATCH, FORCED_MATCH ->
+				{
 					entry.setEvent(IdentityHistoryEvent.MATCH);
-					return getMatchPair(entry);
-				case PERFECT_MATCH:
-					return getMatchPair(entry);
-				case MERGE:
-					return getMergePairForIdentity(entry);
-				default:
-					return new IdentityHistoryPair(entry);
-			}
+					yield getMatchPair(entry);
+				}
+				case PERFECT_MATCH -> getMatchPair(entry);
+				case MERGE -> getMergePairForIdentity(entry);
+				default -> new IdentityHistoryPair(entry);
+			};
 		}
 		catch (InvalidParameterException | UnknownObjectException | MPIException e)
 		{
@@ -151,7 +148,7 @@ public class HistoryHelper extends AbstractEpixServiceBean implements Serializab
 	 */
 	private PossibleMatchHistoryDTO getPossibleMatchHistory(IdentityHistoryDTO entry) throws InvalidParameterException, UnknownObjectException
 	{
-		for (PossibleMatchHistoryDTO possibleMatchHistory : managementService.getPossibleMatchHistoryForUpdatedIdentity(entry.getIdentityId()))
+		for (PossibleMatchHistoryDTO possibleMatchHistory : getManager().getPossibleMatchHistoryForUpdatedIdentity(entry.getIdentityId()))
 		{
 			if (entry.getHistoryTimestamp().compareTo(possibleMatchHistory.getHistoryTimestamp()) == 0)
 			{
@@ -184,7 +181,7 @@ public class HistoryHelper extends AbstractEpixServiceBean implements Serializab
 		IdentityHistoryDTO result = null;
 
 		// search the complete history of the given identity id
-		for (IdentityHistoryDTO identityHistoryEntry : managementService.getHistoryForIdentity(identityId))
+		for (IdentityHistoryDTO identityHistoryEntry : getManager().getHistoryForIdentity(identityId))
 		{
 			// if identityHistoryTimestamp before or equals timestamp and (no result yet or
 			// identityHistoryTimestamp after current result timestamp)
@@ -214,7 +211,7 @@ public class HistoryHelper extends AbstractEpixServiceBean implements Serializab
 		IdentityHistoryDTO oldIdentity = null;
 
 		// durchsuche alle identityHistoryEinträge für die personId von entry
-		for (IdentityHistoryDTO e : managementService.getIdentityHistoryByPersonId(entry.getPersonId()))
+		for (IdentityHistoryDTO e : getManager().getIdentityHistoryByPersonId(entry.getPersonId()))
 		{
 			// wenn timestamp vor übergebenem timestamp liegt
 			if (e.getHistoryTimestamp().before(entry.getHistoryTimestamp()))

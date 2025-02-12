@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.impl;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.deduplication.impl;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -69,7 +69,7 @@ public class LevenshteinAlgorithm implements IStringMatchingAlgorithm
 		{
 			if (logger.isTraceEnabled())
 			{
-				logger.trace("levenshtein similarity for matching " + str1 + " and " + str2 + " = 1");
+				logger.trace("levenshtein similarity for matching {} and {} = 1", str1, str2);
 			}
 			return 1;
 		}
@@ -83,7 +83,7 @@ public class LevenshteinAlgorithm implements IStringMatchingAlgorithm
 		float r = 1 - dist / length; // length kann wegen voherigem equals-vergleich nicht 0 sein
 		if (logger.isTraceEnabled())
 		{
-			logger.trace("levenshtein similarity for matching " + str1 + " and " + str2 + " = " + r);
+			logger.trace("levenshtein similarity for matching {} and {} = {}", str1, str2, r);
 		}
 		return r;
 	}

@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -39,13 +39,15 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-end###
  */
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Date;
 
-import javax.annotation.PostConstruct;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
-import javax.faces.bean.ViewScoped;
-
+import jakarta.annotation.PostConstruct;
+import jakarta.faces.annotation.ManagedProperty;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixWebBean;
 import org.emau.icmvc.ttp.epix.frontend.model.IdentityHistoryPairLazyModel;
 import org.emau.icmvc.ttp.epix.frontend.util.HistoryHelper;
@@ -54,11 +56,14 @@ import org.emau.icmvc.ttp.epix.frontend.util.HistoryHelper;
  * @author Arne Blumentritt
  */
 @ViewScoped
-@ManagedBean(name = "reportsController")
-public class ReportsController extends AbstractEpixWebBean
+@Named( "reportsController")
+public class ReportsController extends AbstractEpixWebBean implements Serializable
 {
+	@Serial
+	private static final long serialVersionUID = 3546101085192088495L;
 	private IdentityHistoryPairLazyModel identityHistoryPairsLazyModel;
 
+	@Inject
 	@ManagedProperty(value = "#{historyHelper}")
 	protected HistoryHelper historyHelper;
 	
@@ -83,7 +88,7 @@ public class ReportsController extends AbstractEpixWebBean
 	{
 		if (identityHistoryPairsLazyModel == null)
 		{
-			identityHistoryPairsLazyModel = new IdentityHistoryPairLazyModel(managementService, historyHelper, getDomainSelector(),
+			identityHistoryPairsLazyModel = new IdentityHistoryPairLazyModel(getManager(), historyHelper, getDomainSelector(),
 					getSimpleDateFormat("date").toPattern(), getSimpleDateFormat("datetime").toPattern());
 		}
 

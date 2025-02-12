@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -54,17 +54,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ManagedProperty;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
-
+import jakarta.faces.annotation.ManagedProperty;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.emau.icmvc.ttp.epix.common.exception.DuplicateEntryException;
 import org.emau.icmvc.ttp.epix.common.exception.IllegalOperationException;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
+import org.emau.icmvc.ttp.epix.common.exception.MPIErrorCode;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
+import org.emau.icmvc.ttp.epix.common.exception.ValidatorException;
 import org.emau.icmvc.ttp.epix.common.model.ContactHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.ContactOutDTO;
@@ -84,14 +86,16 @@ import org.emau.icmvc.ttp.epix.frontend.model.WebHistory;
 import org.emau.icmvc.ttp.epix.frontend.model.WebPerson;
 import org.emau.icmvc.ttp.epix.frontend.util.HistoryHelper;
 import org.icmvc.ttp.web.model.WebTag;
+import org.primefaces.PrimeFaces;
 
 @ViewScoped
-@ManagedBean(name = "personController")
+@Named("personController")
 public class PersonController extends AbstractEpixWebBean implements Serializable
 {
 	@Serial
 	private static final long serialVersionUID = -1087566417706811854L;
 
+	@Inject
 	@ManagedProperty(value = "#{historyHelper}")
 	protected HistoryHelper historyHelper;
 
@@ -109,7 +113,6 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 	private IdentityInDTO editIdentity;
 	private String editSource;
 	private String editComment;
-	private boolean forceEdit = false;
 	private boolean edit = false;
 
 	private ContactInDTO editContact;
@@ -145,7 +148,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 		{
 			try
 			{
-				person = service.getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), mpi);
+				person = getService().getPersonByFirstMPI(getDomainSelector().getSelectedDomainName(), mpi);
 			}
 			catch (UnknownObjectException e)
 			{
@@ -161,7 +164,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 			}
 			else
 			{
-				possibleMatches = service.getPossibleMatchesForPerson(getDomainSelector().getSelectedDomainName(), referenceMpi);
+				possibleMatches = getService().getPossibleMatchesForPerson(getDomainSelector().getSelectedDomainName(), referenceMpi);
 			}
 			loadIdentities();
 			loadContacts();
@@ -244,7 +247,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 		// Link History (Merges and Splits)
 		if (!person.isDeactivated())
 		{
-			for (PossibleMatchHistoryDTO possibleMatchHistoryDTO : managementService.getPossibleMatchHistoryForPerson(getDomainSelector().getSelectedDomainName(), referenceMpi))
+			for (PossibleMatchHistoryDTO possibleMatchHistoryDTO : getManager().getPossibleMatchHistoryForPerson(getDomainSelector().getSelectedDomainName(), referenceMpi))
 			{
 				switch (possibleMatchHistoryDTO.getSolution())
 				{
@@ -273,14 +276,14 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 		for (IdentifierDTO identifierDTO : identifiers)
 		{
 			// post v2023.1
-			for (IdentifierHistoryDTO identifierHistoryDTO : managementService.getHistoryForIdentifier(identifierDTO.getIdentifierDomain().getName(), identifierDTO.getValue()))
+			for (IdentifierHistoryDTO identifierHistoryDTO : getManager().getHistoryForIdentifier(identifierDTO.getIdentifierDomain().getName(), identifierDTO.getValue()))
 			{
 				WebHistory.Event webEvent = switch (identifierHistoryDTO.getEvent())
-						{
-							case NEW -> WebHistory.Event.IDENTIFIER_ADDED;
-							case DEACTIVATE -> WebHistory.Event.IDENTIFIER_DEACTIVATED;
-							default -> null;
-						};
+				{
+					case NEW -> WebHistory.Event.IDENTIFIER_ADDED;
+					case DEACTIVATE -> WebHistory.Event.IDENTIFIER_DEACTIVATED;
+					default -> null;
+				};
 				if (webEvent != null)
 				{
 					historyList.add(new WebHistory(identifierHistoryDTO.getHistoryTimestamp(), webEvent, identifierHistoryDTO.getUser(), identifierHistoryDTO));
@@ -299,16 +302,16 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 		for (ContactOutDTO contact : contacts)
 		{
 			// post v2023.1
-			for (ContactHistoryDTO contactHistoryDTO : managementService.getHistoryForContact(contact.getContactId()))
+			for (ContactHistoryDTO contactHistoryDTO : getManager().getHistoryForContact(contact.getContactId()))
 			{
 				WebHistory.Event webEvent = switch (contactHistoryDTO.getEvent())
-						{
-							case NEW -> WebHistory.Event.CONTACT_ADDED;
-							case UPDATE -> WebHistory.Event.CONTACT_UPDATED;
-							case DEACTIVATED -> WebHistory.Event.CONTACT_DEACTIVATED;
-							case SET_REFERENCE -> WebHistory.Event.CONTACT_REFERENCE;
-							default -> null;
-						};
+				{
+					case NEW -> WebHistory.Event.CONTACT_ADDED;
+					case UPDATE -> WebHistory.Event.CONTACT_UPDATED;
+					case DEACTIVATED -> WebHistory.Event.CONTACT_DEACTIVATED;
+					case SET_REFERENCE -> WebHistory.Event.CONTACT_REFERENCE;
+					default -> null;
+				};
 				if (webEvent != null)
 				{
 					historyList.add(new WebHistory(contactHistoryDTO.getHistoryTimestamp(), webEvent, contactHistoryDTO.getUser(), contactHistoryDTO));
@@ -322,7 +325,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 			}
 
 			// Person history
-			for (PersonHistoryDTO personHistoryDTO : managementService.getHistoryForPerson(getDomainSelector().getSelectedDomainName(), referenceMpi))
+			for (PersonHistoryDTO personHistoryDTO : getManager().getHistoryForPerson(getDomainSelector().getSelectedDomainName(), referenceMpi))
 			{
 				switch (personHistoryDTO.getEvent())
 				{
@@ -332,7 +335,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 		}
 
 		// Identity History
-		for (IdentityHistoryDTO identityHistoryDTO : managementService.getIdentityHistoryByPersonId(person.getPersonId()))
+		for (IdentityHistoryDTO identityHistoryDTO : getManager().getIdentityHistoryByPersonId(person.getPersonId()))
 		{
 			switch (identityHistoryDTO.getEvent())
 			{
@@ -390,7 +393,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 	{
 		try
 		{
-			service.deactivatePerson(getDomainSelector().getSelectedDomainName(), referenceMpi);
+			getServiceWithAutomaticNotification().deactivatePerson(getDomainSelector().getSelectedDomainName(), referenceMpi);
 			logMessage(getBundle().getString("page.person.message.info.personDeactivated"), Severity.INFO);
 		}
 		catch (InvalidParameterException | MPIException | UnknownObjectException e)
@@ -403,8 +406,8 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 	{
 		try
 		{
-			service.deactivatePerson(getDomainSelector().getSelectedDomainName(), referenceMpi);
-			service.deletePerson(getDomainSelector().getSelectedDomainName(), referenceMpi);
+			getServiceWithAutomaticNotification().deactivatePerson(getDomainSelector().getSelectedDomainName(), referenceMpi);
+			getServiceWithAutomaticNotification().deletePerson(getDomainSelector().getSelectedDomainName(), referenceMpi);
 			return "dashboard.xhtml?message=message.epix.person.deleted&severity=INFO&faces-redirect=true";
 		}
 		catch (InvalidParameterException | MPIException | UnknownObjectException | IllegalOperationException e)
@@ -420,19 +423,23 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 		edit = false;
 	}
 
-	public void onAddIdentity()
+	public void onAddIdentity(boolean forceSaving)
 	{
 		try
 		{
-			service.updatePerson(getDomainSelector().getSelectedDomainName(), referenceMpi, editIdentity, editSource, forceEdit, editComment);
+			getServiceWithAutomaticNotification().updatePerson(getDomainSelector().getSelectedDomainName(), referenceMpi, editIdentity, editSource, forceSaving, editComment);
 			load(referenceMpi);
 			logMessage(getBundle().getString("page.person.message.info.identityAdded"), Severity.INFO);
 		}
-		catch (InvalidParameterException | MPIException | UnknownObjectException e)
+		catch (InvalidParameterException | MPIException | UnknownObjectException | ValidatorException e)
 		{
-			if (e.getLocalizedMessage().contains("fit to the person"))
+			if (e instanceof ValidatorException validatorException)
 			{
-				logMessage(getBundle().getString("page.person.identity.add.error.idatDoesNotFit"), Severity.ERROR);
+				handleValidatorException(validatorException);
+			}
+			else if (e instanceof MPIException mpiException && MPIErrorCode.IDAT_DONT_FIT_TO_IDENTIFIER.equals(mpiException.getErrorCode()))
+			{
+				PrimeFaces.current().executeScript("PF('forceSaving').show();");
 			}
 			else
 			{
@@ -455,8 +462,8 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 	{
 		try
 		{
-			service.deactivateIdentity(identityId);
-			service.deleteIdentity(identityId);
+			getServiceWithAutomaticNotification().deactivateIdentity(identityId);
+			getServiceWithAutomaticNotification().deleteIdentity(identityId);
 			load(referenceMpi);
 			logMessage(getBundle().getString("page.person.message.info.identityDeleted"), Severity.INFO);
 		}
@@ -468,7 +475,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 
 	public void onSetReferenceIdentity(long identityId) throws MPIException, InvalidParameterException, UnknownObjectException
 	{
-		service.setReferenceIdentity(getDomainSelector().getSelectedDomainName(), referenceMpi, identityId, null);
+		getServiceWithAutomaticNotification().setReferenceIdentity(getDomainSelector().getSelectedDomainName(), referenceMpi, identityId, null);
 		load(referenceMpi);
 		logMessage(getBundle().getString("page.person.message.info.referenceIdentitySet"), Severity.INFO);
 	}
@@ -481,15 +488,15 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 
 	public void onAddContact()
 	{
+
 		try
 		{
 			if (editContactId != null)
 			{
-				service.deactivateContact(editContactId);
-				service.deleteContact(editContactId);
+				getServiceWithAutomaticNotification().deactivateContact(editContactId);
+				getServiceWithAutomaticNotification().deleteContact(editContactId);
 			}
-			service.addContact(referenceIdentity.getIdentityId(), editContact);
-
+			getServiceWithAutomaticNotification().addContact(referenceIdentity.getIdentityId(), editContact);
 			load(referenceMpi);
 			logMessage(getBundle().getString("page.person.message.info.contactAdded"), Severity.INFO);
 		}
@@ -517,8 +524,8 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 	{
 		try
 		{
-			service.deactivateContact(contactId);
-			service.deleteContact(contactId);
+			getServiceWithAutomaticNotification().deactivateContact(contactId);
+			getServiceWithAutomaticNotification().deleteContact(contactId);
 			load(referenceMpi);
 			logMessage(getBundle().getString("page.person.message.info.contactDeleted"), Severity.INFO);
 		}
@@ -537,7 +544,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 	{
 		try
 		{
-			service.addLocalIdentifierToActivePersonWithMPI(getDomainSelector().getSelectedDomainName(), referenceMpi, Collections.singletonList(editIdentifier));
+			getServiceWithAutomaticNotification().addLocalIdentifierToActivePersonWithMPI(getDomainSelector().getSelectedDomainName(), referenceMpi, Collections.singletonList(editIdentifier));
 			logMessage(getBundle().getString("page.person.message.info.identifierAdded"), Severity.INFO);
 			load(referenceMpi);
 		}
@@ -554,7 +561,7 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 	{
 		try
 		{
-			service.removeLocalIdentifier(getDomainSelector().getSelectedDomainName(), Collections.singletonList(identifierDTO));
+			getServiceWithAutomaticNotification().removeLocalIdentifier(getDomainSelector().getSelectedDomainName(), Collections.singletonList(identifierDTO));
 			load(referenceMpi);
 			logMessage(getBundle().getString("page.person.message.info.identifierDeleted"), Severity.INFO);
 		}
@@ -649,16 +656,6 @@ public class PersonController extends AbstractEpixWebBean implements Serializabl
 	public void setEditComment(String editComment)
 	{
 		this.editComment = editComment;
-	}
-
-	public boolean isForceEdit()
-	{
-		return forceEdit;
-	}
-
-	public void setForceEdit(boolean forceEdit)
-	{
-		this.forceEdit = forceEdit;
 	}
 
 	public ContactInDTO getEditContact()

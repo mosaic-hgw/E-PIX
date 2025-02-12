@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.test;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -46,12 +46,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SorensenDiceCoefficientTest
+class SorensenDiceCoefficientTest
 {
 	private static final SorensenDiceCoefficient sdc = new SorensenDiceCoefficient();
 
 	@Test
-	public void testAllZerosEqualsWithSameLength()
+	void testAllZerosEqualsWithSameLength()
 	{
 		String empty1 = "0000000000";
 		String empty2 = "0000000000";
@@ -60,7 +60,7 @@ public class SorensenDiceCoefficientTest
 	}
 
 	@Test
-	public void testEqualsWithSameLength()
+	void testEqualsWithSameLength()
 	{
 		String str1 = "0101110011";
 		String str2 = "0101110011";
@@ -69,7 +69,7 @@ public class SorensenDiceCoefficientTest
 	}
 
 	@Test
-	public void testDifferentLength()
+	void testDifferentLength()
 	{
 		String str1 = "010111001101001";
 		String str2 = "0101110011";
@@ -78,7 +78,7 @@ public class SorensenDiceCoefficientTest
 	}
 
 	@Test
-	public void testNullStrings()
+	void testNullStrings()
 	{
 		String str1 = null;
 		String str2 = null;
@@ -87,7 +87,7 @@ public class SorensenDiceCoefficientTest
 	}
 
 	@Test
-	public void testOtherSignsEqualWithSameLength()
+	void testOtherSignsEqualWithSameLength()
 	{
 		String str1 = "A0B0C0D0E0";
 		String str2 = "1010101010";
@@ -96,7 +96,7 @@ public class SorensenDiceCoefficientTest
 	}
 
 	@Test
-	public void test50PercentSameLength()
+	void test50PercentSameLength()
 	{
 		String str1 = "1111110000";
 		String str2 = "1110000000";
@@ -105,7 +105,7 @@ public class SorensenDiceCoefficientTest
 	}
 
 	@Test
-	public void testInvalidBase64()
+	void testInvalidBase64()
 	{
 		String corr = "SGFsbG8=";
 		String fail = ".SGFsbG8=";

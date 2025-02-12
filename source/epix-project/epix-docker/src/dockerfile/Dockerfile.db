@@ -1,0 +1,58 @@
+ARG TAG=mosaicgreifswald/wildfly-db:${docker.wildfly.version}
+FROM ${TAG}
+
+# ###license-information-start###
+# E-PIX - Enterprise Patient Identifier Cross-referencing
+# __
+# Copyright (C) 2013 - ${build.year} Independent Trusted Third Party of the University Medicine Greifswald
+# 							kontakt-ths@uni-greifswald.de
+#
+# 							concept and implementation
+# 							c.schack, l.geidel, d.langner, g.koetzschke
+# 							web client
+# 							a.blumentritt
+# 							docker
+# 							r.schuldt
+#
+# 							please cite our publications
+# 							http://dx.doi.org/10.3414/ME14-01-0133
+# 							http://dx.doi.org/10.1186/s12967-015-0545-6
+# __
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# ###license-information-end###
+
+ARG DATE_YMD="20240618"
+
+# envs
+ENV TTP_${project.upperName}_VERSION="${project.version}" \
+    TTP_${project.upperName}_WEB_AUTH_MODE="none" \
+    \
+    TTP_DB_HOST="localhost"
+
+# annotations
+LABEL maintainer                           = "ronny.schuldt@uni-greifswald.de" \
+      org.opencontainers.image.authors     = "university-medicine greifswald" \
+      org.opencontainers.image.source      = "https://github.com/mosaic-hgw/${project.parent.name}" \
+      org.opencontainers.image.vendor      = "uni-greifswald.de" \
+      org.opencontainers.image.title       = "${project.parent.name}" \
+      org.opencontainers.image.version     = "${project.version}-db" \
+      org.opencontainers.image.description = "E-PIX - Enterprise Patient Identifier Cross-referencing" \
+      org.opencontainers.image.license     = "AGPLv3"
+
+# copy files
+COPY --chown=${PROCESS_UID}:${PROCESS_GID} ["deployments/*ar", "${ENTRY_WILDFLY_DEPLOYS}/"]
+COPY --chown=${PROCESS_UID}:${PROCESS_GID} ["jboss/*",         "${ENTRY_WILDFLY_CLI}/"]
+COPY --chown=${PROCESS_UID}:${PROCESS_GID} ["sqls/*.sql",      "${ENTRY_MYSQL_SQLS}/"]
+
+RUN register --add-version="${project.parent.name}:${project.version}"

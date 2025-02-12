@@ -1,7 +1,7 @@
-${ttp.epix.readme.header}
+${ttp.readme.header}
 
 ---
-**Hinweis:** Diese README beschäftigt sich nur mit den Ausführen des E-PIX`s ohne vorher ein eigenes E-PIX-Image zu bauen. Zum Einsatz kommt dafür nur Docker-Compose mit gemounteten Volumes.
+**Hinweis:** Diese README beschäftigt sich nur mit dem Ausführen des E-PIX`s ohne vorher ein eigenes E-PIX-Image zu bauen. Zum Einsatz kommt dafür nur Docker-Compose mit gemounteten Volumes.
 
 
 ---
@@ -11,14 +11,16 @@ ${ttp.epix.readme.header}
     1. Berechtigungen setzen
     1. Starten mit Docker-Compose
     1. Verwenden von .env-Dateien
+    1. Verwenden der Demo-Daten
 1. Logging
 1. Authentifizierung E-PIX-Web
     1. gras
     1. keycloak
     1. keycloak-json (alternative)
+    1. KeyCloak-Authentifizierung TTP-FHIR Gateway
 1. Externe E-PIX-Datenbank einbinden
 1. Fehlersuche
-1. Alle verfügbaren Enviroment-Variablen
+1. Alle verfügbaren Environment-Variablen
 1. Additional Information
 
 ---
@@ -26,12 +28,15 @@ ${ttp.epix.readme.header}
 
 ```
 ____compose/
+  |____addins/
+  |____demo/
+  |  |____demo_epix.sql
   |____deployments/
   |  |____epix-VERSION.ear
   |  |____epix-web-VERSION.war
   |  |____ths-notification-client-VERSION.ear
   |  |____ths-notification-service-VERSION.war
-  |  |____ttp-fhir-gateway-VERSION.war (Platzhalter, noch keine E-PIX Unterstützung)
+  |  |____ttp-fhir-gateway-VERSION.war
   |____envs/
   |  |____mysql.env
   |  |____ttp_commons.env
@@ -39,12 +44,14 @@ ____compose/
   |  |____ttp_fhir.env
   |  |____ttp_gras.env
   |  |____ttp_noti.env
+  |  |____wf_commons.env
   |____jboss/
-  |  |____configure_wildfly_commons.cli
-  |  |____configure_wildfly_fhir.cli
-  |  |____configure_wildfly_epix.cli
+  |  |____configure_ttp_commons.cli
+  |  |____configure_wildfly_fhir-VERSION.cli
+  |  |____configure_wildfly_epix-VERSION.cli
   |  |____configure_wildfly_gras.cli
-  |  |____configure_wildfly_noti.cli
+  |  |____configure_wildfly_noti_client-VERSION.cli
+  |  |____configure_wildfly_noti_service-VERSION.cli
   |  |____epix_gras_jboss-web.xml
   |  |____epix_gras_web.xml
   |  |____epix_oidc_web.xml
@@ -65,6 +72,20 @@ ____compose/
   |____ReleaseNotes_E-PIX.md (oder .pdf)
 ```
 
+### Kurz-Übersicht zum Zweck der einzelnen Konfigurationsdateien
+
+| Verzeichnis | Datei              | Zweck                                                                          | Kategorien                                                                |
+|-------------|--------------------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| /           | docker-compose.yml | Docker-Compose Basis-Konfiguration                                             | Images, Volumes, Ports, etc.                                              |
+| /jboss/     | *.cli              | Skripte zur Konfiguration des Wildfly. <br/>*Empfehlung: Keine Modifikationen* | alle                                                                      |
+| /envs/      | mysql.env          | Konfiguration MySQL-DB/-Anbindung                                              | Security, Optimizing                                                      |
+| /envs/      | ttp_commons.env    | Basiskonfiguration alle Interfaces und Komponenten                             | Logging, WF-Admin, Security,Web-Security,SOAP-Security,Quality,Optimizing |
+| /envs/      | ttp_fhir.env       | Detailkonfiguration TTP-FHIR Gateway                                           | Security                                                                  |
+| /envs/      | ttp_{toolname}.env | Detailkonfiguration {toolname}                                                 | Logging,Database, Security                                                |
+| /envs/      | ttp_gras.env       | Detailkonfiguration gRAS (Rechte/Rollen)                                       | Database                                                                  |  
+| /envs/      | ttp_noti.env       | Detailkonfiguration NotificationService                                        | Logging, Database                                                         |
+| /envs/      | wf_commons.env     | Basiskonfiguration ausschließlich für den WildFly                              | Logging, Database                                                         |
+
 ---
 ## 2. Nutzung
 Sowohl in der Nutzung mit Docker-Compose, als auch in der beschriebenen Nutzung mit Docker-Run wird ein WildFly-Image aus dem Docker-Hub von [mosaicgreifswald/wildfly](https://hub.docker.com/r/mosaicgreifswald/wildfly) heruntergeladen, welches wir für die E-PIX-Nutzung vorbereitet haben. Im Gegensatz zu anderen WildFly-Images kann dieses mittels Einbindung von verschiedenen Volumes direkt genutzt werden und muss nicht erst gebaut werden (bauen ist natürlich trotzdem möglich).
@@ -80,7 +101,7 @@ Bevor der E-PIX gestartet werden kann, müssen Berechtigungen auf den Ordnern ge
 chown -R 999:999 sqls
 
 # für den WildFly-Container
-chown -R 1000:1000 deployments jboss logs
+chown -R 1111:1111 deployments jboss logs
 ```
 
 ---
@@ -106,7 +127,7 @@ Der erste Start dauert bis zu 5 Minuten, da die Datenbank und der Wildfly konfig
 
 ---
 #### 2.3. Verwenden von .env-Dateien
-.env-Dateien ermöglichen das Auslagern von Enviroment-Variablen aus der .yml-Datei und werden wie folgt verwendet. Zusätzlich können Enviroment-Variablen auch in die .yml-Datei geschrieben werden. Die .env-Dateien enthalten schon alle relevanten Variablen, die zum Teil nur einkommentiert, bzw. angepasst werden müssen.
+.env-Dateien ermöglichen das Auslagern von Environment-Variablen aus der .yml-Datei und werden wie folgt verwendet. Zusätzlich können Enviroment-Variablen auch in die .yml-Datei geschrieben werden. Die .env-Dateien enthalten schon alle relevanten Variablen, die zum Teil nur einkommentiert, bzw. angepasst werden müssen.
 
 ```yml
 services:
@@ -121,18 +142,26 @@ services:
       - ./envs/ttp_fhir.env
       - ./envs/ttp_gras.env
       - ./envs/ttp_noti.env
+      - ./envs/wf_commons.env
     ...
 ```
 
 ---
+#### 2.4. Verwenden der Demo-Daten
+Im demo-Verzeichnis befindet sich eine sql-Datei, welche einen kleinen Demo-Datensatz enthält.<br>
+Die einfachste Möglichkeit die Demo-Daten einzuspielen, ist vor dem Hochfahren der Container die Datei `demo.sql` in das sql-Verzeichnis zu kopieren. Beim Hochfahren werden diese automatisch mit verarbeitet.
+
+---
 ## 3. Logging
 Wem die Standard-Log-Einstellungen nicht genügen, kann diese ändern.<br>
-Zum einen kann mit der ENV-Variable `WF_CONSOLE_LOG_LEVEL` der Log-Level für den Console-Handler geändert werden (Default ist *info*), zum anderen kann mit `TTP_EPIX_LOG_TO_FILE` *true* eine separate Log-Datei für den E-PIX angelegt werden. Die Log-Datei wird im WildFly-Container unter `${docker.wildfly.logs}` abgelegt und kann wie folgt gemountet werden.
+Zum einen kann mit der ENV-Variable `WF_SYSTEM_LOG_LEVEL` der Log-Level für den Console-Handler geändert werden (Default ist *INFO*),
+zum anderen kann mit `TTP_EPIX_LOG_TO` *FILE* eine separate Log-Datei für den E-PIX angelegt werden.
+Die Log-Datei wird im WildFly-Container unter `${docker.wildfly.logs}` abgelegt und kann wie folgt gemountet werden.
 
 ```ini
-WF_CONSOLE_LOG_LEVEL=debug
-TTP_EPIX_LOG_TO_FILE=true
-TTP_EPIX_LOG_LEVEL=info
+WF_SYSTEM_LOG_LEVEL=DEBUG
+TTP_EPIX_LOG_TO=FILE
+TTP_EPIX_LOG_LEVEL=INFO
 ```
 
 docker-compose.yml:
@@ -166,14 +195,14 @@ Neben der ENV-Variable `TTP_EPIX_WEB_AUTH_MODE` mit den Wert *keycloak*, müssen
 
 ```ini
 TTP_EPIX_WEB_AUTH_MODE=keycloak
-KEYCLOAK_SERVER_URL=<PROTOCOL://HOST_OR_IP:PORT/auth/>
-KEYCLOAK_SSL_REQUIRED=<none|external|all>
-KEYCLOAK_REALM=<REALM>
-# KEYCLOAK_CLIENT_ID is the new alias from KEYCLOAK_RESOURCE=<RESOURCE>
-KEYCLOAK_CLIENT_ID=<CLIENT_ID>
-KEYCLOAK_CLIENT_SECRET=<CLIENT_SECRET>
-KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS=<true|false>
-KEYCLOAK_CONFIDENTIAL_PORT=<CONFIDENTIAL_PORT>
+TTP_KEYCLOAK_SERVER_URL=<PROTOCOL://HOST_OR_IP:PORT/auth/>
+TTP_KEYCLOAK_SSL_REQUIRED=<none|external|all>
+TTP_KEYCLOAK_REALM=<REALM>
+# TTP_KEYCLOAK_CLIENT_ID is the new alias from KEYCLOAK_RESOURCE=<RESOURCE>
+TTP_KEYCLOAK_CLIENT_ID=<CLIENT_ID>
+TTP_KEYCLOAK_CLIENT_SECRET=<CLIENT_SECRET>
+TTP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS=<true|false>
+TTP_KEYCLOAK_CONFIDENTIAL_PORT=<CONFIDENTIAL_PORT>
 ```
 **Hinweis:** Konfiguration des Keycloak-Server unter https://www.ths-greifswald.de/ttp-tools/keycloak
 
@@ -189,7 +218,7 @@ HTTPS is required by default for external requests. Valid values are 'all', 'ext
 
 ---
 
-#### 4.3. KeyCloak-Authentifizierung (die JSON-Alternative)
+#### 4.3. KeyCloak-Authentifizierung E-PIX-Web (die JSON-Alternative)
 
 Für diese Variante muss eine JSON-Datei `oidc.json` im jboss-Verzeichnis angepasst werden, dessen Werte aus der lokalen KeyCloak-Instanz entnommen werden können.
 
@@ -213,6 +242,21 @@ Zusätzlich braucht nur der Wert der ENV-Variable `TTP_EPIX_WEB_AUTH_MODE` auf *
 ```ini
 TTP_EPIX_WEB_AUTH_MODE: keycloak-json
 ```
+---
+
+#### 4.4. KeyCloak-Authentifizierung TTP-FHIR Gateway
+Ab TTP-FHIR Gateway Version 2.0.0 ist eine Absicherung der TTP-FHIR-Gateway-Schnittstelle je Endpunkt, wie zum Beispiel E-PIX, vorgesehen und nach Bedarf konfigurierbar.
+
+Alle erforderlichen Informationen werden in der separat bereitgestellten Dokumentation erläutert.
+
+https://www.ths-greifswald.de/ttpfhirgateway/keycloak (pdf)
+
+Diese Dokumentation umfasst:
+
+- Installation und Einrichtung von Keycloak
+- Testung der Keycloak-Konfiguration
+- Einrichtung des TTP-FHIR-Gateways für Keycloak-Authentifizierung
+- Test und Benutzung des TTP-FHIR-Gateways mit Keycloak-Authentifizierung anhand von Beispielen
 
 ---
 ## 5. Externe E-PIX-Datenbank einrichten
@@ -259,19 +303,19 @@ docker-compose up wildfly
 * `Conversation context is already active, most likely it was not cleaned up properly during previous request processing`<br>
   Der verwendete Keycloak-Nutzer wurde bei der letzten Sitzung nicht korrekt am Keycloak-Server abgemeldet. Manuell abmelden und neu versuchen.<br><br>
 
-* Wenn man [Windows Docker Desktop](https://docs.docker.com/desktop/windows/wsl/) mit [WSL 2](https://docs.microsoft.com/de-de/windows/wsl/compare-versions) Backend verwendet, werden die Deployment-Artefakte in einer Endlosschleife neugeladen.
+* Wenn man [Windows Docker Desktop](https://docs.docker.com/desktop/windows/wsl/) mit [WSL 2](https://docs.microsoft.com/de-de/windows/wsl/compare-versions) Backend verwendet, werden die Deployment-Artefakte in einer Endlosschleife neu geladen.
   Eine ausführliche Analyse des Problems findet man im [Repository des WildFly Docker Image auf github](https://github.com/jboss-dockerfiles/wildfly/issues/144).
-  Das Problem tritt nicht auf, wenn man die Deployment-Artefakte in den Linux-Container kopiert, so dass die ensprechenden Markerfiles beim Start nicht mehr direkt in den Windows-Mount geschrieben werden.
-  Dies passiert automatisch, wenn man in der `ttp_commons.env` die Variable `WF_MARKERFILES` auf *false* setzt.
+  Das Problem tritt nicht auf, wenn man die Deployment-Artefakte in den Linux-Container kopiert, sodass die entsprechenden Markerfiles beim Start nicht mehr direkt in den Windows-Mount geschrieben werden.
+  Dies passiert automatisch, wenn man in der `wf_commons.env` die Variable `WF_MARKERFILES` auf *false* setzt.
 
 ---
-## 7. Alle verfügbaren Enviroment-Variablen
+## 7. Alle verfügbaren Environment-Variablen
 In den env-Dateien stehen weitere Details zu den einzelnen Variablen.
 
 #### ./envs/ttp_epix.env **<-- ehemals epix.env**
 | Kategorie | Variable                                                | verfügbare Werte oder Schema           | default                                             |
 |-----------|---------------------------------------------------------|----------------------------------------|-----------------------------------------------------|
-| Logging   | TTP_EPIX_LOG_TO_FILE **<-- Alias von EPIX_FILE_LOG**    | true, false                            | false                                               |
+| Logging   | TTP_EPIX_LOG_TO **<-- ehemals TTP_EPIX_LOG_TO_FILE**    | CONSOLE;FILE                           | CONSOLE                                             |
 | Logging   | TTP_EPIX_LOG_LEVEL **<-- Alias von EPIX_LOG_LEVEL**     | TRACE, DEBUG, INFO, WARN, ERROR, FATAL | INFO                                                |
 | Database  | TTP_EPIX_DB_HOST **<-- Alias von EPIX_DB_HOST**         | \<STRING\>                             | mysql                                               |
 | Database  | TTP_EPIX_DB_PORT **<-- Alias von EPIX_DB_PORT**         | 0-65535                                | 3306                                                |
@@ -279,82 +323,106 @@ In den env-Dateien stehen weitere Details zu den einzelnen Variablen.
 | Database  | TTP_EPIX_DB_USER **<-- Alias von EPIX_DB_USER**         | \<STRING\>                             | epix_user                                           |
 | Database  | TTP_EPIX_DB_PASS **<-- Alias von EPIX_DB_PASS**         | \<STRING\>                             | epix_password                                       |
 | Security  | TTP_EPIX_WEB_AUTH_MODE **<-- Alias von EPIX_AUTH_MODE** | gras, keycloak, keycloak-json          | -                                                   |
-| Security  | TTP_EPIX_SOAP_KEYCLOAK_ENABLE **<-- neu**               | true, false                            | -                                                   |
-| Security  | TTP_EPIX_SOAP_ROLE_USER_NAME **<-- neu**                | \<STRING\>                             | role.epix.user                                      |
-| Security  | TTP_EPIX_SOAP_ROLE_USER_SERVICES **<-- neu**            | \<STRING\>                             | /epix/epixService,/epix/epixServiceWithNotification |
-| Security  | TTP_EPIX_SOAP_ROLE_ADMIN_NAME **<-- neu**               | \<STRING\>                             | role.epix.admin                                     |
-| Security  | TTP_EPIX_SOAP_ROLE_ADMIN_SERVICES **<-- neu**           | \<STRING\>                             | /epix/epixManagementService                         |
+| Security  | TTP_EPIX_SOAP_KEYCLOAK_ENABLE                           | true, false                            | -                                                   |
+| Security  | TTP_EPIX_SOAP_ROLE_USER_NAME                            | \<STRING\>                             | role.epix.user                                      |
+| Security  | TTP_EPIX_SOAP_ROLE_USER_SERVICES                        | \<STRING\>                             | /epix/epixService,/epix/epixServiceWithNotification |
+| Security  | TTP_EPIX_SOAP_ROLE_ADMIN_NAME                           | \<STRING\>                             | role.epix.admin                                     |
+| Security  | TTP_EPIX_SOAP_ROLE_ADMIN_SERVICES                       | \<STRING\>                             | /epix/epixManagementService                         |
+| Security  | TTP_EPIX_AUTH_DOMAIN_ROLES                              | DISABLED, FORCED, IMPLIED              | IMPLIED                                             |
 
 #### ./envs/ttp_noti.env **<-- ehemals noti.env**
-| Kategorie | Variable                                      | verfügbare Werte oder Schema | default              |
-|-----------|-----------------------------------------------|------------------------------|----------------------|
-| Database  | TTP_NOTI_DB_HOST **<-- Alias von NOTI_DB_HOST | \<STRING\>                   | mysql                |
-| Database  | TTP_NOTI_DB_PORT **<-- Alias von NOTI_DB_PORT | 0-65535                      | 3306                 |
-| Database  | TTP_NOTI_DB_NAME **<-- Alias von NOTI_DB_NAME | \<STRING\>                   | notification_service |
-| Database  | TTP_NOTI_DB_USER **<-- Alias von NOTI_DB_USER | \<STRING\>                   | noti_user            |
-| Database  | TTP_NOTI_DB_PASS **<-- Alias von NOTI_DB_PASS | \<STRING\>                   | noti_password        |
+| Kategorie | Variable                                        | verfügbare Werte oder Schema           | default              |
+|-----------|-------------------------------------------------|----------------------------------------|----------------------|
+| Logging   | TTP_NOTI_LOG_TO **<-- neu**                     | CONSOLE;FILE                           | CONSOLE              |
+| Logging   | TTP_NOTI_LOG_LEVEL **<-- neu**                  | TRACE, DEBUG, INFO, WARN, ERROR, FATAL | INFO                 |
+| Service   | TTP_NOTI_SVC_PROTOCOL **<-- neu**               | \<STRING\>                             | http                 |
+| Service   | TTP_NOTI_SVC_HOST **<-- neu**                   | \<STRING\>                             | localhost            |
+| Service   | TTP_NOTI_SVC_PORT **<-- neu**                   | 0-65535                                | 8080                 |
+| Database  | TTP_NOTI_DB_HOST **<-- Alias von NOTI_DB_HOST** | \<STRING\>                             | mysql                |
+| Database  | TTP_NOTI_DB_PORT **<-- Alias von NOTI_DB_PORT** | 0-65535                                | 3306                 |
+| Database  | TTP_NOTI_DB_NAME **<-- Alias von NOTI_DB_NAME** | \<STRING\>                             | notification_service |
+| Database  | TTP_NOTI_DB_USER **<-- Alias von NOTI_DB_USER** | \<STRING\>                             | noti_user            |
+| Database  | TTP_NOTI_DB_PASS **<-- Alias von NOTI_DB_PASS** | \<STRING\>                             | noti_password        |
 
 #### ./envs/ttp_fhir.env **<-- ehemals fhir.env**
-| Kategorie   | Variable                                     | verfügbare Werte oder Schema         | default         |
-|-------------|----------------------------------------------|--------------------------------------|-----------------|
-| Security    | TTP_FHIR_KEYCLOAK_ENABLE                     | true, false                          | false           |
-| Security    | TTP_FHIR_KEYCLOAK_REALM                      | \<STRING\>                           | ttp             |
-| Security    | TTP_FHIR_KEYCLOAK_CLIENT_ID                  | \<STRING\>                           | fhir            |
-| Security    | TTP_FHIR_KEYCLOAK_SSL_REQUIRED               | none, external, all                  | all             |
-| Security    | TTP_FHIR_KEYCLOAK_SERVER_URL                 | \<PROTOCOL://HOST_OR_IP:PORT/auth/\> | -               |
-| Security    | TTP_FHIR_KEYCLOAK_CLIENT_SECRET              | \<STRING\>                           | -               |
-| Security    | TTP_FHIR_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS | true, false                          | false           |
-| Security    | TTP_FHIR_KEYCLOAK_CONFIDENTIAL_PORT          | 0-65535                              | 8443            |
-| Security    | TTP_FHIR_KEYCLOAK_ROLE_EPIX_USER             | \<STRING\>                           | role.epix.user  |
-| Security    | TTP_FHIR_KEYCLOAK_ROLE_EPIX_ADMIN            | \<STRING\>                           | role.epix.admin |
+| Kategorie  | Variable                                     | verfügbare Werte oder Schema           | default         |
+|------------|----------------------------------------------|----------------------------------------|-----------------|
+| Logging    | TTP_FHIR_LOG_TO **<-- neu**                  | CONSOLE;FILE                           | CONSOLE         |
+| Logging    | TTP_FHIR_LOG_LEVEL **<-- neu**               | TRACE, DEBUG, INFO, WARN, ERROR, FATAL | INFO            |
+| Security   | TTP_FHIR_KEYCLOAK_ENABLE                     | true, false                            | false           |
+| Security   | TTP_FHIR_KEYCLOAK_REALM                      | \<STRING\>                             | ttp             |
+| Security   | TTP_FHIR_KEYCLOAK_CLIENT_ID                  | \<STRING\>                             | fhir            |
+| Security   | TTP_FHIR_KEYCLOAK_SSL_REQUIRED               | none, external, all                    | all             |
+| Security   | TTP_FHIR_KEYCLOAK_SERVER_URL                 | \<PROTOCOL://HOST_OR_IP:PORT/auth/\>   | -               |
+| Security   | TTP_FHIR_KEYCLOAK_CLIENT_SECRET              | \<STRING\>                             | -               |
+| Security   | TTP_FHIR_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS | true, false                            | false           |
+| Security   | TTP_FHIR_KEYCLOAK_CONFIDENTIAL_PORT          | 0-65535                                | 8443            |
+| Security   | TTP_FHIR_KEYCLOAK_ROLE_EPIX_USER             | \<STRING\>                             | role.epix.user  |
+| Security   | TTP_FHIR_KEYCLOAK_ROLE_EPIX_ADMIN            | \<STRING\>                             | role.epix.admin |
 
 #### ./envs/ttp_gras.env **<-- neu, Werte aus ttp_commons.env ausgelagert**
-| Kategorie | Variable                                      | verfügbare Werte oder Schema | default       |
-|-----------|-----------------------------------------------|------------------------------|---------------|
-| Database  | TTP_GRAS_DB_HOST **<-- Alias von GRAS_DB_HOST | \<STRING\>                   | mysql         |
-| Database  | TTP_GRAS_DB_PORT **<-- Alias von GRAS_DB_PORT | 0-65535                      | 3306          |
-| Database  | TTP_GRAS_DB_NAME **<-- Alias von GRAS_DB_NAME | \<STRING\>                   | gras          |
-| Database  | TTP_GRAS_DB_USER **<-- Alias von GRAS_DB_USER | \<STRING\>                   | gras_user     |
-| Database  | TTP_GRAS_DB_PASS **<-- Alias von GRAS_DB_PASS | \<STRING\>                   | gras_password |
+| Kategorie | Variable                                        | verfügbare Werte oder Schema | default       |
+|-----------|-------------------------------------------------|------------------------------|---------------|
+| Database  | TTP_GRAS_DB_HOST **<-- Alias von GRAS_DB_HOST** | \<STRING\>                   | mysql         |
+| Database  | TTP_GRAS_DB_PORT **<-- Alias von GRAS_DB_PORT** | 0-65535                      | 3306          |
+| Database  | TTP_GRAS_DB_NAME **<-- Alias von GRAS_DB_NAME** | \<STRING\>                   | gras          |
+| Database  | TTP_GRAS_DB_USER **<-- Alias von GRAS_DB_USER** | \<STRING\>                   | gras_user     |
+| Database  | TTP_GRAS_DB_PASS **<-- Alias von GRAS_DB_PASS** | \<STRING\>                   | gras_password |
 
-#### ./envs/ttp_commons.env **<-- ehemals wildfly.env**
-| Kategorie     | Variable                                                                                      | verfügbare Werte oder Schema           | default          |
-|---------------|-----------------------------------------------------------------------------------------------|----------------------------------------|------------------|
-| Logging       | WF_CONSOLE_LOG_LEVEL **<-- ehemals CONSOLE_LOG_LEVEL**                                        | TRACE, DEBUG, INFO, WARN, ERROR, FATAL | INFO             |
-| WF-Admin      | WF_NO_ADMIN **<-- ehemals NO_ADMIN**                                                          | true, false                            | false            |
-| WF-Admin      | WF_ADMIN_USER **<-- ehemals ADMIN_USER**                                                      | \<STRING\>                             | admin            |
-| WF-Admin      | WF_ADMIN_PASS **<-- ehemals WILDFLY_PASS**                                                    | \<STRING\>                             | wildfly_password |
-| Security      | TTP_KEYCLOAK_SERVER_URL **<-- Alias von KEYCLOAK_SERVER_URL**                                 | \<PROTOCOL://HOST_OR_IP:PORT/auth/\>   | -                |
-| Security      | TTP_KEYCLOAK_SSL_REQUIRED **<-- Alias von KEYCLOAK_SSL_REQUIRED**                             | none, external, all                    | all              |
-| Security      | TTP_KEYCLOAK_REALM **<-- Alias von KEYCLOAK_REALM**                                           | \<STRING\>                             | -                |
-| Security      | TTP_KEYCLOAK_CLIENT_ID **<-- Alias von KEYCLOAK_RESOURCE**                                    | \<STRING\>                             | -                |
-| Security      | TTP_KEYCLOAK_CLIENT_SECRET **<-- Alias von KEYCLOAK_CLIENT_SECRET**                           | \<STRING\>                             | -                |
-| Security      | TTP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS **<-- Alias von KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS** | true, false                            | false            |
-| Security      | TTP_KEYCLOAK_CONFIDENTIAL_PORT **<-- Alias von KEYCLOAK_CONFIDENTIAL_PORT**                   | 0-65535                                | 8443             |
-| Web-Security  | TTP_WEB_KEYCLOAK_REALM **<-- neu**                                                            | \<STRING\>                             | ttp              |
-| Web-Security  | TTP_WEB_KEYCLOAK_CLIENT_ID **<-- neu**                                                        | \<STRING\>                             | ths              |
-| Web-Security  | TTP_WEB_KEYCLOAK_SERVER_URL **<-- neu**                                                       | \<PROTOCOL://HOST_OR_IP:PORT/auth/\>   | -                |
-| Web-Security  | TTP_WEB_KEYCLOAK_SSL_REQUIRED **<-- neu**                                                     | none, external, all                    | all              |
-| Web-Security  | TTP_WEB_KEYCLOAK_CLIENT_SECRET **<-- neu**                                                    | \<STRING\>                             | -                |
-| Web-Security  | TTP_WEB_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS **<-- neu**                                       | true, false                            | false            |
-| Web-Security  | TTP_WEB_KEYCLOAK_CONFIDENTIAL_PORT **<-- neu**                                                | 0-65535                                | 8443             |
-| SOAP-Security | TTP_SOAP_KEYCLOAK_REALM **<-- neu**                                                           | \<STRING\>                             | ttp              |
-| SOAP-Security | TTP_SOAP_KEYCLOAK_CLIENT_ID **<-- neu**                                                       | \<STRING\>                             | ths              |
-| SOAP-Security | TTP_SOAP_KEYCLOAK_SERVER_URL **<-- neu**                                                      | \<PROTOCOL://HOST_OR_IP:PORT/auth/\>   | -                |
-| SOAP-Security | TTP_SOAP_KEYCLOAK_SSL_REQUIRED **<-- neu**                                                    | none, external, all                    | all              |
-| SOAP-Security | TTP_SOAP_KEYCLOAK_CLIENT_SECRET **<-- neu**                                                   | \<STRING\>                             | -                |
-| SOAP-Security | TTP_SOAP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS **<-- neu**                                      | true, false                            | false            |
-| SOAP-Security | TTP_SOAP_KEYCLOAK_CONFIDENTIAL_PORT **<-- neu**                                               | 0-65535                                | 8443             |
-| Quality       | WF_HEALTHCHECK_URLS **<-- ehemals HEALTHCHECK_URLS**                                          | \<SPACE-SEPARATED-URLs\>               | -                |
-| Optimizing    | WF_ADD_CLI_FILTER **<-- neu**                                                                 | \<SPACE-SEPARATED-STRING\>             | -                |
-| Optimizing    | WF_MAX_POST_SIZE **<-- Alias von MAX_POST_SIZE**                                              | \<BYTES\>                              | 10485760         |
-| Optimizing    | WF_MAX_CHILD_ELEMENTS **<-- Alias von MAX_CHILD_ELEMENTS**                                    | \<INTEGER\>                            | 50000            |
-| Optimizing    | WF_BLOCKING_TIMEOUT **<-- neu**                                                               | \<SECONDS\>                            | 300              |
-| Optimizing    | WF_TRANSACTION_TIMEOUT **<-- neu**                                                            | \<SECONDS\>                            | 300              |
-| Optimizing    | WF_DISABLE_HTTP2 **<-- neu**                                                                  | true, false                            | false            |
-| Optimizing    | WF_MARKERFILES **<-- ehemals WILDFLY_MARKERFILES**                                            | true, false, auto                      | auto             |
-| Optimizing    | TZ                                                                                            | \<STRING\>                             | Europe/Berlin    |
-| Optimizing    | JAVA_OPTS                                                                                     | \<STRING\>                             | -                |
+#### ./envs/ttp_commons.env **<-- aufgesplittet in ttp_commons.env und wf_commons.env**
+| Kategorie     | Variable                                                                                      | verfügbare Werte oder Schema           | default  |
+|---------------|-----------------------------------------------------------------------------------------------|----------------------------------------|----------|
+| Logging       | TTP_LOG_TO **<-- neu**                                                                        | CONSOLE;FILE                           | CONSOLE  |
+| Logging       | TTP_LOG_LEVEL **<-- neu**                                                                     | TRACE, DEBUG, INFO, WARN, ERROR, FATAL | INFO     |
+| Logging       | TTP_AUTH_LOG_TO **<-- ehemals TTP_AUTH_LOG_TO_FILE**                                          | CONSOLE;FILE                           | CONSOLE  |
+| Logging       | TTP_AUTH_LOG_LEVEL                                                                            | TRACE, DEBUG, INFO, WARN, ERROR, FATAL | INFO     |
+| Logging       | TTP_WEB_LOG_TO **<-- ehemals TTP_WEB_LOG_TO_FILE**                                            | CONSOLE;FILE                           | CONSOLE  |
+| Logging       | TTP_WEB_LOG_LEVEL                                                                             | TRACE, DEBUG, INFO, WARN, ERROR, FATAL | INFO     |
+| Database      | TTP_DB_HOST                                                                                   | \<STRING\>                             | mysql    |
+| Database      | TTP_DB_PORT                                                                                   | 0-65535                                | 3306     |
+| Database      | TTP_DB_USER                                                                                   | \<STRING\>                             | -        |
+| Database      | TTP_DB_PASS                                                                                   | \<STRING\>                             | -        |
+| Security      | TTP_KEYCLOAK_SERVER_URL **<-- Alias von KEYCLOAK_SERVER_URL**                                 | \<PROTOCOL://HOST_OR_IP:PORT/auth/\>   | -        |
+| Security      | TTP_KEYCLOAK_SSL_REQUIRED **<-- Alias von KEYCLOAK_SSL_REQUIRED**                             | none, external, all                    | all      |
+| Security      | TTP_KEYCLOAK_REALM **<-- Alias von KEYCLOAK_REALM**                                           | \<STRING\>                             | -        |
+| Security      | TTP_KEYCLOAK_CLIENT_ID **<-- Alias von KEYCLOAK_RESOURCE**                                    | \<STRING\>                             | -        |
+| Security      | TTP_KEYCLOAK_CLIENT_SECRET **<-- Alias von KEYCLOAK_CLIENT_SECRET**                           | \<STRING\>                             | -        |
+| Security      | TTP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS **<-- Alias von KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS** | true, false                            | false    |
+| Security      | TTP_KEYCLOAK_CONFIDENTIAL_PORT **<-- Alias von KEYCLOAK_CONFIDENTIAL_PORT**                   | 0-65535                                | 8443     |
+| Web-Security  | TTP_WEB_KEYCLOAK_REALM                                                                        | \<STRING\>                             | ttp      |
+| Web-Security  | TTP_WEB_KEYCLOAK_CLIENT_ID                                                                    | \<STRING\>                             | ths      |
+| Web-Security  | TTP_WEB_KEYCLOAK_SERVER_URL                                                                   | \<PROTOCOL://HOST_OR_IP:PORT/auth/\>   | -        |
+| Web-Security  | TTP_WEB_KEYCLOAK_SSL_REQUIRED                                                                 | none, external, all                    | all      |
+| Web-Security  | TTP_WEB_KEYCLOAK_CLIENT_SECRET                                                                | \<STRING\>                             | -        |
+| Web-Security  | TTP_WEB_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS                                                   | true, false                            | false    |
+| Web-Security  | TTP_WEB_KEYCLOAK_CONFIDENTIAL_PORT                                                            | 0-65535                                | 8443     |
+| SOAP-Security | TTP_SOAP_KEYCLOAK_REALM                                                                       | \<STRING\>                             | ttp      |
+| SOAP-Security | TTP_SOAP_KEYCLOAK_CLIENT_ID                                                                   | \<STRING\>                             | ths      |
+| SOAP-Security | TTP_SOAP_KEYCLOAK_SERVER_URL                                                                  | \<PROTOCOL://HOST_OR_IP:PORT/auth/\>   | -        |
+| SOAP-Security | TTP_SOAP_KEYCLOAK_SSL_REQUIRED                                                                | none, external, all                    | all      |
+| SOAP-Security | TTP_SOAP_KEYCLOAK_CLIENT_SECRET                                                               | \<STRING\>                             | -        |
+| SOAP-Security | TTP_SOAP_KEYCLOAK_USE_RESOURCE_ROLE_MAPPINGS                                                  | true, false                            | false    |
+| SOAP-Security | TTP_SOAP_KEYCLOAK_CONFIDENTIAL_PORT                                                           | 0-65535                                | 8443     |
+
+#### ./envs/wf_commons.env **<-- neu, Werte aus ttp_commons.env ausgelagert**
+| Kategorie     | Variable                                                   | verfügbare Werte oder Schema           | default          |
+|---------------|------------------------------------------------------------|----------------------------------------|------------------|
+| Logging       | WF_SYSTEM_LOG_TO **<-- ehemals WF_CONSOLE_LOG_TO_FILE**    | CONSOLE;FILE                           | CONSOLE          |
+| Logging       | WF_SYSTEM_LOG_LEVEL **<-- Alias von CONSOLE_LOG_LEVEL**    | TRACE, DEBUG, INFO, WARN, ERROR, FATAL | INFO             |
+| WF-Admin      | WF_NO_ADMIN **<-- Alias von NO_ADMIN**                     | true, false                            | false            |
+| WF-Admin      | WF_ADMIN_USER **<-- Alias von ADMIN_USER**                 | \<STRING\>                             | admin            |
+| WF-Admin      | WF_ADMIN_PASS **<-- Alias von WILDFLY_PASS**               | \<STRING\>                             | wildfly_password |
+| Quality       | WF_HEALTHCHECK_URLS **<-- Alias von HEALTHCHECK_URLS**     | \<SPACE-SEPARATED-URLs\>               | -                |
+| Optimizing    | WF_ADD_CLI_FILTER                                          | \<SPACE-SEPARATED-STRING\>             | -                |
+| Optimizing    | WF_MAX_PARAMETERS                                          | 1-2147483647                           | 1000             |
+| Optimizing    | WF_MAX_POST_SIZE **<-- Alias von MAX_POST_SIZE**           | \<BYTES\>                              | 10485760         |
+| Optimizing    | WF_MAX_CHILD_ELEMENTS **<-- Alias von MAX_CHILD_ELEMENTS** | \<INTEGER\>                            | 50000            |
+| Optimizing    | WF_BLOCKING_TIMEOUT                                        | \<SECONDS\>                            | 300              |
+| Optimizing    | WF_TRANSACTION_TIMEOUT                                     | \<SECONDS\>                            | 300              |
+| Optimizing    | WF_ENABLE_HTTP2 **<-- neu, ehemals via WF_DISABLE_HTTP2**  | true, false                            | true             |
+| Optimizing    | WF_MARKERFILES **<-- Alias von WILDFLY_MARKERFILES**       | true, false, auto                      | auto             |
+| Optimizing    | TZ                                                         | \<STRING\>                             | Europe/Berlin    |
+| Optimizing    | JAVA_OPTS                                                  | \<STRING\>                             | -                |
 
 #### ./envs/mysql.env
 | Kategorie  | Variable            | verfügbare Werte oder Schema | default       |
@@ -362,6 +430,5 @@ In den env-Dateien stehen weitere Details zu den einzelnen Variablen.
 | Security   | MYSQL_ROOT_PASSWORD | \<STRING\>                   | root          |
 | Optimizing | TZ **<-- neu**      | \<STRING\>                   | Europe/Berlin |
 
-
 ---
-${ttp.epix.readme.footer}
+${ttp.readme.footer}

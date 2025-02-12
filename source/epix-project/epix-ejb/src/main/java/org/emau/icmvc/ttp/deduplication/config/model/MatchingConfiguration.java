@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.deduplication.config.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -44,13 +44,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 import org.emau.icmvc.ttp.epix.common.exception.InvalidParameterException;
 import org.emau.icmvc.ttp.epix.common.exception.MPIErrorCode;
 import org.emau.icmvc.ttp.epix.common.exception.MPIException;
@@ -58,7 +57,7 @@ import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
 import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.common.model.enums.MatchingMode;
 import org.emau.icmvc.ttp.epix.common.model.enums.PersistMode;
-import org.emau.icmvc.ttp.epix.common.utils.XMLBindingUtil;
+import org.emau.icmvc.ttp.xml.XMLBindingUtil;
 
 /**
  *
@@ -67,7 +66,7 @@ import org.emau.icmvc.ttp.epix.common.utils.XMLBindingUtil;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "MatchingConfiguration", propOrder = { "matchingMode", "mpiGenerator", "mpiPrefix", "useNotifications", "lowMemory", "persistMode", "requiredFields",
-		"valueFieldsMapping", "deduplication", "privacy", "preprocessingConfig", "matching" })
+		"valueFieldsMapping", "deduplication", "validation", "privacy", "preprocessingConfig", "matching" })
 @XmlRootElement(name = "MatchingConfiguration")
 public class MatchingConfiguration
 {
@@ -92,6 +91,8 @@ public class MatchingConfiguration
 	private ValueFieldsMapping valueFieldsMapping;
 	@XmlElement(name = "deduplication", required = false)
 	private Deduplication deduplication;
+	@XmlElement(name = "validation", required = false)
+	private Validation validation;
 	@XmlElement(name = "privacy", required = false)
 	private Privacy privacy;
 	@XmlElement(name = "preprocessing-config", required = false)
@@ -104,7 +105,6 @@ public class MatchingConfiguration
 
 	public MatchingConfiguration(ConfigurationContainer configObjects, String domainName)
 	{
-		// TODO validierung
 		if (configObjects == null)
 		{
 			throw new RuntimeException(new MPIException(MPIErrorCode.INTERNAL_ERROR,
@@ -137,6 +137,10 @@ public class MatchingConfiguration
 		if (configObjects.getDeduplication() != null)
 		{
 			deduplication = new Deduplication(configObjects.getDeduplication());
+		}
+		if (configObjects.getValidation() != null)
+		{
+			validation = new Validation(configObjects.getValidation());
 		}
 		if (configObjects.getPrivacy() != null)
 		{
@@ -240,6 +244,16 @@ public class MatchingConfiguration
 	public void setDeduplication(Deduplication deduplication)
 	{
 		this.deduplication = deduplication;
+	}
+
+	public Validation getValidation()
+	{
+		return validation;
+	}
+
+	public void setValidation(Validation validation)
+	{
+		this.validation = validation;
 	}
 
 	public Privacy getPrivacy()
@@ -363,6 +377,7 @@ public class MatchingConfiguration
 		return new ConfigurationContainer(getMatchingMode(), getMpiGenerator(),
 				getMpiPrefix(), isUseNotifications(), isLowMemory(), getPersistMode(),
 				requiredFields, valueFieldMapping, getDeduplication() != null ? getDeduplication().toDTO() : null,
+				getValidation() != null ? getValidation().toDTO() : null,
 				getPrivacy() != null ? getPrivacy().toDTO() : null, getMatching().toDTO(),
 				getPreprocessingConfig() != null ? getPreprocessingConfig().toDTO() : null);
 	}
@@ -417,6 +432,10 @@ public class MatchingConfiguration
 		{
 			return false;
 		}
+		if (getValidation() != null ? !getValidation().equals(that.getValidation()) : that.getValidation() != null)
+		{
+			return false;
+		}
 		if (getPrivacy() != null ? !getPrivacy().equals(that.getPrivacy()) : that.getPrivacy() != null)
 		{
 			return false;
@@ -440,6 +459,7 @@ public class MatchingConfiguration
 		result = 31 * result + (getRequiredFields() != null ? getRequiredFields().hashCode() : 0);
 		result = 31 * result + (getValueFieldsMapping() != null ? getValueFieldsMapping().hashCode() : 0);
 		result = 31 * result + (getDeduplication() != null ? getDeduplication().hashCode() : 0);
+		result = 31 * result + (getValidation() != null ? getValidation().hashCode() : 0);
 		result = 31 * result + (getPrivacy() != null ? getPrivacy().hashCode() : 0);
 		result = 31 * result + (getPreprocessingConfig() != null ? getPreprocessingConfig().hashCode() : 0);
 		result = 31 * result + (getMatching() != null ? getMatching().hashCode() : 0);
@@ -451,7 +471,8 @@ public class MatchingConfiguration
 	{
 		return "MatchingConfiguration [matchingMode=" + matchingMode + ", mpiGenerator=" + mpiGenerator + ", mpiPrefix=" + mpiPrefix
 				+ ", useNotifications=" + useNotifications + ", lowMemory=" + lowMemory + ", persistMode=" + persistMode
-				+ ", requiredFields=" + requiredFields + ", valueFieldsMapping=" + valueFieldsMapping + ", preprocessingConfig=" + preprocessingConfig + ", matching=" + matching + "]";
+				+ ", requiredFields=" + requiredFields + ", valueFieldsMapping=" + valueFieldsMapping + ", deduplication=" + deduplication
+				+ ", validation=" + validation + ", preprocessingConfig=" + preprocessingConfig + ", matching=" + matching + "]";
 	}
 
 	/**

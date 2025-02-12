@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.test;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.test;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -52,7 +52,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SimilarityTest
+class SimilarityTest
 {
 	private static final Logger logger = LogManager.getLogger(SimilarityTest.class);
 
@@ -63,7 +63,7 @@ public class SimilarityTest
 	private static final JaccardSimilarityAlgorithmCoded jsac = new JaccardSimilarityAlgorithmCoded();
 
 	@Test
-	public void highSimilarity1()
+	void highSimilarity1()
 	{
 		String salt = "nO2202c0mI";
 
@@ -82,7 +82,7 @@ public class SimilarityTest
 	}
 
 	@Test
-	public void highSimilarity2()
+	void highSimilarity2()
 	{
 		String salt = "sA0m8AXALs";
 
@@ -108,7 +108,7 @@ public class SimilarityTest
 	}
 
 	@Test
-	public void OneCharDifferent()
+	void OneCharDifferent()
 	{
 		String bloom1 = "0001001110110110100101000100100111010001000101010001000001110110010110001111001100110011001110101111010011100011001100110111101111000010010001010010000011000010110011010111010010011001001100101101011110101101101110110001100110110000101001100101010010";
 		String bloom2 = "0001011010110110100101000101101111010001100101000001100000111110010110001101001100110010001110111111010011100111001100110111111011010010010001010010000011000110110011100111010010010001001010101101001110101101101110110001100011100000101100100101010010";

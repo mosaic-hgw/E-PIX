@@ -1,4 +1,6 @@
-${ttp.epix.readme.header}
+![context](https://www.ths-greifswald.de/wp-content/uploads/2019/01/Design-Logo-THS-deutsch-542.png)
+
+Stand: Dez. 2024
 
 # Absicherung der THS-Schnittstellen mit **Keycloak**-basierter Authentifizierung
 
@@ -35,6 +37,7 @@ Schnittstellen der Werkzeuge mit **Keycloak**-basierter Authentifizierung:
       - [Variante 2: Angabe einer gültigen Admin-Rolle](#variante-2-angabe-einer-g%C3%BCltigen-admin-rolle)
   - [SOAP-Webservices](#soap-webservices)
     - [Bedeutung der Admin-Rolle in SOAP-Webservices](#bedeutung-der-admin-rolle-in-soap-webservices)
+  - [Einbettung von gICS-Formularen in externe Anwendungen](#einbettung-von-gics-formularen-in-externe-anwendungen)
 - [Credits ](#credits-keycloak-for-for-ttp-tools-and-ttp-fhir-gateway)
 - [License](#license)
 
@@ -544,6 +547,21 @@ TTP_GPAS_SOAP_ROLE_USER_SERVICES=/gpas/gpasService,/gpas/gpasServiceWithNotifica
 TTP_GPAS_SOAP_ROLE_ADMIN_SERVICES=/gpas/DomainService
 ```
 
-${ttp.epix.readme.footer}
+### Einbettung von gICS-Formularen in externe Anwendungen
 
+Seit Version 2024.3.0 können gICS-Formulare in externe Anwendungen eingebettet werden.
+Für eine mit **Keycloak** abgesicherte Web-Oberfläche ist automatisch auch der Zugriff 
+auf diese Formulare abgesichert: der Benutzer externer Anwendungen mit eingebetteten 
+gICS-Formularen wird an einen Login-Dialog des **Keycloak**-Servers weitergeleitet, 
+wo er seine Credentials (Benutzername und Passwort) eingibt.
+
+Für den Zugriff auf die entsprechenden Endpunkte, die sich alle im Kontext `html/embedded`
+befinden, benötigt der Nutzer jedoch die Rolle `role.gics.embedded`, die für diesen im
+**Keycloak**-Server entsprechend konfiguriert sein muss.
+
+## Credits 'Keycloak for for TTP-Tools and TTP-FHIR-Gateway' ##
+
+Implementation and documentation: P. Penndorf, F.-M. Moser, M. Bialke, R. Schuldt, A. Blumentritt
+
+${ttp.readme.footer}
 

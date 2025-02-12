@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.frontend.controller.management;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -53,7 +53,6 @@ import org.emau.icmvc.ttp.epix.common.model.IdentifierDomainDTO;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.AbstractEpixBean;
 import org.emau.icmvc.ttp.epix.frontend.controller.common.ICRUDObject;
 import org.emau.icmvc.ttp.epix.frontend.util.EpixHelper;
-import org.emau.icmvc.ttp.epix.service.EPIXManagementService;
 import org.icmvc.ttp.web.controller.Text;
 
 public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObject<IdentifierDomainDTO>
@@ -62,9 +61,8 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 	private EpixHelper epixHelper;
 
 	@Override
-	public void init(EPIXManagementService managementService, EpixHelper epixHelper, Text text)
+	public void init(EpixHelper epixHelper, Text text)
 	{
-		this.managementService = managementService;
 		this.epixHelper = epixHelper;
 		this.text = text;
 		pageMode = PageMode.READ;
@@ -108,7 +106,7 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 		{
 			try
 			{
-				managementService.updateIdentifierDomain(selected);
+				getManager().updateIdentifierDomain(selected);
 				logMessage(new MessageFormat(getBundle().getString("domain.message.identifierDomain.edit.success")).format(args), Severity.INFO);
 			}
 			catch (InvalidParameterException e)
@@ -133,7 +131,7 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 				IdentifierDomainDTO tmp = new IdentifierDomainDTO(selected);
 				tmp.setName(StringUtils.isEmpty(tmp.getName()) ? tmp.getLabel().replace(" ", "_") : tmp.getName());
 				tmp.setOid(StringUtils.isEmpty(tmp.getOid()) ? UUID.randomUUID().toString() : tmp.getOid());
-				managementService.addIdentifierDomain(tmp);
+				getManager().addIdentifierDomain(tmp);
 				logMessage(new MessageFormat(getBundle().getString("domain.message.identifierDomain.add.success")).format(args), Severity.INFO);
 				// on success write back changes on selected (currently unused)
 				selected = new IdentifierDomainDTO(tmp);
@@ -173,7 +171,7 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 		Object[] args = { selected.getLabel() };
 		try
 		{
-			managementService.deleteIdentifierDomain(selected.getName());
+			getManager().deleteIdentifierDomain(selected.getName());
 			logMessage(new MessageFormat(getBundle().getString("domain.message.identifierDomain.delete.success")).format(args), Severity.INFO);
 			reload();
 		}
@@ -198,7 +196,7 @@ public class IdentifierDomainBean extends AbstractEpixBean implements ICRUDObjec
 	@Override
 	public List<IdentifierDomainDTO> getAll()
 	{
-		return managementService.getIdentifierDomains();
+		return getManager().getIdentifierDomains();
 	}
 
 	@Override

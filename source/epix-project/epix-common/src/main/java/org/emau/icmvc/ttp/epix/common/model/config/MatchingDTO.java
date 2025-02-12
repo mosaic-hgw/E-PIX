@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model.config;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -50,25 +50,27 @@ public class MatchingDTO implements Serializable
 	private double thresholdAutomaticMatch = 14.5;
 	private boolean useCEMFIM = false;
 	private int parallelMatchingAfter = 1000;
+	private int numberOfThreads = Runtime.getRuntime().availableProcessors();
 	private final List<FieldDTO> fields = new ArrayList<>();
 
 	public MatchingDTO()
 	{}
 
 	public MatchingDTO(double thresholdPossibleMatch, double thresholdAutomaticMatch, boolean useCEMFIM, int parallelMatchingAfter,
-			List<FieldDTO> fields)
+			int numberOfThreads, List<FieldDTO> fields)
 	{
 		super();
 		this.thresholdPossibleMatch = thresholdPossibleMatch;
 		this.thresholdAutomaticMatch = thresholdAutomaticMatch;
 		this.useCEMFIM = useCEMFIM;
 		this.parallelMatchingAfter = parallelMatchingAfter;
+		this.numberOfThreads = numberOfThreads;
 		setFields(fields);
 	}
 
 	public MatchingDTO(MatchingDTO dto)
 	{
-		this(dto.getThresholdPossibleMatch(), dto.getThresholdAutomaticMatch(), dto.isUseCEMFIM(), dto.getParallelMatchingAfter(), dto.getFields());
+		this(dto.getThresholdPossibleMatch(), dto.getThresholdAutomaticMatch(), dto.isUseCEMFIM(), dto.getParallelMatchingAfter(), dto.getNumberOfThreads(), dto.getFields());
 	}
 
 	public double getThresholdPossibleMatch()
@@ -111,6 +113,16 @@ public class MatchingDTO implements Serializable
 		this.parallelMatchingAfter = parallelMatchingAfter;
 	}
 
+	public int getNumberOfThreads()
+	{
+		return numberOfThreads;
+	}
+
+	public void setNumberOfThreads(int numberOfThreads)
+	{
+		this.numberOfThreads = numberOfThreads;
+	}
+
 	public List<FieldDTO> getFields()
 	{
 		return fields;
@@ -135,6 +147,7 @@ public class MatchingDTO implements Serializable
 		int result = 1;
 		result = prime * result + (fields == null ? 0 : fields.hashCode());
 		result = prime * result + parallelMatchingAfter;
+		result = prime * result + numberOfThreads;
 		long temp;
 		temp = Double.doubleToLongBits(thresholdAutomaticMatch);
 		result = prime * result + (int) (temp ^ temp >>> 32);
@@ -194,6 +207,7 @@ public class MatchingDTO implements Serializable
 	public String toString()
 	{
 		return "MatchingDTO [thresholdPossibleMatch=" + thresholdPossibleMatch + ", thresholdAutomaticMatch=" + thresholdAutomaticMatch
-				+ ", useCEMFIM=" + useCEMFIM + ", parallelMatchingAfter=" + parallelMatchingAfter + ", fields=" + fields + "]";
+				+ ", useCEMFIM=" + useCEMFIM + ", parallelMatchingAfter=" + parallelMatchingAfter + ", numberOfthreads=" + numberOfThreads
+			    + ", fields=" + fields + "]";
 	}
 }

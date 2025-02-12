@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.persistence;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.persistence;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -44,6 +44,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,24 +54,23 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
-import javax.ejb.ConcurrencyManagement;
-import javax.ejb.ConcurrencyManagementType;
-import javax.ejb.EJB;
-import javax.ejb.EJBException;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-
 import it.unimi.dsi.fastutil.longs.LongList;
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.ConcurrencyManagement;
+import jakarta.ejb.ConcurrencyManagementType;
+import jakarta.ejb.EJB;
+import jakarta.ejb.EJBException;
+import jakarta.ejb.Singleton;
+import jakarta.ejb.Startup;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceException;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.emau.icmvc.ttp.deduplication.model.MatchResult;
@@ -83,6 +83,7 @@ import org.emau.icmvc.ttp.epix.common.exception.MPIException;
 import org.emau.icmvc.ttp.epix.common.exception.ObjectInUseException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectException;
 import org.emau.icmvc.ttp.epix.common.exception.UnknownObjectType;
+import org.emau.icmvc.ttp.epix.common.exception.ValidatorException;
 import org.emau.icmvc.ttp.epix.common.model.ContactHistoryDTO;
 import org.emau.icmvc.ttp.epix.common.model.ContactInDTO;
 import org.emau.icmvc.ttp.epix.common.model.ContactOutDTO;
@@ -106,7 +107,6 @@ import org.emau.icmvc.ttp.epix.common.model.StatisticDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.ConfigurationContainer;
 import org.emau.icmvc.ttp.epix.common.model.config.DeduplicationDTO;
 import org.emau.icmvc.ttp.epix.common.model.config.ReasonDTO;
-import org.emau.icmvc.ttp.epix.common.model.enums.FieldName;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentifierDeletionResult;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityField;
 import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
@@ -135,7 +135,8 @@ import org.emau.icmvc.ttp.epix.persistence.model.PersonHistory;
 import org.emau.icmvc.ttp.epix.persistence.model.Source;
 import org.emau.icmvc.ttp.epix.persistence.model.Statistic;
 import org.emau.icmvc.ttp.epix.persistence.model.Statistic_;
-import org.emau.icmvc.ttp.epix.service.NotificationSender;
+import org.emau.icmvc.ttp.epix.service.EpixNotificationSender;
+import org.emau.icmvc.ttp.utils.ValidatorResult;
 
 /**
  * central data access point (db and cache) - public parts
@@ -162,7 +163,7 @@ public class PublicDAO extends DAO
 	private static final Map<Thread, Set<Thread>> MULTITHREADING_BLOCK_MAP = new HashMap<>();
 
 	@EJB
-	private NotificationSender notificationSender;
+	private EpixNotificationSender notificationSender;
 
 	/**
 	 * this is the only way to make it possible to catch a {@link PersistenceException}<br>
@@ -196,7 +197,7 @@ public class PublicDAO extends DAO
 		{
 			if (logger.isDebugEnabled())
 			{
-				logger.debug("register match block for " + ppco);
+				logger.debug("register match block for {}", ppco);
 			}
 			for (Entry<Thread, PreprocessedCacheObject> entry : MULTITHREADING_CACHE_MAP.entrySet())
 			{
@@ -211,7 +212,7 @@ public class PublicDAO extends DAO
 		}
 		if (logger.isDebugEnabled())
 		{
-			logger.debug(Thread.currentThread() + " is waiting for " + set.size() + " other identities");
+			logger.debug("{} is waiting for {} other identities", Thread.currentThread(), set.size());
 		}
 		// TODO: synchronization over a local variable makes no sense and has no effect - remove or replace by sync over an instance variable
 		synchronized (set)
@@ -239,7 +240,7 @@ public class PublicDAO extends DAO
 		{
 			if (logger.isDebugEnabled())
 			{
-				logger.debug("deregister match block for " + Thread.currentThread());
+				logger.debug("deregister match block for {}", Thread.currentThread());
 			}
 			MULTITHREADING_CACHE_MAP.remove(Thread.currentThread());
 			MULTITHREADING_BLOCK_MAP.remove(Thread.currentThread());
@@ -254,7 +255,7 @@ public class PublicDAO extends DAO
 						{
 							if (logger.isDebugEnabled())
 							{
-								logger.debug("all matching identites for " + entry.getKey() + " are processed, notifying the thread to continue");
+								logger.debug("all matching identites for {} are processed, notifying the thread to continue", entry.getKey());
 							}
 							entry.getValue().notifyAll(); // das set wird als monitor-object genutzt
 						}
@@ -276,7 +277,7 @@ public class PublicDAO extends DAO
 	// ***********************************
 	public ResponseEntryDTO handleMPIRequest(String notificationClientID, String domainName, String sourceName,
 			IdentityInBaseDTO identityDTO, String comment, RequestConfig requestConfig, String user)
-			throws InvalidParameterException, MPIException, UnknownObjectException
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
 		logger.debug("handleMPIRequest start");
 		// diese funktion gibt niemals "null" zurueck, eclipse erkennt nicht, dass die funktion vorher auf jeden fall eine exception wirft
@@ -285,6 +286,15 @@ public class PublicDAO extends DAO
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
 		Identity identityForBlocking = new Identity(identityDTO, new ArrayList<>(), new ArrayList<>(), null, null, false, timestamp);
+
+		ValidatorResult validatorResult = DOMAIN_CACHE.validateIdentity(domainName, identityForBlocking);
+		if (!validatorResult.isValid())
+		{
+			logger.info("One or more attribute fields of the identity are invalid");
+
+			throw new ValidatorException("Invalid fields", validatorResult.getInvalidFields());
+		}
+
 		IdentityPreprocessed identityPPForBlocking = DOMAIN_CACHE.preprocess(domainName, identityForBlocking);
 		PreprocessedCacheObject ppcoForBlocking = DOMAIN_CACHE.createPreprocessedCacheObjectFromIdentityPP(domainName, identityPPForBlocking);
 		emRWL.readLock().lock(); // hier reicht readlock wegen spezialabsicherung ueber MULTITHREADING_BLOCK_MAP
@@ -327,7 +337,7 @@ public class PublicDAO extends DAO
 			{
 				result.add(getDBPersonById(id).toDTO());
 			}
-			logger.debug("found " + result.size() + " persons");
+			logger.debug("found {} persons", result.size());
 			return result;
 		}
 		finally
@@ -341,7 +351,7 @@ public class PublicDAO extends DAO
 	// ***********************************
 	public DomainDTO getDomain(String domainName) throws UnknownObjectException
 	{
-		logger.debug("getDomain for " + domainName);
+		logger.debug("getDomain for {}", domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -365,7 +375,7 @@ public class PublicDAO extends DAO
 			{
 				result.add(domain.toDTO());
 			}
-			logger.debug("found " + result.size() + " domains");
+			logger.debug("found {} domains", result.size());
 			return result;
 		}
 		finally
@@ -410,7 +420,7 @@ public class PublicDAO extends DAO
 		return result;
 	}
 
-	public DomainDTO updateDomain(DomainDTO domainDTO) throws MPIException, ObjectInUseException, UnknownObjectException
+	public DomainDTO updateDomain(DomainDTO domainDTO) throws MPIException, ObjectInUseException, UnknownObjectException, InvalidParameterException
 	{
 		DomainDTO result = null;
 		logger.debug("updateDomain");
@@ -424,7 +434,9 @@ public class PublicDAO extends DAO
 				logger.error(message);
 				throw new ObjectInUseException(message);
 			}
-			result = self.updateDomain(domain, domainDTO).toDTO();
+			Domain tmpDomain = self.updateDomain(domain, domainDTO);
+			result = tmpDomain.toDTO();
+			DOMAIN_CACHE.updateDomainStrategies(tmpDomain);
 			logger.debug("domain updated");
 		}
 		catch (EJBException e)
@@ -462,7 +474,7 @@ public class PublicDAO extends DAO
 
 	public void deleteDomain(String domainName, boolean force, String user) throws MPIException, ObjectInUseException, UnknownObjectException
 	{
-		logger.debug("deleteDomain " + domainName + ", force=" + force);
+		logger.debug("deleteDomain {}, force={}", domainName, force);
 		emRWL.writeLock().lock();
 		try
 		{
@@ -549,7 +561,7 @@ public class PublicDAO extends DAO
 
 	public IdentifierDomainDTO getIdentifierDomainByOID(String oid) throws UnknownObjectException
 	{
-		logger.debug("getIdentifierDomainByOID for oid " + oid);
+		logger.debug("getIdentifierDomainByOID for oid {}", oid);
 		emRWL.readLock().lock();
 		try
 		{
@@ -571,7 +583,7 @@ public class PublicDAO extends DAO
 
 	public IdentifierDomainDTO getIdentifierDomain(String name) throws UnknownObjectException
 	{
-		logger.debug("getIdentifierDomain for " + name);
+		logger.debug("getIdentifierDomain for {}", name);
 		emRWL.readLock().lock();
 		try
 		{
@@ -595,7 +607,7 @@ public class PublicDAO extends DAO
 			{
 				result.add(identifierDomain.toDTO());
 			}
-			logger.debug("found " + result.size() + " identifier domains");
+			logger.debug("found {} identifier domains", result.size());
 			return result;
 		}
 		finally
@@ -739,7 +751,7 @@ public class PublicDAO extends DAO
 	// TODO wird nirgends benutzt - weg?
 	public IdentifierDTO getIdentifierById(IdentifierId id) throws UnknownObjectException
 	{
-		logger.debug("getIdentifierById for " + id);
+		logger.debug("getIdentifierById for {}", id);
 		emRWL.readLock().lock();
 		try
 		{
@@ -770,7 +782,7 @@ public class PublicDAO extends DAO
 			{
 				result.add(source.toDTO());
 			}
-			logger.debug("found " + result.size() + " sources");
+			logger.debug("found {} sources", result.size());
 			return result;
 		}
 		finally
@@ -781,7 +793,7 @@ public class PublicDAO extends DAO
 
 	public SourceDTO getSource(String name) throws UnknownObjectException
 	{
-		logger.debug("getSourceByName for " + name);
+		logger.debug("getSourceByName for {}", name);
 		emRWL.readLock().lock();
 		try
 		{
@@ -963,7 +975,7 @@ public class PublicDAO extends DAO
 	public List<PersonDTO> getActivePersons(String domainName, Map<PersonField, String> filter, boolean filterIsCaseSensitive)
 			throws UnknownObjectException
 	{
-		logger.debug("getActivePersons for domain " + domainName);
+		logger.debug("getActivePersons for domain {}", domainName);
 		List<PersonDTO> result = new ArrayList<>();
 		emRWL.readLock().lock();
 		try
@@ -991,7 +1003,7 @@ public class PublicDAO extends DAO
 	public List<PersonDTO> getActivePersonsPaginated(String domainName, int firstEntry, int pageSize, PersonField sortField, boolean sortIsAscending,
 			Map<PersonField, String> filter, boolean filterIsCaseSensitive) throws UnknownObjectException
 	{
-		logger.debug("getActivePersonsPaginated for domain " + domainName);
+		logger.debug("getActivePersonsPaginated for domain {}", domainName);
 		List<PersonDTO> result = new ArrayList<>();
 		emRWL.readLock().lock();
 		try
@@ -1030,7 +1042,7 @@ public class PublicDAO extends DAO
 
 	public long countActivePersonsFiltered(String domainName, Map<PersonField, String> filter, boolean filterIsCaseSensitive) throws UnknownObjectException
 	{
-		logger.debug("countActivePersonsPaginated for domain " + domainName);
+		logger.debug("countActivePersonsPaginated for domain {}", domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1050,7 +1062,7 @@ public class PublicDAO extends DAO
 
 	public List<PersonDTO> getDeactivatedPersons(String domainName) throws UnknownObjectException
 	{
-		logger.debug("getDeactivatedPersons for domain " + domainName);
+		logger.debug("getDeactivatedPersons for domain {}", domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1073,7 +1085,7 @@ public class PublicDAO extends DAO
 
 	public PersonDTO getPersonByFirstMPI(String domainName, String mpiId) throws UnknownObjectException
 	{
-		logger.debug("getPersonByFirstMPI for mpi " + mpiId + " within domain " + domainName);
+		logger.debug("getPersonByFirstMPI for mpi {} within domain {}", mpiId, domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1088,7 +1100,7 @@ public class PublicDAO extends DAO
 
 	public List<PersonDTO> getPersonsByFirstMPIBatch(String domainName, List<String> mpiIds) throws UnknownObjectException
 	{
-		logger.debug("getPersonsByFirstMPIBatch for " + mpiIds.size() + " mpiIds within domain " + domainName);
+		logger.debug("getPersonsByFirstMPIBatch for {} mpiIds within domain {}", mpiIds.size(), domainName);
 		List<PersonDTO> result = new ArrayList<>();
 		emRWL.readLock().lock();
 		try
@@ -1103,13 +1115,13 @@ public class PublicDAO extends DAO
 		{
 			emRWL.readLock().unlock();
 		}
-		logger.debug("found " + result.size() + " persons within domain " + domainName);
+		logger.debug("found {} persons within domain {}", result.size(), domainName);
 		return result;
 	}
 
 	public PersonDTO getActivePersonByMPI(String domainName, String mpiId) throws UnknownObjectException
 	{
-		logger.debug("getActivePersonByMPI for mpi " + mpiId + " within domain " + domainName);
+		logger.debug("getActivePersonByMPI for mpi {} within domain {}", mpiId, domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1124,7 +1136,7 @@ public class PublicDAO extends DAO
 
 	public List<PersonDTO> getActivePersonsByMPIBatch(String domainName, List<String> mpiIds) throws UnknownObjectException
 	{
-		logger.debug("getActivePersonByMPIBatch for " + mpiIds.size() + " mpiIds within domain " + domainName);
+		logger.debug("getActivePersonByMPIBatch for {} mpiIds within domain {}", mpiIds.size(), domainName);
 		List<PersonDTO> result = new ArrayList<>();
 		emRWL.readLock().lock();
 		try
@@ -1139,12 +1151,13 @@ public class PublicDAO extends DAO
 		{
 			emRWL.readLock().unlock();
 		}
-		logger.debug("found " + result.size() + " persons within domain " + domainName);
+		logger.debug("found {} persons within domain {}", result.size(), domainName);
 		return result;
 	}
 
 	public ResponseEntryDTO updatePerson(String notificationClientID, String domainName, String mpiId, IdentityInDTO identityDTO, String sourceName,
-			boolean force, String comment, RequestConfig requestConfig, String user) throws InvalidParameterException, MPIException, UnknownObjectException
+			boolean force, String comment, RequestConfig requestConfig, boolean activePerson, String user)
+			throws InvalidParameterException, MPIException, UnknownObjectException, ValidatorException
 	{
 		logger.debug("updatePersonWithConfig start");
 		// diese funktion gibt niemals "null" zurueck, eclipse erkennt nicht, dass die funktion vorher auf jeden fall eine exception wirft
@@ -1153,7 +1166,7 @@ public class PublicDAO extends DAO
 		try
 		{
 			result = self.updateDBPerson(domainName, mpiId, identityDTO, sourceName, force, comment, requestConfig,
-					new Timestamp(System.currentTimeMillis()), user);
+					new Timestamp(System.currentTimeMillis()), activePerson, user);
 			logger.debug("updatePersonWithConfig end");
 		}
 		catch (EJBException e)
@@ -1202,7 +1215,7 @@ public class PublicDAO extends DAO
 		return result;
 	}
 
-	public void deactivatePerson(String notificationClientID, String domainName, String mpiId, String user) throws InvalidParameterException, MPIException, UnknownObjectException
+	public void deactivatePerson(String notificationClientID, String domainName, String mpiId, String user) throws MPIException, UnknownObjectException
 	{
 		logger.debug("deactivatePerson start");
 		emRWL.writeLock().lock();
@@ -1270,7 +1283,7 @@ public class PublicDAO extends DAO
 	public List<IdentityOutDTO> getIdentitiesByDomain(String domainName, Map<IdentityField, String> filter, boolean filterIsCaseSensitive)
 			throws UnknownObjectException
 	{
-		logger.debug("getIdentitiesByDomain for domain " + domainName);
+		logger.debug("getIdentitiesByDomain for domain {}", domainName);
 		List<IdentityOutDTO> result = new ArrayList<>();
 		emRWL.readLock().lock();
 		try
@@ -1298,7 +1311,7 @@ public class PublicDAO extends DAO
 	public List<IdentityOutDTO> getIdentitiesByDomainPaginated(String domainName, int firstEntry, int pageSize, IdentityField sortField,
 			boolean sortIsAscending, Map<IdentityField, String> filter, boolean filterIsCaseSensitive) throws UnknownObjectException
 	{
-		logger.debug("getIdentitiesByDomainPaginated for domain " + domainName);
+		logger.debug("getIdentitiesByDomainPaginated for domain {}", domainName);
 		List<IdentityOutDTO> result = new ArrayList<>();
 		emRWL.readLock().lock();
 		try
@@ -1337,7 +1350,7 @@ public class PublicDAO extends DAO
 
 	public long countIdentitiesByDomainFiltered(String domainName, Map<IdentityField, String> filter, boolean filterIsCaseSensitive) throws UnknownObjectException
 	{
-		logger.debug("countIdentitiesByDomainFiltered for domain " + domainName);
+		logger.debug("countIdentitiesByDomainFiltered for domain {}", domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1357,7 +1370,7 @@ public class PublicDAO extends DAO
 
 	public List<IdentityOutDTO> getDeactivatedIdentitiesByDomain(String domainName) throws UnknownObjectException
 	{
-		logger.debug("getDeactivatedIdentitiesByDomain for domain " + domainName);
+		logger.debug("getDeactivatedIdentitiesByDomain for domain {}", domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1365,7 +1378,7 @@ public class PublicDAO extends DAO
 			@SuppressWarnings("unchecked")
 			List<Identity> temp = em.createNamedQuery("Identity.findDeactivatedByDomain").setParameter("domain", domain)
 					.getResultList();
-			logger.debug("found " + temp.size() + " identities for domain " + domainName);
+			logger.debug("found {} identities for domain {}", temp.size(), domainName);
 			List<IdentityOutDTO> result = new ArrayList<>();
 			for (Identity identity : temp)
 			{
@@ -1496,7 +1509,7 @@ public class PublicDAO extends DAO
 	// ***********************************
 	public ContactOutDTO getContactById(long id) throws UnknownObjectException
 	{
-		logger.debug("getContactById for id " + id);
+		logger.debug("getContactById for id {}", id);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1558,31 +1571,62 @@ public class PublicDAO extends DAO
 		return result;
 	}
 
-	public void deactivateContact(long contactId, String user) throws UnknownObjectException
+	public void deactivateContact(String notificationClientID, long contactId, String user) throws UnknownObjectException
 	{
-		logger.debug("deactivateContact with id " + contactId);
+		logger.debug("deactivateContact with id {}", contactId);
 		emRWL.writeLock().lock();
+
+		// Nur benoetigt fuer notification
+		String domainName = null;
+
 		try
 		{
+			if (notificationClientID != null)
+			{
+				Contact contact = getDBContactById(contactId);
+				domainName = contact.getIdentity().getPerson().getDomain().getName();
+			}
+
+
 			self.deactivateDBContact(contactId, user);
 		}
 		finally
 		{
 			emRWL.writeLock().unlock();
 		}
+
+		if (notificationClientID != null)
+		{
+			notificationSender.sendDeactivateContactNotification(notificationClientID, contactId, domainName);
+		}
 	}
 
-	public void deleteContact(long contactId, String comment, String user) throws IllegalOperationException, UnknownObjectException
+	public void deleteContact(String notificationClientID, long contactId, String comment, String user) throws IllegalOperationException, UnknownObjectException
 	{
-		logger.debug("deleteDBContact with id " + contactId);
+		logger.debug("deleteDBContact with id {}", contactId);
 		emRWL.writeLock().lock();
+
+		// Nur benoetigt fuer notification
+		String domainName = null;
+
 		try
 		{
+			if (notificationClientID != null)
+			{
+				Contact contact = getDBContactById(contactId);
+				domainName = contact.getIdentity().getPerson().getDomain().getName();
+			}
+
 			self.deleteDBContact(contactId, comment, user);
 		}
 		finally
 		{
 			emRWL.writeLock().unlock();
+		}
+
+		if (notificationClientID != null)
+		{
+			notificationSender.sendDeleteContactNotification(notificationClientID, contactId, domainName);
 		}
 	}
 
@@ -1594,10 +1638,10 @@ public class PublicDAO extends DAO
 	 * Returns all possible matches for the given domain.
 	 *
 	 * @param domainName
-	 *            the name of the domain
+	 * 		the name of the domain
 	 * @return all {@link PossibleMatchDTO} entries
 	 * @throws UnknownObjectException
-	 *             for a wrong domain name
+	 * 		for a wrong domain name
 	 */
 	public List<PossibleMatchDTO> getPossibleMatchesForDomain(String domainName) throws UnknownObjectException
 	{
@@ -1608,10 +1652,10 @@ public class PublicDAO extends DAO
 	 * Counts all possible matches for the given domain.
 	 *
 	 * @param domainName
-	 *            the name of the domain
+	 * 		the name of the domain
 	 * @return number of all possible matches
 	 * @throws UnknownObjectException
-	 *             for a wrong domain name
+	 * 		for a wrong domain name
 	 */
 	public long countPossibleMatchesForDomain(String domainName) throws UnknownObjectException
 	{
@@ -1625,20 +1669,20 @@ public class PublicDAO extends DAO
 	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
 	 *
 	 * @param domainName
-	 *            the name of the domain
+	 * 		the name of the domain
 	 * @param pc
-	 *            the pagination configuration
+	 * 		the pagination configuration
 	 * @return matching {@link PossibleMatchDTO} entries
 	 * @throws UnknownObjectException
-	 *             for a wrong domain name
+	 * 		for a wrong domain name
 	 */
 	public List<PossibleMatchDTO> getPossibleMatchesForDomainFiltered(String domainName, PaginationConfig pc) throws UnknownObjectException
 	{
-		logger.debug("getPossibleMatchesForDomainFiltered for domain " + domainName + " with " + pc);
+		logger.debug("getPossibleMatchesForDomainFiltered for domain {} with {}", domainName, pc);
 		emRWL.readLock().lock();
 		try
 		{
-			pc = pc == null ? new PaginationConfig() : pc;
+			pc = prepareIdentityFilterForPredicates(domainName, pc);
 			CriteriaQuery<IdentityLink> cq = PaginatedHelper.generateWhereQueryForIdentityLink(
 					em.getCriteriaBuilder(), DOMAIN_CACHE.getDomain(domainName), pc);
 
@@ -1668,16 +1712,16 @@ public class PublicDAO extends DAO
 	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
 	 *
 	 * @param domainName
-	 *            the name of the domain
+	 * 		the name of the domain
 	 * @param pc
-	 *            the pagination configuration
+	 * 		the pagination configuration
 	 * @return number of matching {@link PossibleMatchDTO} entries.
 	 * @throws UnknownObjectException
-	 *             for a wrong domain name
+	 * 		for a wrong domain name
 	 */
 	public long countPossibleMatchesForDomainFiltered(String domainName, PaginationConfig pc) throws UnknownObjectException
 	{
-		logger.debug("countPossibleMatchesForDomainFiltered for domain " + domainName + " with " + pc);
+		logger.debug("countPossibleMatchesForDomainFiltered for domain {} with {}", domainName, pc);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1685,7 +1729,7 @@ public class PublicDAO extends DAO
 			CriteriaQuery<Long> cq = cb.createQuery(Long.class);
 			Root<IdentityLink> root = cq.from(IdentityLink.class);
 			cq.select(cb.count(root)).where(PaginatedHelper.generateWherePredicateForIdentityLink(
-					cb, root, DOMAIN_CACHE.getDomain(domainName), pc));
+					cb, root, DOMAIN_CACHE.getDomain(domainName), prepareIdentityFilterForPredicates(domainName, pc)));
 			return em.createQuery(cq).getSingleResult();
 		}
 		finally
@@ -1710,7 +1754,7 @@ public class PublicDAO extends DAO
 
 	public List<PossibleMatchForMPIDTO> getPossibleMatchesByPerson(String domainName, String mpiId) throws UnknownObjectException
 	{
-		logger.debug("getPossibleMatchesByPerson for mpi " + mpiId + " within domain " + domainName);
+		logger.debug("getPossibleMatchesByPerson for mpi {} within domain {}", mpiId, domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -1746,7 +1790,7 @@ public class PublicDAO extends DAO
 	public boolean prioritizePossibleMatch(long linkId, PossibleMatchPriority priority) throws InvalidParameterException, MPIException
 	{
 		boolean result = false;
-		logger.debug("prioritizePossibleMatch with id " + linkId + " as " + priority);
+		logger.debug("prioritizePossibleMatch with id {} as {}", linkId, priority);
 		emRWL.writeLock().lock();
 		try
 		{
@@ -1796,7 +1840,7 @@ public class PublicDAO extends DAO
 			}
 			else
 			{
-				String message = "identity with id " + winningIdentityId + " is not part of possible match with id " + possibleMatch.getId();
+				String message = "identity with id {} " + winningIdentityId + " is not part of possible match with id " + possibleMatch.getId();
 				logger.error(message);
 				throw new InvalidParameterException("possibleMatchId|winningIdentityId", message);
 			}
@@ -1906,14 +1950,14 @@ public class PublicDAO extends DAO
 	// ***********************************
 	public List<PersonHistoryDTO> getHistoryForPerson(String domainName, String mpiId) throws UnknownObjectException
 	{
-		logger.debug("getHistoryForPerson for mpi id " + mpiId + " within domain " + domainName);
+		logger.debug("getHistoryForPerson for mpi id {} within domain {}", mpiId, domainName);
 		emRWL.readLock().lock();
 		try
 		{
 			Domain domain = getDBDomain(domainName);
 			Person person = getDBPersonByFirstMPI(domain, mpiId);
 			List<PersonHistory> histories = getDBHistoryForPerson(person);
-			logger.debug("found " + histories.size() + " history entries for person " + person);
+			logger.debug("found {} history entries for person {}", histories.size(), person);
 			List<PersonHistoryDTO> result = new ArrayList<>();
 			for (PersonHistory history : histories)
 			{
@@ -1935,19 +1979,19 @@ public class PublicDAO extends DAO
 	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
 	 *
 	 * @param domainName
-	 *            the name of the domain
+	 * 		the name of the domain
 	 * @param filter
-	 *            the filter map
+	 * 		the filter map
 	 * @param filterIsCaseSensitive
-	 *            true to filter case-sensitively
+	 * 		true to filter case-sensitively
 	 * @return matching {@link IdentityHistoryDTO} entries.
 	 * @throws UnknownObjectException
-	 *             for a wrong domain name
+	 * 		for a wrong domain name
 	 */
 	public List<IdentityHistoryDTO> getIdentityHistoriesForDomain(String domainName, Map<IdentityField, String> filter, boolean filterIsCaseSensitive)
 			throws UnknownObjectException
 	{
-		logger.debug("getIdentityHistoriesForDomain " + domainName);
+		logger.debug("getIdentityHistoriesForDomain {}", domainName);
 		List<IdentityHistoryDTO> result = new ArrayList<>();
 		emRWL.readLock().lock();
 		try
@@ -1957,7 +2001,7 @@ public class PublicDAO extends DAO
 			CriteriaQuery<IdentityHistory> cq = cb.createQuery(IdentityHistory.class);
 			Root<IdentityHistory> root = cq.from(IdentityHistory.class);
 			Predicate predicate = PaginatedHelper.generateWherePredicateForIdentityHistory(
-					cb, root, domain, new PaginationConfig(filter, null, true, filterIsCaseSensitive));
+					cb, root, domain, prepareIdentityFilterForPredicates(domainName, new PaginationConfig(filter, null, true, filterIsCaseSensitive)));
 			cq.select(root).where(predicate);
 			List<IdentityHistory> identityHistories = em.createQuery(cq).getResultList();
 			for (IdentityHistory identityHistory : identityHistories)
@@ -1980,34 +2024,24 @@ public class PublicDAO extends DAO
 	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
 	 *
 	 * @param domainName
-	 *            the name of the domain
+	 * 		the name of the domain
 	 * @param pc
-	 *            the pagination configuration
+	 * 		the pagination configuration
 	 * @return matching {@link IdentityHistoryDTO} entries
 	 * @throws UnknownObjectException
-	 *             for a wrong domain name
+	 * 		for a wrong domain name
 	 */
 	public List<IdentityHistoryDTO> getIdentityHistoriesPaginated(String domainName, PaginationConfig pc) throws UnknownObjectException
 	{
-		logger.debug("getIdentityHistoriesPaginated for domain " + domainName);
+		logger.debug("getIdentityHistoriesPaginated for domain {}", domainName);
 		emRWL.readLock().lock();
 		try
 		{
+			pc = prepareIdentityFilterForPredicates(domainName, pc);
 			Domain domain = getDBDomain(domainName);
 			CriteriaBuilder criteriaBuilder = em.getCriteriaBuilder();
 			CriteriaQuery<IdentityHistory> criteriaQuery = criteriaBuilder.createQuery(IdentityHistory.class);
 			Root<IdentityHistory> root = criteriaQuery.from(IdentityHistory.class);
-
-			pc.normalize();
-			// set up the default column set to search in with the global filter pattern combined as disjunction (if applicable)
-			if (pc.detectAndConfigureGlobalIdentityFiltering(new HashSet<>(
-					FieldName.toIdentityFields(getConfigurationContainerForDomain(domainName).getRequiredFields()))))
-			{
-				// replace localized gender patterns by matching gender symbols separated by ',' (e.g. 'lich' -> 'F,M')
-				pc.detectAndConfigureIdentityGenderFiltering();
-				logger.debug("getIdentityHistoriesPaginated final paginationConfig=" + pc);
-			}
-
 			Predicate predicate = PaginatedHelper.generateWherePredicateForIdentityHistory(criteriaBuilder, root, domain, pc);
 			criteriaQuery.select(root).where(predicate);
 
@@ -2047,16 +2081,16 @@ public class PublicDAO extends DAO
 	 * otherwise search in all given fields for the respective pattern linked by AND (conjunction).
 	 *
 	 * @param domainName
-	 *            the name of the domain
+	 * 		the name of the domain
 	 * @param pc
-	 *            the pagination configuration
+	 * 		the pagination configuration
 	 * @return number of matching {@link IdentityHistoryDTO} entries.
 	 * @throws UnknownObjectException
-	 *             for a wrong domain name
+	 * 		for a wrong domain name
 	 */
 	public long countIdentityHistories(String domainName, PaginationConfig pc) throws UnknownObjectException
 	{
-		logger.debug("countIdentityHistories for domain " + domainName);
+		logger.debug("countIdentityHistories for domain {}", domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -2064,7 +2098,8 @@ public class PublicDAO extends DAO
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			CriteriaQuery<Long> cq = cb.createQuery(Long.class);
 			Root<IdentityHistory> root = cq.from(IdentityHistory.class);
-			Predicate predicate = PaginatedHelper.generateWherePredicateForIdentityHistory(cb, root, domain, pc);
+			Predicate predicate = PaginatedHelper.generateWherePredicateForIdentityHistory(cb, root, domain,
+					prepareIdentityFilterForPredicates(domainName, pc));
 			cq.select(cb.count(root)).where(predicate);
 			return em.createQuery(cq).getSingleResult();
 		}
@@ -2079,16 +2114,16 @@ public class PublicDAO extends DAO
 	 * w.r.t the given domain and pagination config.
 	 *
 	 * @param domainName
-	 *            the name of the domain
+	 * 		the name of the domain
 	 * @param pc
-	 *            the pagination configuration
+	 * 		the pagination configuration
 	 * @return number of matching {@link PossibleMatchHistoryDTO} (respectively {@link IdentityLinkHistory}) entries (in the DB)
 	 * @throws UnknownObjectException
-	 *             for a wrong domain name
+	 * 		for a wrong domain name
 	 */
 	public long countPossibleMatchHistories(String domainName, PaginationConfig pc) throws UnknownObjectException
 	{
-		logger.debug("countIdentityHistories for domain " + domainName);
+		logger.debug("countIdentityHistories for domain {}", domainName);
 		emRWL.readLock().lock();
 		try
 		{
@@ -2096,7 +2131,8 @@ public class PublicDAO extends DAO
 			CriteriaBuilder cb = em.getCriteriaBuilder();
 			CriteriaQuery<Long> cq = cb.createQuery(Long.class);
 			Root<IdentityLinkHistory> root = cq.from(IdentityLinkHistory.class);
-			Predicate predicate = PaginatedHelper.generateWherePredicateForIdentityLinkHistory(cb, root, domain, pc);
+			Predicate predicate = PaginatedHelper.generateWherePredicateForIdentityLinkHistory(cb, root, domain,
+					prepareIdentityFilterForPredicates(domainName, pc));
 			cq.select(cb.count(root)).where(predicate);
 			return em.createQuery(cq).getSingleResult();
 		}
@@ -2106,9 +2142,22 @@ public class PublicDAO extends DAO
 		}
 	}
 
+	private PaginationConfig prepareIdentityFilterForPredicates(String domainName, PaginationConfig pc) throws UnknownObjectException
+	{
+		if (pc == null)
+		{
+			pc = new PaginationConfig();
+		}
+		else if (pc.prepareIdentityFilterForPredicates(getConfigurationContainerForDomain(domainName)))
+		{
+			logger.debug("prepareIdentityFilterForPredicates: the final pagination config is {}", pc);
+		}
+		return pc;
+	}
+
 	public List<IdentityHistoryDTO> getHistoryForIdentity(long identityId) throws UnknownObjectException
 	{
-		logger.debug("getHistoryForIdentity with id " + identityId);
+		logger.debug("getHistoryForIdentity with id {}", identityId);
 		emRWL.readLock().lock();
 		try
 		{
@@ -2129,13 +2178,13 @@ public class PublicDAO extends DAO
 
 	public List<ContactHistoryDTO> getHistoryForContact(long contactId) throws UnknownObjectException
 	{
-		logger.debug("getHistoryForContact with id " + contactId);
+		logger.debug("getHistoryForContact with id {}", contactId);
 		emRWL.readLock().lock();
 		try
 		{
 			Contact contact = getDBContactById(contactId);
 			List<ContactHistory> histories = getDBHistoryForContact(contact);
-			logger.debug("found " + histories.size() + " history entries for contact " + contact);
+			logger.debug("found {} history entries for contact {}", histories.size(), contact);
 			List<ContactHistoryDTO> result = new ArrayList<>();
 			for (ContactHistory history : histories)
 			{
@@ -2151,14 +2200,14 @@ public class PublicDAO extends DAO
 
 	public List<IdentifierHistoryDTO> getHistoryForIdentifier(String identifierDomainName, String value) throws UnknownObjectException
 	{
-		logger.debug("getHistoryForIdentifier with identifierDomainName '" + identifierDomainName + "' and value '" + value + "'");
+		logger.debug("getHistoryForIdentifier with identifierDomainName '{}' and value '{}'", identifierDomainName, value);
 		emRWL.readLock().lock();
 		try
 		{
 
 			Identifier identifier = getDBIdentifierById(new IdentifierId(identifierDomainName, value));
 			List<IdentifierHistory> histories = getDBHistoryForIdentifier(identifier);
-			logger.debug("found " + histories.size() + " history entries for identifier " + identifier);
+			logger.debug("found {} history entries for identifier {}", histories.size(), identifier);
 			List<IdentifierHistoryDTO> result = new ArrayList<>();
 			for (IdentifierHistory history : histories)
 			{
@@ -2174,14 +2223,14 @@ public class PublicDAO extends DAO
 
 	public List<PossibleMatchHistoryDTO> getPossibleMatchHistoryForPerson(String domainName, String mpiId) throws UnknownObjectException
 	{
-		logger.debug("getPossibleMatchHistoryForPerson with mpi id " + mpiId + " within domain " + domainName);
+		logger.debug("getPossibleMatchHistoryForPerson with mpi id {} within domain {}", mpiId, domainName);
 		emRWL.readLock().lock();
 		try
 		{
 			Domain domain = getDBDomain(domainName);
 			Person person = getActiveDBPersonByMPI(domain, mpiId);
 			List<IdentityLinkHistory> histories = getDBPossibleMatchHistoryForPerson(person);
-			logger.debug("found " + histories.size() + " possible match history entries for person " + person);
+			logger.debug("found {} possible match history entries for person {}", histories.size(), person);
 			List<PossibleMatchHistoryDTO> result = new ArrayList<>();
 			for (IdentityLinkHistory history : histories)
 			{
@@ -2197,7 +2246,7 @@ public class PublicDAO extends DAO
 
 	public List<PossibleMatchHistoryDTO> getPossibleMatchHistoryForUpdatedIdentity(long updatedIdentityId) throws UnknownObjectException
 	{
-		logger.debug("getPossibleMatchHistoryForUpdatedIdentity with updatedIdentityId " + updatedIdentityId);
+		logger.debug("getPossibleMatchHistoryForUpdatedIdentity with updatedIdentityId {}", updatedIdentityId);
 		emRWL.readLock().lock();
 		try
 		{
@@ -2218,7 +2267,7 @@ public class PublicDAO extends DAO
 
 	public List<PossibleMatchHistoryDTO> getPossibleMatchHistoryByIdentity(long identityId) throws UnknownObjectException
 	{
-		logger.debug("getPossibleMatchHistoryByIdentity by identityId " + identityId);
+		logger.debug("getPossibleMatchHistoryByIdentity by identityId {}", identityId);
 		emRWL.readLock().lock();
 		try
 		{
@@ -2239,7 +2288,7 @@ public class PublicDAO extends DAO
 
 	public List<IdentityHistoryDTO> getIdentityHistoryByPersonId(Long personId) throws UnknownObjectException
 	{
-		logger.debug("getReferenceIdentityAtTimestamp with personId " + personId);
+		logger.debug("getReferenceIdentityAtTimestamp with personId {}", personId);
 		emRWL.readLock().lock();
 		try
 		{
@@ -2254,6 +2303,31 @@ public class PublicDAO extends DAO
 	// *********
 	// statistic
 	// *********
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public StatisticDTO getFirstStats()
+	{
+		statisticRWL.readLock().lock();
+		StatisticDTO result;
+		try
+		{
+			CriteriaBuilder criteriaBuilder = em.getCriteriaBuilder();
+			CriteriaQuery<Statistic> criteriaQuery = criteriaBuilder.createQuery(Statistic.class);
+			Root<Statistic> root = criteriaQuery.from(Statistic.class);
+			criteriaQuery.select(root).orderBy(criteriaBuilder.asc(root.get(Statistic_.stat_entry_id)));
+			Statistic stat = em.createQuery(criteriaQuery).setMaxResults(1).getSingleResult();
+			result = stat.toDTO();
+		}
+		catch (NoResultException maybe)
+		{
+			result = new StatisticDTO();
+		}
+		finally
+		{
+			statisticRWL.readLock().unlock();
+		}
+		return result;
+	}
+	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public StatisticDTO getLatestStats()
 	{
@@ -2309,6 +2383,33 @@ public class PublicDAO extends DAO
 		}
 	}
 
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public List<StatisticDTO> getStatsFromTo(Date from, Date to)
+	{
+		statisticRWL.readLock().lock();
+		try
+		{
+			List<StatisticDTO> result = new ArrayList<>();
+			CriteriaBuilder criteriaBuilder = em.getCriteriaBuilder();
+			CriteriaQuery<Statistic> criteriaQuery = criteriaBuilder.createQuery(Statistic.class);
+
+			Root<Statistic> root = criteriaQuery.from(Statistic.class);
+			criteriaQuery.select(root)
+					.where(criteriaBuilder.between(root.get(Statistic_.entrydate), from, to));
+			List<Statistic> queryResult = em.createQuery(criteriaQuery).getResultList();
+
+			for (Statistic stats : queryResult)
+			{
+				result.add(stats.toDTO());
+			}
+			return result;
+		}
+		finally
+		{
+			statisticRWL.readLock().unlock();
+		}
+	}
+
 	public StatisticDTO updateStats()
 	{
 		Instant start = Instant.now();
@@ -2324,6 +2425,7 @@ public class PublicDAO extends DAO
 			long allPossibleMatchesOpen = 0L;
 			long allPossibleMatchesMerged = 0L;
 			long allPossibleMatchesSplit = 0L;
+			long allPossibleMatchesPostponed = 0L;
 			long allIdentitiesNoMatch = 0L;
 			long allIdentitiesPossibleMatch = 0L;
 			long allIdentitiesMatch = 0L;
@@ -2339,12 +2441,17 @@ public class PublicDAO extends DAO
 				stat.put(new StatisticKeys(StatisticKeys.IDENTITIES).perDomain(domain.getName()).build(), domainIdentities);
 				allIdentities += domainIdentities;
 
-				long possibleMatchesOpen = countPossibleMatchesForDomain(domain.getName());
+				PaginationConfig pc = PaginationConfig.builder().withPriorityFilter(PossibleMatchPriority.POSTPONED).build();
+				long possibleMatchesPostponed = countPossibleMatchesForDomainFiltered(domain.getName(), pc);
+				stat.put(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_POSTPONED).perDomain(domain.getName()).build(), possibleMatchesPostponed);
+				allPossibleMatchesPostponed += possibleMatchesPostponed;
+
+				long possibleMatchesOpen = countPossibleMatchesForDomain(domain.getName()) - possibleMatchesPostponed;
 				stat.put(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_OPEN).perDomain(domain.getName()).build(), possibleMatchesOpen);
 				allPossibleMatchesOpen += possibleMatchesOpen;
 
 				Set<IdentityHistoryEvent> merge = new HashSet<>(List.of(IdentityHistoryEvent.MERGE));
-				PaginationConfig pc = PaginationConfig.builder().withEventFilter(merge).build();
+				pc = PaginationConfig.builder().withEventFilter(merge).build();
 				long possibleMatchesMerged = countIdentityHistories(domain.getName(), pc);
 				stat.put(new StatisticKeys(StatisticKeys.POSSIBLE_MATCHES_MERGED).perDomain(domain.getName()).build(), possibleMatchesMerged);
 				allPossibleMatchesMerged += possibleMatchesMerged;
@@ -2387,6 +2494,7 @@ public class PublicDAO extends DAO
 			stat.put(StatisticKeys.POSSIBLE_MATCHES_OPEN, allPossibleMatchesOpen);
 			stat.put(StatisticKeys.POSSIBLE_MATCHES_MERGED, allPossibleMatchesMerged);
 			stat.put(StatisticKeys.POSSIBLE_MATCHES_SPLIT, allPossibleMatchesSplit);
+			stat.put(StatisticKeys.POSSIBLE_MATCHES_POSTPONED, allPossibleMatchesPostponed);
 			stat.put(StatisticKeys.IDENTITY_NO_MATCH, allIdentitiesNoMatch);
 			stat.put(StatisticKeys.IDENTITY_POSSIBLE_MATCH, allIdentitiesPossibleMatch);
 			stat.put(StatisticKeys.IDENTITY_MATCH, allIdentitiesMatch);

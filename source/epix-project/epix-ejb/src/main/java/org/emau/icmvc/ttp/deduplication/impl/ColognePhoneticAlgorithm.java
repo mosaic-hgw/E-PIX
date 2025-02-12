@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.deduplication.impl;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.deduplication.impl;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -61,7 +61,7 @@ public class ColognePhoneticAlgorithm implements IStringMatchingAlgorithm
 		boolean bool = colognePhonetic.isEncodeEqual(toBlock, candidate);
 		if (logger.isTraceEnabled())
 		{
-			logger.trace("matching: " + toBlock + " and " + candidate + " gives " + bool);
+			logger.trace("matching: {} and {} gives {}", toBlock, candidate, bool);
 		}
 		return bool ? 1. : 0.;
 	}

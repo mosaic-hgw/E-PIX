@@ -4,7 +4,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * ###license-information-start###
  * E-PIX - Enterprise Patient Identifier Cross-referencing
  * __
- * Copyright (C) 2009 - 2023 Trusted Third Party of the University Medicine Greifswald
+ * Copyright (C) 2009 - 2025 Trusted Third Party of the University Medicine Greifswald
  * 							kontakt-ths@uni-greifswald.de
  * 
  * 							concept and implementation
@@ -14,7 +14,7 @@ package org.emau.icmvc.ttp.epix.common.model;
  * 							a.blumentritt, f.m. moser
  * 
  * 							docker
- * 							r.schuldt
+ * 							r.schuldt, f.m. moser
  * 
  * 							privacy preserving record linkage (PPRL)
  * 							c.hampf
@@ -53,11 +53,12 @@ import org.emau.icmvc.ttp.epix.common.model.enums.IdentityHistoryEvent;
 public class IdentityHistoryDTO extends IdentityOutBaseDTO
 {
 	@Serial
-	private static final long serialVersionUID = 7914394675246745984L;
+	private static final long serialVersionUID = -2411670202445423686L;
 	private long historyId;
 	private Date historyTimestamp;
 	private IdentityHistoryEvent event;
 	private double matchingScore;
+	private long matchingIdentityId;
 	private String comment;
 	private String user;
 
@@ -66,14 +67,15 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 		super();
 	}
 
-	public IdentityHistoryDTO(IdentityOutBaseDTO superDTO, long historyId, Date historyTimestamp, IdentityHistoryEvent event, double matchingScore,
-			String comment, String user)
+	public IdentityHistoryDTO(IdentityOutBaseDTO superDTO, long historyId, Date historyTimestamp, IdentityHistoryEvent event,
+			double matchingScore, long matchingIdentityId, String comment, String user)
 	{
 		super(superDTO);
 		this.historyId = historyId;
 		setHistoryTimestamp(historyTimestamp);
 		this.event = event;
 		this.matchingScore = matchingScore;
+		this.matchingIdentityId = matchingIdentityId;
 		this.comment = comment;
 		this.user = user;
 	}
@@ -118,6 +120,16 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 		this.matchingScore = matchingScore;
 	}
 
+	public double getMatchingIdentityId()
+	{
+		return matchingIdentityId;
+	}
+
+	public void setMatchingIdentityId(long matchingIdentityId)
+	{
+		this.matchingIdentityId = matchingIdentityId;
+	}
+
 	public String getComment()
 	{
 		return comment;
@@ -149,6 +161,7 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 		result = prime * result + (historyTimestamp == null ? 0 : historyTimestamp.hashCode());
 		long temp;
 		temp = Double.doubleToLongBits(matchingScore);
+		result = prime * result + (int) (matchingIdentityId ^ matchingIdentityId >>> 32);
 		result = prime * result + (int) (temp ^ temp >>> 32);
 		result = prime * result + (user == null ? 0 : user.hashCode());
 		return result;
@@ -204,6 +217,10 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 		{
 			return false;
 		}
+		if (matchingIdentityId != other.matchingIdentityId)
+		{
+			return false;
+		}
 		if (user == null)
 		{
 			if (other.user != null)
@@ -224,6 +241,7 @@ public class IdentityHistoryDTO extends IdentityOutBaseDTO
 		return "IdentityHistoryDTO [historyId=" + historyId + ", historyTimestamp=" + historyTimestamp
 				+ (event != null ? ", event=" + event : "")
 				+ ", matchingScore=" + matchingScore
+				+ ", matchingIdentityId=" + matchingIdentityId
 				+ (Strings.isNotBlank(comment) ? ", comment=" + comment : "")
 				+ (Strings.isNotBlank(user) ? ", user=" + user : "")
 				+ "]";
